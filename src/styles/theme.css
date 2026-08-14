@@ -1,0 +1,51 @@
+/* Copyright (C) 2025-2026 Tuack-GUI Develop Team. */
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+@import "tailwindcss";
+
+:root {
+  /* —— VS Code Dark+ 设计令牌 —— */
+  --vscode-editor-bg: #1e1e1e;
+  --vscode-sidebar-bg: #252526;
+  --vscode-activitybar-bg: #333333;
+  --vscode-titlebar-bg: #3c3c3c;
+  --vscode-tab-bg: #2d2d2d;
+  --vscode-panel-bg: #1e1e1e;
+  --vscode-statusbar-bg: #007acc;
+  --vscode-border: #2b2b2b;
+  --vscode-text: #cccccc;
+  --vscode-text-muted: #858585;
+  --vscode-focus: #007fd4;
+
+  --font-ui: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--vscode-text);
+  background-color: var(--vscode-editor-bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #424242;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4f4f4f;
+}
