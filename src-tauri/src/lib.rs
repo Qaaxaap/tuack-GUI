@@ -432,10 +432,28 @@ fn find_in_path(name: &str) -> Option<PathBuf> {
     None
 }
 
+fn sidecar_dir() -> Option<PathBuf> {
+    std::env::current_exe()
+        .ok()?
+        .parent()
+        .map(|p| p.to_path_buf())
+}
+
 fn resolve_tuack(state: &AppState) -> Option<PathBuf> {
+    // 1. 用户手动指定
     if let Some(p) = state.tuack_path.lock().unwrap().clone() {
-        return Some(p);
+        if p.is_file() {
+            return Some(p);
+        }
     }
+    // 2. 内置 sidecar（与可执行文件同目录）
+    if let Some(dir) = sidecar_dir() {
+        let exe = dir.join(format!("tuack-ng{}", std::env::consts::EXE_SUFFIX));
+        if exe.is_file() {
+            return Some(exe);
+        }
+    }
+    // 3. 系统 PATH
     find_in_path("tuack-ng")
 }
 
@@ -458,13 +476,21 @@ async fn run_command(
 
     let id = state.next_id.fetch_add(1, Ordering::Relaxed);
 
-    let mut child = tokio::process::Command::new(&exe)
+    let mut command = tokio::process::Command::new(&exe);
+    command
         .args(build_argv(&cmd))
         .current_dir(&cwd)
         .env("CLICOLOR_FORCE", "1")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+    // 把 sidecar 目录加进 PATH，让 tuack-ng 能找到同捆的 typst
+    if let Some(dir) = sidecar_dir() {
+        let existing = std::env::var("PATH").unwrap_or_default();
+        let sep = if cfg!(windows) { ";" } else { ":" };
+        command.env("PATH", format!("{}{}{}", dir.display(), sep, existing));
+    }
+    let mut child = command
         .spawn()
         .map_err(|e| format!("启动 tuack-ng 失败：{e}"))?;
 
