@@ -741,11 +741,49 @@ fn read_text_file(path: String) -> Result<String, String> {
     fs::read_to_string(&path).map_err(|e| format!("读取文件失败：{e}"))
 }
 
+fn copy_dir_recursive(src: &Path, dst: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let from = entry.path();
+        let to = dst.join(entry.file_name());
+        if from.is_dir() {
+            copy_dir_recursive(&from, &to)?;
+        } else {
+            std::fs::copy(&from, &to)?;
+        }
+    }
+    Ok(())
+}
+
+/// 首次启动时，把捆绑的 assets 复制到 tuack-ng 的数据目录（tuack-ng 从这里找 scaffold/checkers/langs.json）
+fn ensure_assets(app: &tauri::AppHandle) {
+    let Ok(resource) = app.path().resource_dir() else {
+        return;
+    };
+    let src = resource.join("assets");
+    if !src.exists() {
+        return;
+    }
+    let Some(dst) = dirs::data_local_dir().map(|d| d.join("tuack-ng")) else {
+        return;
+    };
+    // 已存在则跳过（简化：不做版本同步）
+    if dst.join("langs.json").exists() {
+        return;
+    }
+    let _ = copy_dir_recursive(&src, &dst);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::default())
+        .setup(|app| {
+            ensure_assets(app.handle());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             ping,
             open_project,

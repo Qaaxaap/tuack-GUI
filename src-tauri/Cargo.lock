@@ -4005,6 +4005,7 @@ name = "tuack-gui"
 version = "0.1.0"
 dependencies = [
  "base64 0.23.1",
+ "dirs",
  "path-clean",
  "serde",
  "serde_json",
