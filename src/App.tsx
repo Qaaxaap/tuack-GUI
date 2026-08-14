@@ -6,10 +6,12 @@ import Toolbar from "./ui/Toolbar";
 import SideBar from "./ui/SideBar";
 import MainPanel from "./ui/MainPanel";
 import OutputDrawer from "./ui/OutputDrawer";
+import PdfViewer from "./ui/PdfViewer";
 import {
   cancelCommand,
   detectTuack,
   getLastProject,
+  listDir,
   openProject,
   runCommand,
   saveLastProject,
@@ -26,6 +28,7 @@ export default function App() {
   const [running, setRunning] = useState(false);
   const [runId, setRunId] = useState<number | null>(null);
   const [lastProject, setLastProject] = useState<LastProject | null>(null);
+  const [pdfPath, setPdfPath] = useState<string | null>(null);
 
   async function refreshTuack() {
     try {
@@ -67,7 +70,18 @@ export default function App() {
     setRunning(true);
     runCommand(cmd, cwd, (e) => {
       setLogs((prev) => [...prev, e]);
-      if (e.kind === "exited") setRunning(false);
+      if (e.kind === "exited") {
+        setRunning(false);
+        if (cmd.command === "ren") {
+          const dir = `${cwd}/statements/${cmd.template}`;
+          listDir(dir)
+            .then((res) => {
+              const pdf = res.entries.find((x) => x.name.endsWith(".pdf"));
+              if (pdf) setPdfPath(pdf.path);
+            })
+            .catch(() => {});
+        }
+      }
     })
       .then(setRunId)
       .catch((err) => {
@@ -97,6 +111,7 @@ export default function App() {
         <MainPanel project={project} selected={selected} />
       </div>
       <OutputDrawer logs={logs} running={running} onCancel={handleCancel} />
+      {pdfPath && <PdfViewer path={pdfPath} onClose={() => setPdfPath(null)} />}
     </div>
   );
 }

@@ -15,6 +15,7 @@
     "@tauri-apps/plugin-opener": "^2",
     "@uiw/react-codemirror": "^4.25.11",
     "lucide-react": "^1.31.0",
+    "pdfjs-dist": "^6.2.108",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
