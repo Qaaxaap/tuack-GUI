@@ -37,7 +37,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: 打包
-        run: pnpm tauri build --config '{"bundle":{"externalBin":["binaries/tuack-ng","binaries/typst"],"resources":["binaries/assets"],"targets":["deb"]}}'
+        run: pnpm tauri build --config config/tauri.release.linux.conf.json
 
       - uses: actions/upload-artifact@v4
         with:
@@ -67,7 +67,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: 打包
-        run: pnpm tauri build --config '{"bundle":{"externalBin":["binaries/tuack-ng","binaries/typst"],"resources":["binaries/assets"],"targets":["nsis"]}}'
+        run: pnpm tauri build --config config/tauri.release.windows.conf.json
 
       - uses: actions/upload-artifact@v4
         with:

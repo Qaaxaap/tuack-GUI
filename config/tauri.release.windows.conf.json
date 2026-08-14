@@ -1,0 +1,7 @@
+{
+  "bundle": {
+    "externalBin": ["binaries/tuack-ng", "binaries/typst"],
+    "resources": ["binaries/assets"],
+    "targets": ["nsis"]
+  }
+}
