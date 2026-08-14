@@ -46,9 +46,25 @@ export type GenTarget =
 
 export type TestTarget = "data" | "sample";
 
+export type DataTarget = "data" | "sample";
+
+export type DmkAction = "gen" | "regen" | "reset";
+
+export type DumpTarget = "lemon" | "arbiter";
+
 export type Command =
   | { command: "gen"; target: GenTarget; names: string[]; confirm: boolean }
   | { command: "test"; target: TestTarget }
+  | { command: "ren"; template: string; keep_tmp: boolean; no_auto_open: boolean }
+  | { command: "dmk"; target: DataTarget; action: DmkAction; object: string; validate: boolean | null }
+  | { command: "validate"; target: DataTarget; object: string }
+  | { command: "dump"; target: DumpTarget }
+  | { command: "doc-format"; explain: string | null }
+  | { command: "doc-check"; explain: string | null }
+  | { command: "doc-validate" }
+  | { command: "conf-title"; values: string[] }
+  | { command: "conf-time"; values: string[] }
+  | { command: "conf-length"; values: string[] }
   | { command: "conf-migrate" };
 
 export type ProcessEvent =
