@@ -65,3 +65,7 @@ export function getFileManager(): Promise<string | null> {
 export function saveFileManager(cmd: string): Promise<void> {
   return invoke("set_file_manager", { cmd });
 }
+
+export function readFileBase64(path: string): Promise<string> {
+  return invoke<string>("read_file_base64", { path });
+}
