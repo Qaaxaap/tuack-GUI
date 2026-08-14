@@ -9,6 +9,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use path_clean::PathClean;
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use serde_json::Value;
 use tauri::ipc::Channel;
 use tauri::Manager;
@@ -701,6 +702,12 @@ fn set_file_manager(app: tauri::AppHandle, cmd: String) -> Result<(), String> {
     save_settings(&app, &settings)
 }
 
+#[tauri::command]
+fn read_file_base64(path: String) -> Result<String, String> {
+    let bytes = fs::read(&path).map_err(|e| format!("读取文件失败：{e}"))?;
+    Ok(STANDARD.encode(&bytes))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -721,7 +728,8 @@ pub fn run() {
             write_config,
             open_in_file_manager,
             get_file_manager,
-            set_file_manager
+            set_file_manager,
+            read_file_base64
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
