@@ -69,3 +69,7 @@ export function saveFileManager(cmd: string): Promise<void> {
 export function readFileBase64(path: string): Promise<string> {
   return invoke<string>("read_file_base64", { path });
 }
+
+export function readTextFile(path: string): Promise<string> {
+  return invoke<string>("read_text_file", { path });
+}
