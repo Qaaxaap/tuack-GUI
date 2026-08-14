@@ -73,6 +73,40 @@ enum Command {
     Test {
         target: TestTarget,
     },
+    Ren {
+        template: String,
+        keep_tmp: bool,
+        no_auto_open: bool,
+    },
+    Dmk {
+        target: DataTarget,
+        action: DmkAction,
+        object: String,
+        validate: Option<bool>,
+    },
+    Validate {
+        target: DataTarget,
+        object: String,
+    },
+    Dump {
+        target: DumpTarget,
+    },
+    DocFormat {
+        explain: Option<String>,
+    },
+    DocCheck {
+        explain: Option<String>,
+    },
+    DocValidate,
+    ConfTitle {
+        values: Vec<String>,
+    },
+    ConfTime {
+        values: Vec<String>,
+    },
+    ConfLength {
+        values: Vec<String>,
+    },
     ConfMigrate,
 }
 
@@ -94,6 +128,28 @@ enum GenTarget {
 enum TestTarget {
     Data,
     Sample,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum DataTarget {
+    Data,
+    Sample,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum DmkAction {
+    Gen,
+    Regen,
+    Reset,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum DumpTarget {
+    Lemon,
+    Arbiter,
 }
 
 #[derive(serde::Serialize, Clone)]
@@ -139,8 +195,98 @@ fn build_argv(cmd: &Command) -> Vec<String> {
             }
             .to_string(),
         ],
+        Command::Ren {
+            template,
+            keep_tmp,
+            no_auto_open,
+        } => {
+            let mut v = vec!["ren".to_string(), template.clone()];
+            if *keep_tmp {
+                v.push("--keep-tmp".to_string());
+            }
+            if *no_auto_open {
+                v.push("-s".to_string());
+            }
+            v
+        }
+        Command::Dmk {
+            target,
+            action,
+            object,
+            validate,
+        } => {
+            let mut v = vec![
+                "dmk".to_string(),
+                data_target_str(target).to_string(),
+                dmk_action_str(action).to_string(),
+            ];
+            if !object.is_empty() && object != "all" {
+                v.push(object.clone());
+            }
+            if let Some(val) = validate {
+                v.push(format!("--validate={}", bool_str(*val)));
+            }
+            v
+        }
+        Command::Validate { target, object } => {
+            let mut v = vec!["validate".to_string(), data_target_str(target).to_string()];
+            if !object.is_empty() && object != "all" {
+                v.push(object.clone());
+            }
+            v
+        }
+        Command::Dump { target } => vec!["dump".to_string(), dump_target_str(target).to_string()],
+        Command::DocFormat { explain } => doc_cmd("format", explain),
+        Command::DocCheck { explain } => doc_cmd("check", explain),
+        Command::DocValidate => vec!["doc".to_string(), "validate".to_string()],
+        Command::ConfTitle { values } => conf_cmd("title", values),
+        Command::ConfTime { values } => conf_cmd("time", values),
+        Command::ConfLength { values } => conf_cmd("length", values),
         Command::ConfMigrate => vec!["conf".to_string(), "migrate".to_string()],
     }
+}
+
+fn data_target_str(t: &DataTarget) -> &'static str {
+    match t {
+        DataTarget::Data => "data",
+        DataTarget::Sample => "sample",
+    }
+}
+
+fn dmk_action_str(a: &DmkAction) -> &'static str {
+    match a {
+        DmkAction::Gen => "gen",
+        DmkAction::Regen => "regen",
+        DmkAction::Reset => "reset",
+    }
+}
+
+fn dump_target_str(t: &DumpTarget) -> &'static str {
+    match t {
+        DumpTarget::Lemon => "lemon",
+        DumpTarget::Arbiter => "arbiter",
+    }
+}
+
+fn bool_str(b: bool) -> String {
+    if b { "true".to_string() } else { "false".to_string() }
+}
+
+fn doc_cmd(action: &str, explain: &Option<String>) -> Vec<String> {
+    let mut v = vec!["doc".to_string(), action.to_string()];
+    if let Some(e) = explain {
+        if !e.is_empty() {
+            v.push("--explain".to_string());
+            v.push(e.clone());
+        }
+    }
+    v
+}
+
+fn conf_cmd(target: &str, values: &[String]) -> Vec<String> {
+    let mut v = vec!["conf".to_string(), target.to_string()];
+    v.extend(values.iter().cloned());
+    v
 }
 
 // ---------- 配置解析 ----------
