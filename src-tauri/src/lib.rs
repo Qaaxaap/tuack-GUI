@@ -8,8 +8,8 @@ use std::process::Stdio;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
-use path_clean::PathClean;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
+use path_clean::PathClean;
 use serde_json::Value;
 use tauri::ipc::Channel;
 use tauri::Manager;
@@ -270,7 +270,11 @@ fn dump_target_str(t: &DumpTarget) -> &'static str {
 }
 
 fn bool_str(b: bool) -> String {
-    if b { "true".to_string() } else { "false".to_string() }
+    if b {
+        "true".to_string()
+    } else {
+        "false".to_string()
+    }
 }
 
 fn doc_cmd(action: &str, explain: &Option<String>) -> Vec<String> {
@@ -535,16 +539,10 @@ struct LastProject {
     name: String,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Default)]
 struct Settings {
     last_project: Option<LastProject>,
     file_manager: Option<String>,
-}
-
-impl Default for Settings {
-    fn default() -> Self {
-        Self { last_project: None, file_manager: None }
-    }
 }
 
 fn settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -649,7 +647,11 @@ fn write_config(path: String, value: Value) -> Result<(), String> {
 #[tauri::command]
 fn open_in_file_manager(app: tauri::AppHandle, path: String) -> Result<(), String> {
     // 1. 用户自定义的文件管理器（命令名或绝对路径）
-    if let Some(cmd) = load_settings(&app).file_manager.as_deref().filter(|c| !c.is_empty()) {
+    if let Some(cmd) = load_settings(&app)
+        .file_manager
+        .as_deref()
+        .filter(|c| !c.is_empty())
+    {
         return std::process::Command::new(cmd)
             .arg(&path)
             .spawn()
