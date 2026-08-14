@@ -9,6 +9,7 @@ import type { NodeKind } from "../ipc/types";
 import Select from "./Select";
 import Checkbox from "./Checkbox";
 import TestDataEditor from "./TestDataEditor";
+import Scoreboard from "./Scoreboard";
 
 type FieldType = "text" | "number" | "bool" | "enum" | "json";
 
@@ -56,12 +57,13 @@ function toDisplay(v: unknown): string {
 
 interface Props {
   path: string;
+  dir: string;
   kind: NodeKind;
 }
 
-export default function ConfigEditor({ path, kind }: Props) {
+export default function ConfigEditor({ path, dir, kind }: Props) {
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
-  const [tab, setTab] = useState<"form" | "json" | "data">("form");
+  const [tab, setTab] = useState<"form" | "json" | "data" | "score">("form");
   const [jsonText, setJsonText] = useState("");
   const [status, setStatus] = useState("");
 
@@ -128,6 +130,18 @@ export default function ConfigEditor({ path, kind }: Props) {
             }}
           >
             测试点
+          </button>
+        )}
+        {kind === "problem" && (
+          <button
+            onClick={() => setTab("score")}
+            className="px-2 py-0.5 text-xs"
+            style={{
+              color: tab === "score" ? "var(--text)" : "var(--text-muted)",
+              borderBottom: tab === "score" ? "1px solid var(--accent)" : "1px solid transparent",
+            }}
+          >
+            评测结果
           </button>
         )}
         <button
@@ -233,6 +247,8 @@ export default function ConfigEditor({ path, kind }: Props) {
           )
         ) : tab === "data" ? (
           <TestDataEditor value={config?.["data"]} onChange={(v) => setField("data", v)} />
+        ) : tab === "score" ? (
+          <Scoreboard dir={dir} />
         ) : (
           <div className="flex h-full min-h-0 flex-col gap-2">
             <div className="min-h-0 flex-1 overflow-hidden rounded" style={{ border: "1px solid var(--border)" }}>
