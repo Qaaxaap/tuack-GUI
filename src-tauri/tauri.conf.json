@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tauri-scaffold",
+  "productName": "Tuack-GUI",
   "version": "0.1.0",
   "identifier": "com.tuackng.tuackgui",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "tauri-scaffold",
+        "title": "Tuack-GUI",
         "width": 800,
         "height": 600
       }
