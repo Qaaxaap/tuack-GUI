@@ -486,6 +486,18 @@ fn home_dir(app: tauri::AppHandle) -> Result<String, String> {
         .map_err(|e| format!("获取主目录失败：{e}"))
 }
 
+#[tauri::command]
+fn read_config(path: String) -> Result<Value, String> {
+    let text = fs::read_to_string(&path).map_err(|e| format!("读取配置失败：{e}"))?;
+    serde_json::from_str(&text).map_err(|e| format!("JSON 解析失败：{e}"))
+}
+
+#[tauri::command]
+fn write_config(path: String, value: Value) -> Result<(), String> {
+    let text = serde_json::to_string_pretty(&value).map_err(|e| format!("序列化失败：{e}"))?;
+    fs::write(&path, text).map_err(|e| format!("写入配置失败：{e}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -501,7 +513,9 @@ pub fn run() {
             get_last_project,
             save_last_project,
             list_dir,
-            home_dir
+            home_dir,
+            read_config,
+            write_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
