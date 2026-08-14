@@ -4,21 +4,23 @@
 @import "tailwindcss";
 
 :root {
-  /* —— VS Code Dark+ 设计令牌 —— */
-  --vscode-editor-bg: #1e1e1e;
-  --vscode-sidebar-bg: #252526;
-  --vscode-activitybar-bg: #333333;
-  --vscode-titlebar-bg: #3c3c3c;
-  --vscode-tab-bg: #2d2d2d;
-  --vscode-panel-bg: #1e1e1e;
-  --vscode-statusbar-bg: #007acc;
-  --vscode-border: #2b2b2b;
-  --vscode-text: #cccccc;
-  --vscode-text-muted: #858585;
-  --vscode-focus: #007fd4;
+  /* 配色令牌（暗色） */
+  --bg: #161616;
+  --bg-raised: #1e1e1e;
+  --bg-card: #242424;
+  --border: #2c2c2c;
+  --text: #e6e6e6;
+  --text-muted: #8a8a8a;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --success: #34d399;
+  --danger: #f87171;
 
-  --font-ui: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
-  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --radius: 8px;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
 }
 
 html,
@@ -31,8 +33,8 @@ body,
 body {
   font-family: var(--font-ui);
   font-size: 13px;
-  color: var(--vscode-text);
-  background-color: var(--vscode-editor-bg);
+  color: var(--text);
+  background-color: var(--bg);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
@@ -43,9 +45,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #424242;
+  background: #333333;
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4f4f4f;
+  background: #444444;
 }

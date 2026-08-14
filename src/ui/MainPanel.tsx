@@ -21,23 +21,25 @@ export default function MainPanel() {
 
   const badge =
     backend === "connecting"
-      ? { color: "var(--vscode-text-muted)", text: "连接后端中…" }
+      ? { color: "var(--text-muted)", text: "连接后端中…" }
       : backend === "ok"
-        ? { color: "#4ec9b0", text: "后端已连接（IPC 正常）" }
-        : { color: "#f14c4c", text: `后端连接失败：${error}` };
+        ? { color: "var(--success)", text: "后端已连接" }
+        : { color: "var(--danger)", text: `后端连接失败：${error}` };
 
   return (
-    <main
-      className="flex flex-1 flex-col items-center justify-center gap-3"
-      style={{ backgroundColor: "var(--vscode-editor-bg)" }}
-    >
-      <h1 className="text-2xl font-semibold" style={{ color: "var(--vscode-text)" }}>
+    <main className="flex flex-1 flex-col items-center justify-center gap-4">
+      <h1 className="text-2xl font-semibold" style={{ color: "var(--text)" }}>
         Tuack-GUI
       </h1>
-      <p style={{ color: "var(--vscode-text-muted)" }}>
-        美观、跨平台的 Tuack-NG 图形化前端
-      </p>
-      <span className="text-xs" style={{ color: badge.color }}>
+      <p style={{ color: "var(--text-muted)" }}>美观、跨平台的 Tuack-NG 图形化前端</p>
+      <span
+        className="rounded-full px-3 py-1 text-xs"
+        style={{
+          backgroundColor: "var(--bg-card)",
+          color: badge.color,
+          border: "1px solid var(--border)",
+        }}
+      >
         {badge.text}
       </span>
     </main>
