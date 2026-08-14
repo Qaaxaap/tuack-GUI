@@ -1,3 +1,6 @@
+// Copyright (C) 2025-2026 Tuack-GUI Develop Team.
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
