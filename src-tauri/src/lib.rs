@@ -708,6 +708,11 @@ fn read_file_base64(path: String) -> Result<String, String> {
     Ok(STANDARD.encode(&bytes))
 }
 
+#[tauri::command]
+fn read_text_file(path: String) -> Result<String, String> {
+    fs::read_to_string(&path).map_err(|e| format!("读取文件失败：{e}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -729,7 +734,8 @@ pub fn run() {
             open_in_file_manager,
             get_file_manager,
             set_file_manager,
-            read_file_base64
+            read_file_base64,
+            read_text_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
