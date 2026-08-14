@@ -391,11 +391,12 @@ struct LastProject {
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Settings {
     last_project: Option<LastProject>,
+    file_manager: Option<String>,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { last_project: None }
+        Self { last_project: None, file_manager: None }
     }
 }
 
@@ -498,6 +499,62 @@ fn write_config(path: String, value: Value) -> Result<(), String> {
     fs::write(&path, text).map_err(|e| format!("写入配置失败：{e}"))
 }
 
+#[tauri::command]
+fn open_in_file_manager(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    // 1. 用户自定义的文件管理器（命令名或绝对路径）
+    if let Some(cmd) = load_settings(&app).file_manager.as_deref().filter(|c| !c.is_empty()) {
+        return std::process::Command::new(cmd)
+            .arg(&path)
+            .spawn()
+            .map(|_| ())
+            .map_err(|e| format!("启动文件管理器失败：{e}"));
+    }
+    // 2. 未指定：Linux 探测主流文件管理器；mac/win 用系统默认
+    #[cfg(target_os = "linux")]
+    {
+        let exe = ["dolphin", "nautilus", "nemo", "thunar", "pcmanfm"]
+            .into_iter()
+            .find_map(find_in_path)
+            .or_else(|| find_in_path("xdg-open"))
+            .ok_or_else(|| "未找到可用的文件管理器，请在设置里指定".to_string())?;
+        std::process::Command::new(exe)
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("启动文件管理器失败：{e}"))?;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("启动失败：{e}"))?;
+    }
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("启动失败：{e}"))?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn get_file_manager(app: tauri::AppHandle) -> Option<String> {
+    load_settings(&app).file_manager
+}
+
+#[tauri::command]
+fn set_file_manager(app: tauri::AppHandle, cmd: String) -> Result<(), String> {
+    let mut settings = load_settings(&app);
+    settings.file_manager = if cmd.trim().is_empty() {
+        None
+    } else {
+        Some(cmd.trim().to_string())
+    };
+    save_settings(&app, &settings)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -515,7 +572,10 @@ pub fn run() {
             list_dir,
             home_dir,
             read_config,
-            write_config
+            write_config,
+            open_in_file_manager,
+            get_file_manager,
+            set_file_manager
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
