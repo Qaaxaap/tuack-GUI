@@ -30,7 +30,7 @@ def download(url: str) -> bytes:
 def main() -> None:
     target = sys.argv[1] if len(sys.argv) > 1 else ""
     if target not in TARGETS:
-        print(f"不支持的目标：{target}（可用：{', '.join(TARGETS)}）", file=sys.stderr)
+        print(f"Unsupported target: {target} (available: {', '.join(TARGETS)})", file=sys.stderr)
         sys.exit(1)
     typst_asset, tuack_asset, exe = TARGETS[target]
 
@@ -64,7 +64,7 @@ def main() -> None:
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 dest.write_bytes(z.read(name))
 
-    print(f"已写入：{bin_dir}")
+    print(f"Done: {bin_dir}")
 
 
 if __name__ == "__main__":
