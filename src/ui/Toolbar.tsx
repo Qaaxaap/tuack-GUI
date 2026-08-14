@@ -1,11 +1,56 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Sparkles, Play, Plus, ChevronDown, FolderOpen } from "lucide-react";
+import CommandPanel from "./CommandPanel";
+import NewProjectModal from "./NewProjectModal";
+import PathPicker from "./PathPicker";
+import type { Command } from "../ipc/types";
 
-const actions = ["生成", "测试", "渲染", "数据", "校验", "导出"];
+interface Props {
+  binaryOk: boolean;
+  binaryStatus: string;
+  hasProject: boolean;
+  selectedDir: string;
+  lastProject: { path: string; name: string } | null;
+  onOpenProject: (path: string) => Promise<void>;
+  onSetTuack: (path: string) => Promise<void>;
+  onRunCommand: (cmd: Command, cwd: string) => void;
+}
 
-export default function Toolbar() {
+export default function Toolbar({
+  binaryOk,
+  binaryStatus,
+  hasProject,
+  selectedDir,
+  lastProject,
+  onOpenProject,
+  onSetTuack,
+  onRunCommand,
+}: Props) {
+  const [showCmd, setShowCmd] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [projMenu, setProjMenu] = useState(false);
+  const [picker, setPicker] = useState<"open" | "tuack" | null>(null);
+  const projMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (projMenuRef.current && !projMenuRef.current.contains(e.target as Node)) {
+        setProjMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  async function openLast() {
+    if (!lastProject) return;
+    setProjMenu(false);
+    await onOpenProject(lastProject.path).catch(() => {});
+  }
+
   return (
     <header
       className="flex h-12 shrink-0 items-center gap-4 px-4"
@@ -18,26 +63,115 @@ export default function Toolbar() {
         </span>
       </div>
 
-      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-        未打开工程
+      <span
+        className="truncate text-xs"
+        title={binaryStatus}
+        style={{ color: binaryOk ? "var(--success)" : "var(--text-muted)" }}
+      >
+        tuack-ng：{binaryOk ? "已检测" : "未检测到"}
       </span>
 
       <div className="ml-auto flex items-center gap-2">
-        {actions.map((a) => (
-          <button
-            key={a}
-            title="后续版本实现"
-            className="rounded px-3 py-1.5 text-xs transition-colors hover:text-white"
-            style={{
-              backgroundColor: "var(--bg-card)",
-              color: "var(--text-muted)",
-              border: "1px solid var(--border)",
-            }}
-          >
-            {a}
+        <button className="btn btn-ghost" onClick={() => setShowNew(true)}>
+          <span className="inline-flex items-center gap-1">
+            <Plus size={13} />
+            新建工程
+          </span>
+        </button>
+
+        <div ref={projMenuRef} className="relative">
+          <button className="btn btn-ghost" onClick={() => setProjMenu(!projMenu)}>
+            <span className="inline-flex items-center gap-1">
+              打开工程
+              <ChevronDown size={12} />
+            </span>
           </button>
-        ))}
+          {projMenu && (
+            <div
+              className="absolute right-0 z-20 mt-1 w-80 overflow-hidden rounded"
+              style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}
+            >
+              <button
+                onClick={() => {
+                  setProjMenu(false);
+                  setPicker("open");
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-white/5"
+                style={{ color: "var(--text)" }}
+              >
+                <FolderOpen size={14} style={{ color: "var(--text-muted)" }} />
+                浏览目录…
+              </button>
+              {lastProject && (
+                <button
+                  onClick={openLast}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-white/5"
+                  style={{ color: "var(--text)" }}
+                  title={lastProject.path}
+                >
+                  <FolderOpen size={14} style={{ color: "var(--accent)" }} />
+                  <span className="shrink-0 font-medium">{lastProject.name}</span>
+                  <span className="truncate" style={{ color: "var(--text-muted)" }}>
+                    {lastProject.path}
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <button className="btn btn-ghost" onClick={() => setPicker("tuack")}>
+          设置 tuack-ng
+        </button>
+        <button className="btn btn-primary" onClick={() => setShowCmd(true)} disabled={!hasProject}>
+          <span className="inline-flex items-center gap-1">
+            <Play size={13} />
+            运行命令
+          </span>
+        </button>
       </div>
+
+      {showCmd && (
+        <CommandPanel
+          defaultCwd={selectedDir}
+          onRun={(cmd, cwd) => {
+            setShowCmd(false);
+            onRunCommand(cmd, cwd);
+          }}
+          onClose={() => setShowCmd(false)}
+        />
+      )}
+      {showNew && (
+        <NewProjectModal
+          onRun={(cmd, cwd) => {
+            setShowNew(false);
+            onRunCommand(cmd, cwd);
+          }}
+          onClose={() => setShowNew(false)}
+        />
+      )}
+      {picker === "open" && (
+        <PathPicker
+          title="选择 contest 目录"
+          directory
+          onSelect={(p) => {
+            setPicker(null);
+            onOpenProject(p).catch(() => {});
+          }}
+          onClose={() => setPicker(null)}
+        />
+      )}
+      {picker === "tuack" && (
+        <PathPicker
+          title="选择 tuack-ng 可执行文件"
+          directory={false}
+          onSelect={(p) => {
+            setPicker(null);
+            onSetTuack(p).catch(() => {});
+          }}
+          onClose={() => setPicker(null)}
+        />
+      )}
     </header>
   );
 }

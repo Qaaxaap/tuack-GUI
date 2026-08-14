@@ -3,44 +3,42 @@
 
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import type { Project } from "../ipc/types";
 
-type BackendState = "connecting" | "ok" | "error";
-
-export default function MainPanel() {
-  const [backend, setBackend] = useState<BackendState>("connecting");
-  const [error, setError] = useState("");
+export default function MainPanel({ project }: { project: Project | null }) {
+  const [pingOk, setPingOk] = useState(false);
 
   useEffect(() => {
     invoke<string>("ping")
-      .then((pong) => setBackend(pong === "pong" ? "ok" : "error"))
-      .catch((e) => {
-        setBackend("error");
-        setError(String(e));
-      });
+      .then((p) => setPingOk(p === "pong"))
+      .catch(() => setPingOk(false));
   }, []);
 
-  const badge =
-    backend === "connecting"
-      ? { color: "var(--text-muted)", text: "连接后端中…" }
-      : backend === "ok"
-        ? { color: "var(--success)", text: "后端已连接" }
-        : { color: "var(--danger)", text: `后端连接失败：${error}` };
-
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-semibold" style={{ color: "var(--text)" }}>
-        Tuack-GUI
-      </h1>
-      <p style={{ color: "var(--text-muted)" }}>美观、跨平台的 Tuack-NG 图形化前端</p>
+    <main className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
+      {project ? (
+        <>
+          <h1 className="text-xl font-semibold" style={{ color: "var(--text)" }}>
+            {project.contest.title || project.contest.name}
+          </h1>
+          <p className="text-xs break-all" style={{ color: "var(--text-muted)" }}>{project.root}</p>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>配置表单将在 M3 实现</p>
+        </>
+      ) : (
+        <>
+          <h1 className="text-2xl font-semibold" style={{ color: "var(--text)" }}>Tuack-GUI</h1>
+          <p style={{ color: "var(--text-muted)" }}>美观、跨平台的 Tuack-NG 图形化前端</p>
+        </>
+      )}
       <span
         className="rounded-full px-3 py-1 text-xs"
         style={{
           backgroundColor: "var(--bg-card)",
-          color: badge.color,
           border: "1px solid var(--border)",
+          color: pingOk ? "var(--success)" : "var(--danger)",
         }}
       >
-        {badge.text}
+        {pingOk ? "后端已连接" : "后端未连接"}
       </span>
     </main>
   );

@@ -4,7 +4,7 @@
 @import "tailwindcss";
 
 :root {
-  /* 配色令牌（暗色） */
+  color-scheme: dark;
   --bg: #161616;
   --bg-raised: #1e1e1e;
   --bg-card: #242424;
@@ -39,6 +39,34 @@ body {
   overflow: hidden;
 }
 
+.btn {
+  border-radius: var(--radius);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  transition: background-color 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.btn-ghost {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -51,4 +79,9 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #444444;
+}
+
+select option {
+  background-color: #1e1e1e;
+  color: #e6e6e6;
 }

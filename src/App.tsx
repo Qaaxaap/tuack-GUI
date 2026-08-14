@@ -1,22 +1,102 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { useEffect, useState } from "react";
 import Toolbar from "./ui/Toolbar";
 import SideBar from "./ui/SideBar";
 import MainPanel from "./ui/MainPanel";
 import OutputDrawer from "./ui/OutputDrawer";
+import {
+  cancelCommand,
+  detectTuack,
+  getLastProject,
+  openProject,
+  runCommand,
+  saveLastProject,
+  setTuackPath,
+} from "./ipc";
+import type { Command, LastProject, ProcessEvent, Project } from "./ipc/types";
 
-function App() {
+export default function App() {
+  const [project, setProject] = useState<Project | null>(null);
+  const [binaryOk, setBinaryOk] = useState(false);
+  const [binaryStatus, setBinaryStatus] = useState("检测中…");
+  const [selectedDir, setSelectedDir] = useState("");
+  const [logs, setLogs] = useState<ProcessEvent[]>([]);
+  const [running, setRunning] = useState(false);
+  const [runId, setRunId] = useState<number | null>(null);
+  const [lastProject, setLastProject] = useState<LastProject | null>(null);
+
+  async function refreshTuack() {
+    try {
+      const b = await detectTuack();
+      setBinaryOk(true);
+      setBinaryStatus(b.exe);
+    } catch (e) {
+      setBinaryOk(false);
+      setBinaryStatus(String(e));
+    }
+  }
+
+  useEffect(() => {
+    refreshTuack();
+    getLastProject()
+      .then((lp) => {
+        if (lp) setLastProject(lp);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function handleOpenProject(path: string) {
+    const p = await openProject(path);
+    setProject(p);
+    setSelectedDir(p.root);
+    const name =
+      p.contest.name || p.contest.title || path.split(/[\\/]/).filter(Boolean).pop() || path;
+    setLastProject({ path, name });
+    saveLastProject(path, name).catch(() => {});
+  }
+
+  async function handleSetTuack(path: string) {
+    await setTuackPath(path);
+    await refreshTuack();
+  }
+
+  function handleRun(cmd: Command, cwd: string) {
+    setLogs([]);
+    setRunning(true);
+    runCommand(cmd, cwd, (e) => {
+      setLogs((prev) => [...prev, e]);
+      if (e.kind === "exited") setRunning(false);
+    })
+      .then(setRunId)
+      .catch((err) => {
+        setLogs((prev) => [...prev, { kind: "stderr", line: String(err) }]);
+        setRunning(false);
+      });
+  }
+
+  function handleCancel() {
+    if (runId != null) cancelCommand(runId);
+  }
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      <Toolbar />
+      <Toolbar
+        binaryOk={binaryOk}
+        binaryStatus={binaryStatus}
+        hasProject={project != null}
+        selectedDir={selectedDir}
+        lastProject={lastProject}
+        onOpenProject={handleOpenProject}
+        onSetTuack={handleSetTuack}
+        onRunCommand={handleRun}
+      />
       <div className="flex min-h-0 flex-1">
-        <SideBar />
-        <MainPanel />
+        <SideBar project={project} selectedDir={selectedDir} onSelect={setSelectedDir} />
+        <MainPanel project={project} />
       </div>
-      <OutputDrawer />
+      <OutputDrawer logs={logs} running={running} onCancel={handleCancel} />
     </div>
   );
 }
-
-export default App;
