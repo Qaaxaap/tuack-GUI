@@ -15,13 +15,13 @@ import {
   saveLastProject,
   setTuackPath,
 } from "./ipc";
-import type { Command, LastProject, ProcessEvent, Project } from "./ipc/types";
+import type { Command, LastProject, NodeKind, ProcessEvent, Project } from "./ipc/types";
 
 export default function App() {
   const [project, setProject] = useState<Project | null>(null);
   const [binaryOk, setBinaryOk] = useState(false);
   const [binaryStatus, setBinaryStatus] = useState("检测中…");
-  const [selectedDir, setSelectedDir] = useState("");
+  const [selected, setSelected] = useState<{ dir: string; kind: NodeKind } | null>(null);
   const [logs, setLogs] = useState<ProcessEvent[]>([]);
   const [running, setRunning] = useState(false);
   const [runId, setRunId] = useState<number | null>(null);
@@ -50,7 +50,7 @@ export default function App() {
   async function handleOpenProject(path: string) {
     const p = await openProject(path);
     setProject(p);
-    setSelectedDir(p.root);
+    setSelected({ dir: p.root, kind: "contest" });
     const name =
       p.contest.name || p.contest.title || path.split(/[\\/]/).filter(Boolean).pop() || path;
     setLastProject({ path, name });
@@ -86,15 +86,15 @@ export default function App() {
         binaryOk={binaryOk}
         binaryStatus={binaryStatus}
         hasProject={project != null}
-        selectedDir={selectedDir}
+        selectedDir={selected?.dir ?? ""}
         lastProject={lastProject}
         onOpenProject={handleOpenProject}
         onSetTuack={handleSetTuack}
         onRunCommand={handleRun}
       />
       <div className="flex min-h-0 flex-1">
-        <SideBar project={project} selectedDir={selectedDir} onSelect={setSelectedDir} />
-        <MainPanel project={project} />
+        <SideBar project={project} selectedDir={selected?.dir ?? ""} onSelect={(dir, kind) => setSelected({ dir, kind })} />
+        <MainPanel project={project} selected={selected} />
       </div>
       <OutputDrawer logs={logs} running={running} onCancel={handleCancel} />
     </div>

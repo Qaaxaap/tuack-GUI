@@ -3,12 +3,12 @@
 
 import { useState } from "react";
 import { ChevronRight, ChevronDown, FileText } from "lucide-react";
-import type { ContestNode, DayNode, ProblemNode, Project } from "../ipc/types";
+import type { ContestNode, DayNode, NodeKind, ProblemNode, Project } from "../ipc/types";
 
 interface Props {
   project: Project | null;
   selectedDir: string;
-  onSelect: (dir: string) => void;
+  onSelect: (dir: string, kind: NodeKind) => void;
 }
 
 export default function SideBar({ project, selectedDir, onSelect }: Props) {
@@ -54,14 +54,14 @@ function ContestItem({
 }: {
   node: ContestNode;
   selectedDir: string;
-  onSelect: (dir: string) => void;
+  onSelect: (dir: string, kind: NodeKind) => void;
 }) {
   const [open, setOpen] = useState(true);
   return (
     <div>
       <button
         onClick={() => {
-          onSelect(node.dir);
+          onSelect(node.dir, "contest");
           setOpen(!open);
         }}
         className="flex w-full items-center gap-1 px-2 py-1 text-left hover:bg-white/5"
@@ -88,14 +88,14 @@ function DayItem({
 }: {
   node: DayNode;
   selectedDir: string;
-  onSelect: (dir: string) => void;
+  onSelect: (dir: string, kind: NodeKind) => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <div>
       <button
         onClick={() => {
-          onSelect(node.dir);
+          onSelect(node.dir, "day");
           setOpen(!open);
         }}
         className="flex w-full items-center gap-1 px-2 py-1 text-left hover:bg-white/5"
@@ -122,11 +122,11 @@ function ProblemItem({
 }: {
   node: ProblemNode;
   selectedDir: string;
-  onSelect: (dir: string) => void;
+  onSelect: (dir: string, kind: NodeKind) => void;
 }) {
   return (
     <div
-      onClick={() => onSelect(node.dir)}
+      onClick={() => onSelect(node.dir, "problem")}
       className="flex cursor-pointer items-center gap-1.5 px-2 py-1 hover:bg-white/5"
       style={rowStyle(selectedDir === node.dir)}
     >

@@ -45,3 +45,11 @@ export function listDir(path: string): Promise<DirListing> {
 export function homeDir(): Promise<string> {
   return invoke<string>("home_dir");
 }
+
+export function readConfig(path: string): Promise<Record<string, unknown>> {
+  return invoke<Record<string, unknown>>("read_config", { path });
+}
+
+export function writeConfig(path: string, value: Record<string, unknown>): Promise<void> {
+  return invoke("write_config", { path, value });
+}

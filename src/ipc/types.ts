@@ -73,3 +73,5 @@ export interface DirListing {
   parent: string;
   entries: DirEntry[];
 }
+
+export type NodeKind = "contest" | "day" | "problem";
