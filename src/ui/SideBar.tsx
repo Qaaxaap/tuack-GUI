@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from "react";
-import { ChevronRight, ChevronDown, FileText } from "lucide-react";
+import { ChevronRight, ChevronDown, FileText, ExternalLink } from "lucide-react";
 import type { ContestNode, DayNode, NodeKind, ProblemNode, Project } from "../ipc/types";
+import { openInFileManager } from "../ipc";
 
 interface Props {
   project: Project | null;
@@ -43,8 +44,24 @@ export default function SideBar({ project, selectedDir, onSelect }: Props) {
 function rowStyle(active: boolean) {
   return {
     backgroundColor: active ? "rgba(99,102,241,0.15)" : "transparent",
-    color: active ? "var(--text)" : "var(--text)",
+    color: "var(--text)",
   };
+}
+
+function OpenFolder({ dir }: { dir: string }) {
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        openInFileManager(dir);
+      }}
+      title="在文件管理器中打开"
+      className="mr-1 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 hover:text-white"
+      style={{ color: "var(--text-muted)" }}
+    >
+      <ExternalLink size={13} />
+    </button>
+  );
 }
 
 function ContestItem({
@@ -59,17 +76,19 @@ function ContestItem({
   const [open, setOpen] = useState(true);
   return (
     <div>
-      <button
-        onClick={() => {
-          onSelect(node.dir, "contest");
-          setOpen(!open);
-        }}
-        className="flex w-full items-center gap-1 px-2 py-1 text-left hover:bg-white/5"
-        style={rowStyle(selectedDir === node.dir)}
-      >
-        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        <span className="truncate text-xs">{node.title || node.name}</span>
-      </button>
+      <div className="group flex items-center hover:bg-white/5" style={rowStyle(selectedDir === node.dir)}>
+        <button
+          onClick={() => {
+            onSelect(node.dir, "contest");
+            setOpen(!open);
+          }}
+          className="flex min-w-0 flex-1 items-center gap-1 px-2 py-1 text-left"
+        >
+          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          <span className="truncate text-xs">{node.title || node.name}</span>
+        </button>
+        <OpenFolder dir={node.dir} />
+      </div>
       {open && (
         <div className="pl-4">
           {node.days.map((d) => (
@@ -93,17 +112,19 @@ function DayItem({
   const [open, setOpen] = useState(false);
   return (
     <div>
-      <button
-        onClick={() => {
-          onSelect(node.dir, "day");
-          setOpen(!open);
-        }}
-        className="flex w-full items-center gap-1 px-2 py-1 text-left hover:bg-white/5"
-        style={rowStyle(selectedDir === node.dir)}
-      >
-        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        <span className="truncate text-xs">{node.title || node.name}</span>
-      </button>
+      <div className="group flex items-center hover:bg-white/5" style={rowStyle(selectedDir === node.dir)}>
+        <button
+          onClick={() => {
+            onSelect(node.dir, "day");
+            setOpen(!open);
+          }}
+          className="flex min-w-0 flex-1 items-center gap-1 px-2 py-1 text-left"
+        >
+          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          <span className="truncate text-xs">{node.title || node.name}</span>
+        </button>
+        <OpenFolder dir={node.dir} />
+      </div>
       {open && (
         <div className="pl-4">
           {node.problems.map((p) => (
@@ -125,13 +146,15 @@ function ProblemItem({
   onSelect: (dir: string, kind: NodeKind) => void;
 }) {
   return (
-    <div
-      onClick={() => onSelect(node.dir, "problem")}
-      className="flex cursor-pointer items-center gap-1.5 px-2 py-1 hover:bg-white/5"
-      style={rowStyle(selectedDir === node.dir)}
-    >
-      <FileText size={13} />
-      <span className="truncate text-xs">{node.title || node.name}</span>
+    <div className="group flex items-center hover:bg-white/5" style={rowStyle(selectedDir === node.dir)}>
+      <button
+        onClick={() => onSelect(node.dir, "problem")}
+        className="flex min-w-0 flex-1 items-center gap-1.5 px-2 py-1 text-left"
+      >
+        <FileText size={13} />
+        <span className="truncate text-xs">{node.title || node.name}</span>
+      </button>
+      <OpenFolder dir={node.dir} />
     </div>
   );
 }

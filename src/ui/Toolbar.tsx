@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Play, Plus, ChevronDown, FolderOpen } from "lucide-react";
+import { Sparkles, Play, Plus, ChevronDown, FolderOpen, Settings } from "lucide-react";
 import CommandPanel from "./CommandPanel";
 import NewProjectModal from "./NewProjectModal";
 import PathPicker from "./PathPicker";
+import { getFileManager, saveFileManager } from "../ipc";
 import type { Command } from "../ipc/types";
 
 interface Props {
@@ -32,13 +33,26 @@ export default function Toolbar({
   const [showCmd, setShowCmd] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [projMenu, setProjMenu] = useState(false);
+  const [settingsMenu, setSettingsMenu] = useState(false);
   const [picker, setPicker] = useState<"open" | "tuack" | null>(null);
+  const [fmPicker, setFmPicker] = useState(false);
+  const [fileManager, setFileManager] = useState<string | null>(null);
   const projMenuRef = useRef<HTMLDivElement>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getFileManager()
+      .then((fm) => setFileManager(fm))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
       if (projMenuRef.current && !projMenuRef.current.contains(e.target as Node)) {
         setProjMenu(false);
+      }
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setSettingsMenu(false);
       }
     }
     document.addEventListener("mousedown", onDown);
@@ -129,6 +143,54 @@ export default function Toolbar({
             运行命令
           </span>
         </button>
+
+        <div ref={settingsRef} className="relative">
+          <button
+            className="btn btn-ghost"
+            onClick={() => setSettingsMenu(!settingsMenu)}
+            title="设置"
+          >
+            <Settings size={14} />
+          </button>
+          {settingsMenu && (
+            <div
+              className="absolute right-0 z-20 mt-1 w-72 overflow-hidden rounded"
+              style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}
+            >
+              <div className="px-3 py-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                文件管理器：{fileManager ?? "自动检测"}
+              </div>
+              <button
+                onClick={() => {
+                  setSettingsMenu(false);
+                  setFmPicker(true);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-white/5"
+                style={{ color: "var(--text)" }}
+              >
+                <Settings size={14} style={{ color: "var(--text-muted)" }} />
+                设置文件管理器…
+              </button>
+              {fileManager && (
+                <button
+                  onClick={() => {
+                    setSettingsMenu(false);
+                    saveFileManager("")
+                      .then(() => setFileManager(null))
+                      .catch(() => {});
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-white/5"
+                  style={{ color: "var(--text)" }}
+                  title={fileManager}
+                >
+                  <span className="truncate" style={{ color: "var(--text-muted)" }}>
+                    恢复自动检测（{fileManager}）
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {showCmd && (
@@ -170,6 +232,19 @@ export default function Toolbar({
             onSetTuack(p).catch(() => {});
           }}
           onClose={() => setPicker(null)}
+        />
+      )}
+      {fmPicker && (
+        <PathPicker
+          title="选择文件管理器可执行文件"
+          directory={false}
+          onSelect={(p) => {
+            setFmPicker(false);
+            saveFileManager(p)
+              .then(() => setFileManager(p))
+              .catch(() => {});
+          }}
+          onClose={() => setFmPicker(false)}
         />
       )}
     </header>
