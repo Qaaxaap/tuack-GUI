@@ -53,3 +53,15 @@ export function readConfig(path: string): Promise<Record<string, unknown>> {
 export function writeConfig(path: string, value: Record<string, unknown>): Promise<void> {
   return invoke("write_config", { path, value });
 }
+
+export function openInFileManager(path: string): Promise<void> {
+  return invoke("open_in_file_manager", { path });
+}
+
+export function getFileManager(): Promise<string | null> {
+  return invoke<string | null>("get_file_manager");
+}
+
+export function saveFileManager(cmd: string): Promise<void> {
+  return invoke("set_file_manager", { cmd });
+}
