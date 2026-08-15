@@ -488,6 +488,12 @@ async fn run_command(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    // Windows：tuack-ng 是控制台程序，不设标志会闪一个黑终端窗口
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
     // 把 sidecar 目录加进 PATH，让 tuack-ng 能找到同捆的 typst
     if let Some(dir) = sidecar_dir() {
         let existing = std::env::var("PATH").unwrap_or_default();
