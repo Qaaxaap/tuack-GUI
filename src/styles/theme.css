@@ -181,8 +181,13 @@ body {
   background: #a0a0a0;
 }
 
-/* CodeMirror 跟随配置的等宽字体（覆盖 @uiw 内置主题写死的 font-family: monospace，
-   其样式运行时注入且优先级为单类选择器，这里用更高优先级压过） */
+/* CodeMirror 跟随配置的等宽字体。@codemirror/view 的基础主题把
+   font-family: monospace 写在 .cm-scroller 上（运行时注入、生成类选择器，
+   优先级高），须用 !important 覆盖；行号区由 .cm-editor 继承。 */
 body .cm-editor {
   font-family: var(--font-mono);
+}
+
+body .cm-scroller {
+  font-family: var(--font-mono) !important;
 }
