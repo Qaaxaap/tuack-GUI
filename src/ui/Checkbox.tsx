@@ -1,7 +1,8 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { Check } from "lucide-react";
+import { Checkbox as ShadcnCheckbox } from "../components/ui/checkbox";
+import { Label } from "../components/ui/label";
 
 interface Props {
   checked: boolean;
@@ -10,24 +11,14 @@ interface Props {
 }
 
 export default function Checkbox({ checked, onChange, label }: Props) {
+  const box = <ShadcnCheckbox checked={checked} onCheckedChange={(v) => onChange(v === true)} />;
+  if (!label) {
+    return box;
+  }
   return (
-    <label className="flex cursor-pointer items-center gap-2 text-sm" style={{ color: "var(--text)" }}>
-      <input
-        type="checkbox"
-        className="hidden"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span
-        className="flex h-4 w-4 items-center justify-center rounded border transition-colors"
-        style={{
-          backgroundColor: checked ? "var(--brand)" : "transparent",
-          borderColor: checked ? "var(--brand)" : "var(--border)",
-        }}
-      >
-        {checked && <Check size={12} strokeWidth={3} style={{ color: "#ffffff" }} />}
-      </span>
+    <Label className="flex cursor-pointer items-center gap-2 text-foreground">
+      {box}
       {label}
-    </label>
+    </Label>
   );
 }
