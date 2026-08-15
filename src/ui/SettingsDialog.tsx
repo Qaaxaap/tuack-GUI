@@ -9,14 +9,13 @@ import { Moon, Sun } from "lucide-react";
 import PathPicker from "./PathPicker";
 import FontSettingsModal from "./FontSettingsModal";
 import Select from "./Select";
-import { getFileManager, getRenDefaults, saveFileManager, setRenGlobal, setRenProject } from "../ipc";
+import { getFileManager, getRenDefaults, saveFileManager, setRenGlobal } from "../ipc";
 import { TEMPLATES } from "../templates";
 import type { AppTheme } from "../theme";
 
 interface Props {
   binaryStatus: string;
   custom: boolean;
-  projectRoot: string;
   onSetTuack: (path: string) => Promise<void>;
   onRestoreDefault: () => void;
   theme: AppTheme;
@@ -43,7 +42,6 @@ function Row({ label, value, children }: { label: string; value?: string; childr
 export default function SettingsDialog({
   binaryStatus,
   custom,
-  projectRoot,
   onSetTuack,
   onRestoreDefault,
   theme,
@@ -55,19 +53,15 @@ export default function SettingsDialog({
   const [tuackPicker, setTuackPicker] = useState(false);
   const [showFonts, setShowFonts] = useState(false);
   const [renGlobal, setRenGlobalState] = useState("");
-  const [renProject, setRenProjectState] = useState("");
 
   useEffect(() => {
     getFileManager()
       .then((fm) => setFileManager(fm))
       .catch(() => {});
-    getRenDefaults(projectRoot)
-      .then((d) => {
-        setRenGlobalState(d.global ?? "");
-        setRenProjectState(d.project ?? "");
-      })
+    getRenDefaults("")
+      .then((d) => setRenGlobalState(d.global ?? ""))
       .catch(() => {});
-  }, [projectRoot]);
+  }, []);
 
   return (
     <Dialog open onOpenChange={(o) => {
@@ -117,27 +111,6 @@ export default function SettingsDialog({
               }}
             />
           </div>
-        </Row>
-
-        <Row
-          label="ren 默认模板（项目）"
-          value={projectRoot ? undefined : "（未打开工程）"}
-        >
-          {projectRoot ? (
-            <div className="w-48">
-              <Select
-                value={renProject}
-                options={[
-                  { value: "", label: "未设置（跟随全局）" },
-                  ...TEMPLATES.map((t) => ({ value: t, label: t })),
-                ]}
-                onChange={(v) => {
-                  setRenProjectState(v);
-                  setRenProject(projectRoot, v).catch(() => {});
-                }}
-              />
-            </div>
-          ) : null}
         </Row>
 
         <Row label="主题">

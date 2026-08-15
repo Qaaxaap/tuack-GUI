@@ -9,9 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { useEffect, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
-import { readConfig, writeConfig } from "../ipc";
+import { readConfig, writeConfig, getRenDefaults, setRenProject } from "../ipc";
 import type { NodeKind } from "../ipc/types";
 import type { AppTheme } from "../theme";
+import { TEMPLATES } from "../templates";
 import Select from "./Select";
 import Checkbox from "./Checkbox";
 import TestDataEditor from "./TestDataEditor";
@@ -72,9 +73,10 @@ interface Props {
 
 export default function ConfigEditor({ path, dir, kind, theme }: Props) {
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
-  const [tab, setTab] = useState<"form" | "json" | "data" | "score">("form");
+  const [tab, setTab] = useState<"form" | "json" | "data" | "score" | "gui">("form");
   const [jsonText, setJsonText] = useState("");
   const [status, setStatus] = useState("");
+  const [renProject, setRenProjectState] = useState("");
 
   useEffect(() => {
     setStatus("");
@@ -84,7 +86,13 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
         setJsonText(JSON.stringify(c, null, 2));
       })
       .catch((e) => setStatus(String(e)));
-  }, [path]);
+    if (kind === "contest") {
+      // 项目级 GUI 配置（存于项目根 .tuack-gui.json）
+      getRenDefaults(dir)
+        .then((d) => setRenProjectState(d.project ?? ""))
+        .catch(() => {});
+    }
+  }, [path, kind, dir]);
 
   function setField(key: string, value: unknown) {
     setConfig((prev) => (prev ? { ...prev, [key]: value } : prev));
@@ -129,6 +137,7 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
           {kind === "problem" && <TabsTrigger value="data">测试点</TabsTrigger>}
           {kind === "problem" && <TabsTrigger value="score">评测结果</TabsTrigger>}
           <TabsTrigger value="json">高级 JSON</TabsTrigger>
+          {kind === "contest" && <TabsTrigger value="gui">GUI 设置</TabsTrigger>}
         </TabsList>
         <span
           className="ml-auto text-xs"
@@ -237,6 +246,29 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
             </Button>
           </div>
         </TabsContent>
+        {kind === "contest" && (
+          <TabsContent value="gui">
+            <div className="flex max-w-md flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <Label>ren 默认模板（项目）</Label>
+                <Select
+                  value={renProject}
+                  options={[
+                    { value: "", label: "未设置（跟随全局，默认 noi）" },
+                    ...TEMPLATES.map((t) => ({ value: t, label: t })),
+                  ]}
+                  onChange={(v) => {
+                    setRenProjectState(v);
+                    setRenProject(dir, v).catch(() => {});
+                  }}
+                />
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  存于项目根目录 .tuack-gui.json；运行命令面板中显式选择模板运行后也会自动写入。
+                </span>
+              </div>
+            </div>
+          </TabsContent>
+        )}
       </div>
     </Tabs>
   );
