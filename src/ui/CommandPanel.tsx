@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import Select from "./Select";
 import type { Command, DataTarget, DmkAction, DumpTarget } from "../ipc/types";
 
-type FieldKind = "text" | "select";
+type FieldKind = "text" | "select" | "object";
 
 interface FieldSpec {
   key: string;
@@ -54,7 +54,7 @@ const COMMANDS: CommandSpec[] = [
     fields: [
       { key: "target", label: "目标", kind: "select", options: ["data", "sample"], labels: ["正式数据", "样例"] },
       { key: "action", label: "操作", kind: "select", options: ["gen", "regen", "reset"], labels: ["生成", "重新生成", "重置"] },
-      { key: "object", label: "对象", kind: "text", placeholder: "all（或 1,2-3）", defaultValue: "all" },
+      { key: "object", label: "对象", kind: "object", placeholder: "如 1,2-3,4-10（留空 = 全部）", defaultValue: "all" },
       { key: "validate", label: "生成后校验", kind: "select", options: ["默认", "是", "否"], defaultValue: "默认" },
     ],
     build: (v) => ({
@@ -69,7 +69,7 @@ const COMMANDS: CommandSpec[] = [
     id: "validate", label: "校验输入（validate）",
     fields: [
       { key: "target", label: "目标", kind: "select", options: ["data", "sample"], labels: ["正式数据", "样例"] },
-      { key: "object", label: "对象", kind: "text", placeholder: "all（或 1,2-3）", defaultValue: "all" },
+      { key: "object", label: "对象", kind: "object", placeholder: "如 1,2-3,4-10（留空 = 全部）", defaultValue: "all" },
     ],
     build: (v) => ({ command: "validate", target: v.target as DataTarget, object: v.object || "all" }),
   },
@@ -161,6 +161,25 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
                 }))}
                 onChange={(v) => setVal(f.key, v)}
               />
+            ) : f.kind === "object" ? (
+              <div className="flex flex-col gap-1">
+                <Select
+                  value={values[f.key] === "all" ? "all" : "__custom__"}
+                  options={[
+                    { value: "all", label: "全部" },
+                    { value: "__custom__", label: "自定义范围…" },
+                  ]}
+                  onChange={(v) => setVal(f.key, v === "all" ? "all" : "")}
+                />
+                {values[f.key] !== "all" && (
+                  <Input
+                    type="text"
+                    value={values[f.key]}
+                    onChange={(e) => setVal(f.key, e.target.value)}
+                    placeholder={f.placeholder}
+                  />
+                )}
+              </div>
             ) : (
               <Input
                 type="text"
