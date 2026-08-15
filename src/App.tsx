@@ -88,6 +88,18 @@ export default function App() {
       setLogs((prev) => [...prev, e]);
       if (e.kind === "exited") {
         setRunning(false);
+        if (e.code === 0 && cmd.command === "gen") {
+          if (cmd.target === "contest" && cmd.names.length > 0) {
+            // 新建比赛成功后直接打开它
+            const root = `${cwd.replace(/[\\/]+$/, "")}/${cmd.names[0]}`;
+            handleOpenProject(root).catch(() => {});
+          } else if (project) {
+            // 场次/题目/数据生成后刷新当前工程树
+            openProject(project.root)
+              .then((p) => setProject(p))
+              .catch(() => {});
+          }
+        }
         if (cmd.command === "ren") {
           const dir = `${cwd}/statements/${cmd.template}`;
           listDir(dir)
