@@ -227,6 +227,7 @@ export default function App() {
         <SettingsDialog
           binaryStatus={binaryStatus}
           custom={binarySource === "External"}
+          projectRoot={project?.root ?? ""}
           onSetTuack={handleSetTuack}
           onRestoreDefault={handleRestoreDefaultTuack}
           theme={theme}

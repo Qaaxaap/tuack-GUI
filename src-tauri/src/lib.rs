@@ -736,8 +736,6 @@ struct Settings {
     theme: Option<String>,
     /// ren 全局默认模板
     ren_template: Option<String>,
-    /// ren 项目级默认模板：工程根目录 → 模板名
-    ren_project_templates: Option<HashMap<String, String>>,
 }
 
 fn settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -1034,6 +1032,29 @@ struct RenDefaults {
     project: Option<String>,
 }
 
+/// 项目级 GUI 配置：存于项目根目录 .tuack-gui.json
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+struct ProjectConfig {
+    ren_template: Option<String>,
+}
+
+fn project_config_path(project_root: &str) -> PathBuf {
+    Path::new(project_root).join(".tuack-gui.json")
+}
+
+fn load_project_config(project_root: &str) -> ProjectConfig {
+    fs::read_to_string(project_config_path(project_root))
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+        .unwrap_or_default()
+}
+
+fn save_project_config(project_root: &str, cfg: &ProjectConfig) -> Result<(), String> {
+    let path = project_config_path(project_root);
+    let text = serde_json::to_string_pretty(cfg).map_err(|e| format!("序列化失败：{e}"))?;
+    fs::write(&path, text).map_err(|e| format!("写入 .tuack-gui.json 失败：{e}"))
+}
+
 #[tauri::command]
 fn get_ren_defaults(app: tauri::AppHandle, project_root: String) -> RenDefaults {
     let s = load_settings(&app);
@@ -1042,9 +1063,7 @@ fn get_ren_defaults(app: tauri::AppHandle, project_root: String) -> RenDefaults 
         project: if project_root.trim().is_empty() {
             None
         } else {
-            s.ren_project_templates
-                .as_ref()
-                .and_then(|m| m.get(project_root.trim()).cloned())
+            load_project_config(project_root.trim()).ren_template
         },
     }
 }
@@ -1058,25 +1077,15 @@ fn set_ren_global(app: tauri::AppHandle, template: String) -> Result<(), String>
 }
 
 #[tauri::command]
-fn set_ren_project(
-    app: tauri::AppHandle,
-    project_root: String,
-    template: String,
-) -> Result<(), String> {
+fn set_ren_project(project_root: String, template: String) -> Result<(), String> {
     let root = project_root.trim().to_string();
     if root.is_empty() {
         return Ok(());
     }
+    let mut cfg = load_project_config(&root);
     let t = template.trim().to_string();
-    let mut s = load_settings(&app);
-    let mut m = s.ren_project_templates.unwrap_or_default();
-    if t.is_empty() {
-        m.remove(&root);
-    } else {
-        m.insert(root, t);
-    }
-    s.ren_project_templates = Some(m);
-    save_settings(&app, &s)
+    cfg.ren_template = if t.is_empty() { None } else { Some(t) };
+    save_project_config(&root, &cfg)
 }
 
 /// 首次启动时，把捆绑的 assets 放到 tuack-ng 能读到的地方
