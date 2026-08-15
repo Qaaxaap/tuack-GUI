@@ -16,6 +16,10 @@ use tauri::Manager;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Child;
 
+/// 窗口图标：深色主题用白描边版、浅色主题用黑描边版
+const ICON_LIGHT: &[u8] = include_bytes!("../icons/icon-light.png");
+const ICON_DARK: &[u8] = include_bytes!("../icons/icon-dark.png");
+
 // ---------- 数据结构 ----------
 
 #[derive(serde::Serialize)]
@@ -760,17 +764,22 @@ fn set_fonts(app: tauri::AppHandle, ui_font: String, mono_font: String) -> Resul
     save_settings(&app, &settings)
 }
 
-/// 让原生标题栏与窗口底色跟随主题（前端负责内容区配色）
+/// 让原生标题栏、窗口底色与窗口图标跟随主题（前端负责内容区配色）
 fn apply_window_theme(app: &tauri::AppHandle, theme: &str) {
     if let Some(win) = app.get_webview_window("main") {
-        let t = if theme == "light" {
+        let light = theme == "light";
+        let t = if light {
             Some(tauri::Theme::Light)
         } else {
             Some(tauri::Theme::Dark)
         };
         let _ = win.set_theme(t);
-        let bg = if theme == "light" { "#ffffff" } else { "#161616" };
+        let bg = if light { "#ffffff" } else { "#161616" };
         let _ = win.set_background_color(bg.parse::<tauri::utils::config::Color>().ok());
+        let icon = if light { ICON_LIGHT } else { ICON_DARK };
+        if let Ok(img) = tauri::image::Image::from_bytes(icon) {
+            let _ = win.set_icon(img);
+        }
     }
 }
 

@@ -12,7 +12,7 @@ import {
 
 import { useEffect, useState } from "react";
 import { Play, Plus, ChevronDown, FolderOpen, Settings, Type, Sun, Moon } from "lucide-react";
-import tuackNgIcon from "../assets/tuack-ng.svg";
+import TuackLogo from "./TuackLogo";
 import CommandPanel from "./CommandPanel";
 import FontSettingsModal from "./FontSettingsModal";
 import NewProjectModal from "./NewProjectModal";
@@ -70,7 +70,7 @@ export default function Toolbar({
       style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
     >
       <div className="flex items-center gap-2">
-        <img src={tuackNgIcon} alt="Tuack-NG" className="h-[18px] w-[18px]" />
+        <TuackLogo size={18} />
         <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
           Tuack-GUI
         </span>
