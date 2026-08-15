@@ -44,8 +44,8 @@ export default function SideBar({ project, selectedDir, onSelect }: Props) {
 
 function rowStyle(active: boolean) {
   return {
-    backgroundColor: active ? "rgba(99,102,241,0.15)" : "transparent",
-    color: "var(--text)",
+    backgroundColor: active ? "var(--accent)" : "transparent",
+    color: active ? "var(--accent-foreground)" : "var(--text)",
   };
 }
 

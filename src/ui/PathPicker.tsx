@@ -94,10 +94,13 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
                   else setSelected(e.path);
                 }}
                 className="flex cursor-pointer items-center gap-2 px-2 py-1 hover:bg-[var(--row-hover)]"
-                style={{ color: selected === e.path ? "var(--brand)" : "var(--text)" }}
+                style={{
+                  color: selected === e.path ? "var(--accent-foreground)" : "var(--text)",
+                  backgroundColor: selected === e.path ? "var(--accent)" : "transparent",
+                }}
               >
                 {e.is_dir ? (
-                  <Folder size={14} style={{ color: "var(--brand)" }} />
+                  <Folder size={14} style={{ color: "var(--text-muted)" }} />
                 ) : (
                   <FileText size={14} style={{ color: "var(--text-muted)" }} />
                 )}
