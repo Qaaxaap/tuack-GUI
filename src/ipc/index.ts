@@ -30,6 +30,10 @@ export function cancelCommand(id: number): Promise<void> {
   return invoke("cancel_command", { id });
 }
 
+export function resizePty(id: number, cols: number, rows: number): Promise<void> {
+  return invoke("resize_pty", { id, cols, rows });
+}
+
 export function getLastProject(): Promise<LastProject | null> {
   return invoke<LastProject | null>("get_last_project");
 }

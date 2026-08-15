@@ -8,11 +8,13 @@ import { ChevronUp, ChevronDown, Square } from "lucide-react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
+import { resizePty } from "../ipc";
 import type { ProcessEvent } from "../ipc/types";
 
 interface Props {
   logs: ProcessEvent[];
   running: boolean;
+  runId: number | null;
   onCancel: () => void;
 }
 
@@ -45,7 +47,7 @@ function buildTheme() {
   };
 }
 
-export default function OutputDrawer({ logs, running, onCancel }: Props) {
+export default function OutputDrawer({ logs, running, runId, onCancel }: Props) {
   const [open, setOpen] = useState(false);
   const isOpen = open || running;
 
@@ -53,6 +55,8 @@ export default function OutputDrawer({ logs, running, onCancel }: Props) {
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const writtenRef = useRef(0);
+  const runIdRef = useRef<number | null>(null);
+  runIdRef.current = runId;
 
   // 创建终端（一次）
   useEffect(() => {
@@ -96,12 +100,18 @@ export default function OutputDrawer({ logs, running, onCancel }: Props) {
     return () => window.removeEventListener("tuack-styles-changed", sync);
   }, []);
 
-  // 面板展开 / 容器尺寸变化时 fit
+  // 面板展开 / 容器尺寸变化 / runId 就绪时 fit，并把真实尺寸回推给 PTY
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     const doFit = () => {
-      if (isOpen) fitRef.current?.fit();
+      if (!isOpen) return;
+      fitRef.current?.fit();
+      const term = termRef.current;
+      const id = runIdRef.current;
+      if (term && id != null) {
+        resizePty(id, term.cols, term.rows).catch(() => {});
+      }
     };
     const t = setTimeout(doFit, 0);
     const ro = new ResizeObserver(doFit);
@@ -110,7 +120,7 @@ export default function OutputDrawer({ logs, running, onCancel }: Props) {
       clearTimeout(t);
       ro.disconnect();
     };
-  }, [isOpen]);
+  }, [isOpen, runId]);
 
   // 增量写入日志（logs 被清空视为新一轮运行，重置终端）
   useEffect(() => {

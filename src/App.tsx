@@ -147,7 +147,7 @@ export default function App() {
         <SideBar project={project} selectedDir={selected?.dir ?? ""} onSelect={(dir, kind) => setSelected({ dir, kind })} />
         <MainPanel project={project} selected={selected} theme={theme} />
       </div>
-      <OutputDrawer logs={logs} running={running} onCancel={handleCancel} />
+      <OutputDrawer logs={logs} running={running} runId={runId} onCancel={handleCancel} />
       {pdfPath && <PdfViewer path={pdfPath} onClose={() => setPdfPath(null)} />}
     </div>
   );

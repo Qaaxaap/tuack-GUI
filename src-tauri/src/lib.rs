@@ -392,9 +392,14 @@ fn open_project(start: String) -> Result<Project, String> {
 
 // ---------- 状态 ----------
 
+struct RunningProcess {
+    child: Box<dyn Child + Send + Sync>,
+    master: Box<dyn portable_pty::MasterPty + Send>,
+}
+
 struct AppState {
     tuack_path: Mutex<Option<PathBuf>>,
-    children: Arc<Mutex<HashMap<u64, Box<dyn Child + Send + Sync>>>>,
+    children: Arc<Mutex<HashMap<u64, RunningProcess>>>,
     next_id: Arc<AtomicU64>,
 }
 
@@ -580,7 +585,13 @@ async fn run_command(
         }
     });
 
-    state.children.lock().unwrap().insert(id, child);
+    state.children.lock().unwrap().insert(
+        id,
+        RunningProcess {
+            child,
+            master: pair.master,
+        },
+    );
 
     // 退出轮询
     let children = state.children.clone();
@@ -590,7 +601,7 @@ async fn run_command(
             let code = {
                 let mut map = children.lock().unwrap();
                 match map.get_mut(&id) {
-                    Some(c) => match c.try_wait() {
+                    Some(r) => match r.child.try_wait() {
                         Ok(Some(status)) => {
                             map.remove(&id);
                             Some(status.exit_code() as i32)
@@ -617,8 +628,25 @@ async fn run_command(
 
 #[tauri::command]
 fn cancel_command(id: u64, state: tauri::State<AppState>) -> Result<(), String> {
-    if let Some(child) = state.children.lock().unwrap().get_mut(&id) {
-        let _ = child.kill();
+    if let Some(r) = state.children.lock().unwrap().get_mut(&id) {
+        let _ = r.child.kill();
+    }
+    Ok(())
+}
+
+/// 前端 xterm fit 后回推实际列/行，让子进程按真实宽度绘制进度条
+#[tauri::command]
+fn resize_pty(id: u64, cols: u16, rows: u16, state: tauri::State<AppState>) -> Result<(), String> {
+    if cols == 0 || rows == 0 {
+        return Ok(());
+    }
+    if let Some(r) = state.children.lock().unwrap().get(&id) {
+        let _ = r.master.resize(PtySize {
+            rows,
+            cols,
+            pixel_width: 0,
+            pixel_height: 0,
+        });
     }
     Ok(())
 }
@@ -933,6 +961,7 @@ pub fn run() {
             detect_tuack,
             run_command,
             cancel_command,
+            resize_pty,
             get_last_project,
             save_last_project,
             list_dir,
