@@ -413,11 +413,34 @@ impl Default for AppState {
     }
 }
 
+/// 探测候选二进制：运行 --version，成功且输出含 "tuack" 才视为有效
+fn probe_tuack(exe: &Path) -> bool {
+    let mut cmd = std::process::Command::new(exe);
+    cmd.arg("--version");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW，探测时避免闪黑窗
+    }
+    match cmd.output() {
+        Ok(o) => {
+            o.status.success()
+                && String::from_utf8_lossy(&o.stdout)
+                    .to_lowercase()
+                    .contains("tuack")
+        }
+        Err(_) => false,
+    }
+}
+
 #[tauri::command]
 fn set_tuack_path(state: tauri::State<AppState>, path: String) -> Result<(), String> {
     let p = PathBuf::from(&path);
     if !p.is_file() {
         return Err("文件不存在".to_string());
+    }
+    if !probe_tuack(&p) {
+        return Err("所选文件不是有效的 tuack-ng 可执行文件".to_string());
     }
     *state.tuack_path.lock().unwrap() = Some(p);
     Ok(())
@@ -471,9 +494,11 @@ fn resolve_tuack(state: &AppState) -> Option<PathBuf> {
 
 #[tauri::command]
 fn detect_tuack(state: tauri::State<AppState>) -> Result<BinaryInfo, String> {
-    resolve_tuack(&state)
-        .map(binary_info)
-        .ok_or_else(|| "未找到 tuack-ng，请点「设置」指定路径".to_string())
+    match resolve_tuack(&state) {
+        Some(p) if probe_tuack(&p) => Ok(binary_info(p)),
+        Some(_) => Err("所选文件不是有效的 tuack-ng 可执行文件".to_string()),
+        None => Err("未找到 tuack-ng，请点「设置」指定路径".to_string()),
+    }
 }
 
 /// 增量 UTF-8 解码：把 data 追加到 pending，完整字符立即输出，结尾不完整的

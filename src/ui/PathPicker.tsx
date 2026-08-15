@@ -101,14 +101,14 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
                 ) : (
                   <FileText size={14} style={{ color: "var(--text-muted)" }} />
                 )}
-                <span className="truncate text-xs">{e.name}</span>
+                <span className="min-w-0 truncate text-xs">{e.name}</span>
               </div>
             ))
           )}
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="truncate text-xs" style={{ color: "var(--text-muted)" }}>
+          <span className="min-w-0 truncate text-xs" style={{ color: "var(--text-muted)" }}>
             {directory ? `将选择：${cwd}` : selected ? selected : "请选择一个文件"}
           </span>
           <div className="flex gap-2">

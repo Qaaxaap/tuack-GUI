@@ -85,7 +85,7 @@ export default function Toolbar({
               <DropdownMenuItem onClick={openLast} title={lastProject.path}>
                 <FolderOpen />
                 <span className="shrink-0 font-medium">{lastProject.name}</span>
-                <span className="truncate text-muted-foreground">{lastProject.path}</span>
+                <span className="min-w-0 truncate text-muted-foreground">{lastProject.path}</span>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

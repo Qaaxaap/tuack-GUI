@@ -89,8 +89,13 @@ export default function App() {
   }
 
   async function handleSetTuack(path: string) {
-    await setTuackPath(path);
-    await refreshTuack();
+    try {
+      await setTuackPath(path);
+      await refreshTuack();
+    } catch (e) {
+      setBinaryOk(false);
+      setBinaryStatus(String(e));
+    }
   }
 
   function handleRun(cmd: Command, cwd: string) {
