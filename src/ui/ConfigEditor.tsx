@@ -137,7 +137,7 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
           {kind === "problem" && <TabsTrigger value="data">测试点</TabsTrigger>}
           {kind === "problem" && <TabsTrigger value="score">评测结果</TabsTrigger>}
           <TabsTrigger value="json">高级 JSON</TabsTrigger>
-          {kind === "contest" && <TabsTrigger value="gui">GUI 设置</TabsTrigger>}
+          {kind === "contest" && <TabsTrigger value="gui">偏好</TabsTrigger>}
         </TabsList>
         <span
           className="ml-auto text-xs"
