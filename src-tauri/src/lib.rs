@@ -757,7 +757,11 @@ fn set_fonts(app: tauri::AppHandle, ui_font: String, mono_font: String) -> Resul
     let mut settings = load_settings(&app);
     let norm = |s: String| {
         let t = s.trim().to_string();
-        if t.is_empty() { None } else { Some(t) }
+        if t.is_empty() {
+            None
+        } else {
+            Some(t)
+        }
     };
     settings.ui_font = norm(ui_font);
     settings.mono_font = norm(mono_font);
