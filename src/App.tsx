@@ -13,6 +13,7 @@ import SettingsDialog from "./ui/SettingsDialog";
 import BinaryMissingDialog from "./ui/BinaryMissingDialog";
 import {
   cancelCommand,
+  clearTuackPath,
   detectTuack,
   getFonts,
   getLastProject,
@@ -26,12 +27,13 @@ import {
 } from "./ipc";
 import { applyFonts } from "./fonts";
 import { applyTheme, normalizeTheme, type AppTheme } from "./theme";
-import type { Command, LastProject, NodeKind, ProcessEvent, Project } from "./ipc/types";
+import type { Command, LastProject, NodeKind, ProcessEvent, Project, Source } from "./ipc/types";
 
 export default function App() {
   const [project, setProject] = useState<Project | null>(null);
   const [binaryOk, setBinaryOk] = useState(false);
   const [binaryStatus, setBinaryStatus] = useState("检测中…");
+  const [binarySource, setBinarySource] = useState<Source>("Bundled");
   const [selected, setSelected] = useState<{ dir: string; kind: NodeKind } | null>(null);
   const [logs, setLogs] = useState<ProcessEvent[]>([]);
   const [running, setRunning] = useState(false);
@@ -53,9 +55,11 @@ export default function App() {
       const b = await detectTuack();
       setBinaryOk(true);
       setBinaryStatus(b.exe);
+      setBinarySource(b.source);
     } catch (e) {
       setBinaryOk(false);
       setBinaryStatus(String(e));
+      setBinarySource("Bundled");
     }
   }
 
@@ -91,6 +95,16 @@ export default function App() {
   async function handleSetTuack(path: string) {
     try {
       await setTuackPath(path);
+      await refreshTuack();
+    } catch (e) {
+      setBinaryOk(false);
+      setBinaryStatus(String(e));
+    }
+  }
+
+  async function handleRestoreDefaultTuack() {
+    try {
+      await clearTuackPath();
       await refreshTuack();
     } catch (e) {
       setBinaryOk(false);
@@ -211,7 +225,9 @@ export default function App() {
       {showSettings && (
         <SettingsDialog
           binaryStatus={binaryStatus}
+          custom={binarySource === "External"}
           onSetTuack={handleSetTuack}
+          onRestoreDefault={handleRestoreDefaultTuack}
           theme={theme}
           onToggleTheme={handleToggleTheme}
           onClose={() => setShowSettings(false)}

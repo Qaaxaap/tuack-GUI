@@ -12,6 +12,10 @@ export function setTuackPath(path: string): Promise<void> {
   return invoke("set_tuack_path", { path });
 }
 
+export function clearTuackPath(): Promise<void> {
+  return invoke("clear_tuack_path");
+}
+
 export function openProject(start: string): Promise<Project> {
   return invoke<Project>("open_project", { start });
 }

@@ -13,7 +13,9 @@ import type { AppTheme } from "../theme";
 
 interface Props {
   binaryStatus: string;
+  custom: boolean;
   onSetTuack: (path: string) => Promise<void>;
+  onRestoreDefault: () => void;
   theme: AppTheme;
   onToggleTheme: () => void;
   onClose: () => void;
@@ -35,7 +37,15 @@ function Row({ label, value, children }: { label: string; value?: string; childr
   );
 }
 
-export default function SettingsDialog({ binaryStatus, onSetTuack, theme, onToggleTheme, onClose }: Props) {
+export default function SettingsDialog({
+  binaryStatus,
+  custom,
+  onSetTuack,
+  onRestoreDefault,
+  theme,
+  onToggleTheme,
+  onClose,
+}: Props) {
   const [fileManager, setFileManager] = useState<string | null>(null);
   const [fmPicker, setFmPicker] = useState(false);
   const [tuackPicker, setTuackPicker] = useState(false);
@@ -56,6 +66,9 @@ export default function SettingsDialog({ binaryStatus, onSetTuack, theme, onTogg
 
         <Row label="tuack-ng" value={binaryStatus}>
           <Button variant="ghost" onClick={() => setTuackPicker(true)}>选择可执行文件…</Button>
+          {custom && (
+            <Button variant="ghost" onClick={onRestoreDefault}>恢复默认</Button>
+          )}
         </Row>
 
         <Row label="文件管理器" value={fileManager ?? "自动检测"}>

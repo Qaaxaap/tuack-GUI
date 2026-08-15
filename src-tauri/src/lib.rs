@@ -446,12 +446,12 @@ fn set_tuack_path(state: tauri::State<AppState>, path: String) -> Result<(), Str
     Ok(())
 }
 
-fn binary_info(exe: PathBuf) -> BinaryInfo {
+fn binary_info(exe: PathBuf, source: Source) -> BinaryInfo {
     let assets = exe.parent().map(|d| d.join("assets")).unwrap_or_default();
     BinaryInfo {
         exe,
         assets,
-        source: Source::External,
+        source,
     }
 }
 
@@ -474,28 +474,34 @@ fn sidecar_dir() -> Option<PathBuf> {
         .map(|p| p.to_path_buf())
 }
 
-fn resolve_tuack(state: &AppState) -> Option<PathBuf> {
+fn resolve_tuack(state: &AppState) -> Option<(PathBuf, Source)> {
     // 1. 用户手动指定
     if let Some(p) = state.tuack_path.lock().unwrap().clone() {
         if p.is_file() {
-            return Some(p);
+            return Some((p, Source::External));
         }
     }
     // 2. 内置 sidecar（与可执行文件同目录）
     if let Some(dir) = sidecar_dir() {
         let exe = dir.join(format!("tuack-ng{}", std::env::consts::EXE_SUFFIX));
         if exe.is_file() {
-            return Some(exe);
+            return Some((exe, Source::Bundled));
         }
     }
     // 3. 系统 PATH
-    find_in_path("tuack-ng")
+    find_in_path("tuack-ng").map(|p| (p, Source::Bundled))
+}
+
+#[tauri::command]
+fn clear_tuack_path(state: tauri::State<AppState>) -> Result<(), String> {
+    *state.tuack_path.lock().unwrap() = None;
+    Ok(())
 }
 
 #[tauri::command]
 fn detect_tuack(state: tauri::State<AppState>) -> Result<BinaryInfo, String> {
     match resolve_tuack(&state) {
-        Some(p) if probe_tuack(&p) => Ok(binary_info(p)),
+        Some((p, source)) if probe_tuack(&p) => Ok(binary_info(p, source)),
         Some(_) => Err("所选文件不是有效的 tuack-ng 可执行文件".to_string()),
         None => Err("未找到 tuack-ng，请点「设置」指定路径".to_string()),
     }
@@ -546,6 +552,7 @@ async fn run_command(
     state: tauri::State<'_, AppState>,
 ) -> Result<u64, String> {
     let exe = resolve_tuack(&state)
+        .map(|(exe, _)| exe)
         .ok_or_else(|| "未找到 tuack-ng，请先「设置 tuack-ng」".to_string())?;
 
     let id = state.next_id.fetch_add(1, Ordering::Relaxed);
@@ -1002,6 +1009,7 @@ pub fn run() {
             ping,
             open_project,
             set_tuack_path,
+            clear_tuack_path,
             detect_tuack,
             run_command,
             cancel_command,
