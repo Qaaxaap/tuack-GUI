@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Button } from "../components/ui/button";
+import { Dialog, DialogContent } from "../components/ui/dialog";
 
 import { useEffect, useState } from "react";
 import Select from "./Select";
@@ -148,8 +149,8 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
-      <div className="w-96 rounded-lg p-4" style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}>
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="w-96 rounded-lg p-4">
         <div className="mb-3 text-sm" style={{ color: "var(--text)" }}>运行命令</div>
 
         <label className="mb-1 block text-xs" style={{ color: "var(--text-muted)" }}>命令</label>
@@ -193,7 +194,7 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
           <Button variant="ghost" onClick={onClose}>取消</Button>
           <Button variant="default" onClick={submit}>运行</Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

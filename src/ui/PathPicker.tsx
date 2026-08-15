@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Button } from "../components/ui/button";
+import { Dialog, DialogContent } from "../components/ui/dialog";
 
 import { useEffect, useState } from "react";
 import { ArrowUp, Folder, FileText, X } from "lucide-react";
@@ -44,14 +45,10 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
   const visible = directory ? entries.filter((e) => e.is_dir) : entries;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
-    >
-      <div
-        className="flex h-[420px] w-[560px] flex-col rounded-lg p-4"
-        style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}
-      >
+    <Dialog open onOpenChange={(o) => {
+      if (!o) onClose();
+    }}>
+      <DialogContent className="flex h-[420px] w-[560px] flex-col rounded-lg p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm" style={{ color: "var(--text)" }}>
             {title}
@@ -127,7 +124,7 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
             </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

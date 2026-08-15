@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Button } from "../components/ui/button";
+import { Dialog, DialogContent } from "../components/ui/dialog";
 
 import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
@@ -55,14 +56,10 @@ export default function PdfViewer({ path, onClose }: Props) {
   }, [path]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-    >
-      <div
-        className="flex h-[90vh] w-[72vw] flex-col rounded-lg p-4"
-        style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}
-      >
+    <Dialog open onOpenChange={(o) => {
+      if (!o) onClose();
+    }}>
+      <DialogContent className="flex h-[90vh] w-[72vw] flex-col rounded-lg p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm" style={{ color: "var(--text)" }}>
             PDF 预览
@@ -82,7 +79,7 @@ export default function PdfViewer({ path, onClose }: Props) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
