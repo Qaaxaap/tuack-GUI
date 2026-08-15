@@ -20,15 +20,15 @@ export default function OutputDrawer({ logs, running, onCancel }: Props) {
 
   return (
     <section className="shrink-0" style={{ borderTop: "1px solid var(--border)" }}>
-      <button
+      <Button
+        variant="ghost"
         onClick={() => setOpen(!open)}
-        className="flex h-8 w-full items-center gap-2 px-4 text-xs"
-        style={{ backgroundColor: "var(--bg-raised)", color: "var(--text-muted)" }}
+        className="h-8 w-full justify-start gap-2 rounded-none bg-card px-4 text-xs font-normal text-muted-foreground"
       >
         <span>输出</span>
         {running && <span style={{ color: "var(--brand)" }}>运行中…</span>}
         {isOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-      </button>
+      </Button>
       {isOpen && (
         <div className="flex h-48 flex-col">
           <div

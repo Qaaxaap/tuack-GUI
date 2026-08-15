@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { ChevronRight, ChevronDown, FileText, ExternalLink } from "lucide-react";
+import { Button } from "../components/ui/button";
 import type { ContestNode, DayNode, NodeKind, ProblemNode, Project } from "../ipc/types";
 import { openInFileManager } from "../ipc";
 
@@ -50,17 +51,18 @@ function rowStyle(active: boolean) {
 
 function OpenFolder({ dir }: { dir: string }) {
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={(e) => {
         e.stopPropagation();
         openInFileManager(dir);
       }}
       title="在文件管理器中打开"
-      className="mr-1 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 hover:text-white"
-      style={{ color: "var(--text-muted)" }}
+      className="mr-1 h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 [&_svg]:size-[13px]"
     >
       <ExternalLink size={13} />
-    </button>
+    </Button>
   );
 }
 
@@ -77,16 +79,17 @@ function ContestItem({
   return (
     <div>
       <div className="group flex items-center hover:bg-white/5" style={rowStyle(selectedDir === node.dir)}>
-        <button
+        <Button
+          variant="ghost"
           onClick={() => {
             onSelect(node.dir, "contest");
             setOpen(!open);
           }}
-          className="flex min-w-0 flex-1 items-center gap-1 px-2 py-1 text-left"
+          className="h-6 min-w-0 flex-1 justify-start gap-1 rounded-none px-2 py-1 text-left text-xs font-normal [&_svg]:size-[14px]"
         >
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <span className="truncate text-xs">{node.title || node.name}</span>
-        </button>
+          <span className="truncate">{node.title || node.name}</span>
+        </Button>
         <OpenFolder dir={node.dir} />
       </div>
       {open && (
@@ -113,16 +116,17 @@ function DayItem({
   return (
     <div>
       <div className="group flex items-center hover:bg-white/5" style={rowStyle(selectedDir === node.dir)}>
-        <button
+        <Button
+          variant="ghost"
           onClick={() => {
             onSelect(node.dir, "day");
             setOpen(!open);
           }}
-          className="flex min-w-0 flex-1 items-center gap-1 px-2 py-1 text-left"
+          className="h-6 min-w-0 flex-1 justify-start gap-1 rounded-none px-2 py-1 text-left text-xs font-normal [&_svg]:size-[14px]"
         >
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <span className="truncate text-xs">{node.title || node.name}</span>
-        </button>
+          <span className="truncate">{node.title || node.name}</span>
+        </Button>
         <OpenFolder dir={node.dir} />
       </div>
       {open && (
@@ -147,13 +151,14 @@ function ProblemItem({
 }) {
   return (
     <div className="group flex items-center hover:bg-white/5" style={rowStyle(selectedDir === node.dir)}>
-      <button
+      <Button
+        variant="ghost"
         onClick={() => onSelect(node.dir, "problem")}
-        className="flex min-w-0 flex-1 items-center gap-1.5 px-2 py-1 text-left"
+        className="h-6 min-w-0 flex-1 justify-start gap-1.5 rounded-none px-2 py-1 text-left text-xs font-normal [&_svg]:size-[13px]"
       >
         <FileText size={13} />
-        <span className="truncate text-xs">{node.title || node.name}</span>
-      </button>
+        <span className="truncate">{node.title || node.name}</span>
+      </Button>
       <OpenFolder dir={node.dir} />
     </div>
   );

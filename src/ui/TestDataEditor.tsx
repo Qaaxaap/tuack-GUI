@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 import { useState } from "react";
 import { Plus, Trash2, Combine, Split } from "lucide-react";
@@ -141,9 +142,6 @@ export default function TestDataEditor({ value, onChange }: Props) {
     commit(rows.map((r, i) => ({ ...r, score: base + (i === n - 1 ? rem : 0) } as DataRow)));
   }
 
-  const inputCls = "w-full rounded px-1.5 py-1 text-xs";
-  const inputStyle = { backgroundColor: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" };
-
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
@@ -194,16 +192,16 @@ export default function TestDataEditor({ value, onChange }: Props) {
                   {r.kind === "single" ? r.id : `${r.ids[0]}–${r.ids[r.ids.length - 1]}`}
                 </td>
                 <td className="p-1">
-                  <input type="number" className={inputCls} style={inputStyle} value={r.score}
+                  <Input type="number" className="h-6 px-1.5 text-xs" value={r.score}
                     onChange={(e) => updateRow(i, { score: Number(e.target.value) })} />
                 </td>
                 <td className="p-1">
-                  <input type="number" className={inputCls} style={inputStyle} value={r.subtask}
+                  <Input type="number" className="h-6 px-1.5 text-xs" value={r.subtask}
                     onChange={(e) => updateRow(i, { subtask: Number(e.target.value) })} />
                 </td>
                 <td className="p-1">
                   {r.kind === "single" ? (
-                    <input type="text" className={inputCls} style={inputStyle} value={r.input}
+                    <Input type="text" className="h-6 px-1.5 text-xs" value={r.input}
                       onChange={(e) => updateRow(i, { input: e.target.value })} />
                   ) : (
                     <span style={{ color: "var(--text-muted)" }}>—</span>
@@ -211,7 +209,7 @@ export default function TestDataEditor({ value, onChange }: Props) {
                 </td>
                 <td className="p-1">
                   {r.kind === "single" ? (
-                    <input type="text" className={inputCls} style={inputStyle} value={r.output}
+                    <Input type="text" className="h-6 px-1.5 text-xs" value={r.output}
                       onChange={(e) => updateRow(i, { output: e.target.value })} />
                   ) : (
                     <span style={{ color: "var(--text-muted)" }}>—</span>
@@ -226,9 +224,9 @@ export default function TestDataEditor({ value, onChange }: Props) {
                 </td>
                 <td className="p-1 text-center">
                   {r.kind === "bundle" && (
-                    <button onClick={() => splitRow(i)} title="拆分为单个测试点" style={{ color: "var(--text-muted)" }}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => splitRow(i)} title="拆分为单个测试点">
                       <Split size={13} />
-                    </button>
+                    </Button>
                   )}
                 </td>
               </tr>

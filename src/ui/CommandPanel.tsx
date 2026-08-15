@@ -3,6 +3,8 @@
 
 import { Button } from "../components/ui/button";
 import { Dialog, DialogContent } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 import { useEffect, useState } from "react";
 import Select from "./Select";
@@ -153,7 +155,7 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
       <DialogContent className="w-96 rounded-lg p-4">
         <div className="mb-3 text-sm" style={{ color: "var(--text)" }}>运行命令</div>
 
-        <label className="mb-1 block text-xs" style={{ color: "var(--text-muted)" }}>命令</label>
+        <Label className="mb-1 block">命令</Label>
         <Select
           value={cmdId}
           options={COMMANDS.map((c) => ({ value: c.id, label: c.label }))}
@@ -162,7 +164,7 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
 
         {spec.fields.map((f) => (
           <div key={f.key} className="mb-2">
-            <label className="mb-1 block text-xs" style={{ color: "var(--text-muted)" }}>{f.label}</label>
+            <Label className="mb-1 block">{f.label}</Label>
             {f.kind === "select" ? (
               <Select
                 value={values[f.key] ?? f.options?.[0] ?? ""}
@@ -170,24 +172,21 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
                 onChange={(v) => setVal(f.key, v)}
               />
             ) : (
-              <input
+              <Input
                 type="text"
                 value={values[f.key] ?? ""}
                 onChange={(e) => setVal(f.key, e.target.value)}
                 placeholder={f.placeholder}
-                className="w-full rounded px-2 py-1.5 text-sm"
-                style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}
               />
             )}
           </div>
         ))}
 
-        <label className="mb-1 block text-xs" style={{ color: "var(--text-muted)" }}>工作目录（cwd）</label>
-        <input
+        <Label className="mb-1 block">工作目录（cwd）</Label>
+        <Input
           value={cwd}
           onChange={(e) => setCwd(e.currentTarget.value)}
-          className="mb-3 w-full rounded px-2 py-1.5 text-sm"
-          style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}
+          className="mb-3"
         />
 
         <div className="flex justify-end gap-2">

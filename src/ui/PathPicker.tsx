@@ -3,6 +3,7 @@
 
 import { Button } from "../components/ui/button";
 import { Dialog, DialogContent } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
 
 import { useEffect, useState } from "react";
 import { ArrowUp, Folder, FileText, X } from "lucide-react";
@@ -53,23 +54,22 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
           <span className="text-sm" style={{ color: "var(--text)" }}>
             {title}
           </span>
-          <button onClick={onClose} style={{ color: "var(--text-muted)" }}>
+          <Button variant="ghost" size="icon" onClick={onClose} title="关闭">
             <X size={16} />
-          </button>
+          </Button>
         </div>
 
         <div className="mb-2 flex gap-2">
           <Button variant="ghost" onClick={() => load(parent)} disabled={!parent || parent === cwd}>
             <ArrowUp size={14} />
           </Button>
-          <input
+          <Input
             value={cwd}
             onChange={(e) => setCwd(e.currentTarget.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") load(cwd);
             }}
-            className="flex-1 rounded px-2 py-1 text-xs"
-            style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}
+            className="h-8 flex-1 text-xs"
           />
           <Button variant="ghost" onClick={() => load(cwd)}>
             跳转

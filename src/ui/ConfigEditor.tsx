@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
 import { useEffect, useState } from "react";
@@ -156,9 +158,7 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
                 }
                 return (
                   <div key={f.key} className="flex flex-col gap-1">
-                    <label className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      {f.label}
-                    </label>
+                    <Label>{f.label}</Label>
                     {f.type === "enum" ? (
                       <Select
                         value={String(raw ?? "")}
@@ -166,18 +166,16 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
                         onChange={(v) => setField(f.key, v)}
                       />
                     ) : f.type === "number" ? (
-                      <input
+                      <Input
                         type="number"
                         step="any"
                         value={raw === null || raw === undefined ? "" : Number(raw)}
                         onChange={(e) =>
                           setField(f.key, e.target.value === "" ? null : Number(e.target.value))
                         }
-                        className="w-full rounded px-2 py-1.5 text-sm"
-                        style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}
                       />
                     ) : f.type === "json" ? (
-                      <input
+                      <Input
                         type="text"
                         value={toDisplay(raw)}
                         onChange={(e) => {
@@ -188,16 +186,12 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
                             setField(f.key, t);
                           }
                         }}
-                        className="w-full rounded px-2 py-1.5 text-sm"
-                        style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}
                       />
                     ) : (
-                      <input
+                      <Input
                         type="text"
                         value={raw === null || raw === undefined ? "" : String(raw)}
                         onChange={(e) => setField(f.key, e.target.value)}
-                        className="w-full rounded px-2 py-1.5 text-sm"
-                        style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}
                       />
                     )}
                   </div>
