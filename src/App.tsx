@@ -7,6 +7,8 @@ import SideBar from "./ui/SideBar";
 import MainPanel from "./ui/MainPanel";
 import OutputDrawer from "./ui/OutputDrawer";
 import PdfViewer from "./ui/PdfViewer";
+import AddNodeModal from "./ui/AddNodeModal";
+import RemoveConfirmModal from "./ui/RemoveConfirmModal";
 import {
   cancelCommand,
   detectTuack,
@@ -35,6 +37,12 @@ export default function App() {
   const [lastProject, setLastProject] = useState<LastProject | null>(null);
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [theme, setThemeState] = useState<AppTheme>("dark");
+  const [addNode, setAddNode] = useState<{ target: "day" | "problem"; cwd: string } | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<{
+    kind: "day" | "problem";
+    name: string;
+    parentDir: string;
+  } | null>(null);
 
   async function refreshTuack() {
     try {
@@ -144,11 +152,43 @@ export default function App() {
         onRunCommand={handleRun}
       />
       <div className="flex min-h-0 flex-1">
-        <SideBar project={project} selectedDir={selected?.dir ?? ""} onSelect={(dir, kind) => setSelected({ dir, kind })} />
+        <SideBar
+          project={project}
+          selectedDir={selected?.dir ?? ""}
+          onSelect={(dir, kind) => setSelected({ dir, kind })}
+          onAdd={(cwd, target) => setAddNode({ target, cwd })}
+          onRemove={(parentDir, name, kind) => setRemoveTarget({ parentDir, name, kind })}
+        />
         <MainPanel project={project} selected={selected} theme={theme} />
       </div>
       <OutputDrawer logs={logs} running={running} runId={runId} onCancel={handleCancel} />
       {pdfPath && <PdfViewer path={pdfPath} onClose={() => setPdfPath(null)} />}
+      {addNode && (
+        <AddNodeModal
+          title={addNode.target === "day" ? "新建场次" : "新建题目"}
+          label={addNode.target === "day" ? "场次名（可多个，空格分隔）" : "题目名（可多个，空格分隔）"}
+          placeholder={addNode.target === "day" ? "如 day1 day2" : "如 prob1 prob2"}
+          target={addNode.target}
+          cwd={addNode.cwd}
+          onRun={handleRun}
+          onClose={() => setAddNode(null)}
+        />
+      )}
+      {removeTarget && (
+        <RemoveConfirmModal
+          kind={removeTarget.kind}
+          name={removeTarget.name}
+          parentDir={removeTarget.parentDir}
+          onRemoved={() => {
+            if (project) {
+              openProject(project.root)
+                .then((p) => setProject(p))
+                .catch(() => {});
+            }
+          }}
+          onClose={() => setRemoveTarget(null)}
+        />
+      )}
     </div>
   );
 }

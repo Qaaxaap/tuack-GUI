@@ -58,6 +58,10 @@ export function writeConfig(path: string, value: Record<string, unknown>): Promi
   return invoke("write_config", { path, value });
 }
 
+export function removeNode(parentDir: string, name: string): Promise<void> {
+  return invoke("remove_node", { parentDir, name });
+}
+
 export function openInFileManager(path: string): Promise<void> {
   return invoke("open_in_file_manager", { path });
 }

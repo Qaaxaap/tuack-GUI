@@ -33,21 +33,6 @@ function splitNames(s: string): string[] {
 }
 
 const COMMANDS: CommandSpec[] = [
-  {
-    id: "gen-contest", label: "生成比赛（gen contest）",
-    fields: [{ key: "names", label: "比赛名", kind: "text", placeholder: "如 noip2026" }],
-    build: (v) => ({ command: "gen", target: "contest", names: splitNames(v.names), confirm: false }),
-  },
-  {
-    id: "gen-day", label: "生成场次（gen day）",
-    fields: [{ key: "names", label: "场次名", kind: "text", placeholder: "如 day1 day2（可多个）" }],
-    build: (v) => ({ command: "gen", target: "day", names: splitNames(v.names), confirm: false }),
-  },
-  {
-    id: "gen-problem", label: "生成题目（gen problem）",
-    fields: [{ key: "names", label: "题目名", kind: "text", placeholder: "如 prob1 prob2（可多个）" }],
-    build: (v) => ({ command: "gen", target: "problem", names: splitNames(v.names), confirm: false }),
-  },
   { id: "gen-data", label: "生成数据（gen data）", fields: [], build: () => ({ command: "gen", target: "data", names: [], confirm: true }) },
   { id: "gen-samples", label: "生成样例（gen samples）", fields: [], build: () => ({ command: "gen", target: "samples", names: [], confirm: true }) },
   { id: "gen-all", label: "生成全部（gen all）", fields: [], build: () => ({ command: "gen", target: "all", names: [], confirm: true }) },

@@ -634,7 +634,26 @@ fn cancel_command(id: u64, state: tauri::State<AppState>) -> Result<(), String> 
     Ok(())
 }
 
-/// 前端 xterm fit 后回推实际列/行，让子进程按真实宽度绘制进度条
+/// 从父级 conf.json 的 subdir 中移除条目（不删除磁盘上的文件夹，避免误操作）
+#[tauri::command]
+fn remove_node(parent_dir: String, name: String) -> Result<(), String> {
+    let conf_path = Path::new(&parent_dir).join("conf.json");
+    let text = fs::read_to_string(&conf_path).map_err(|e| format!("读取 conf.json 失败：{e}"))?;
+    let mut value: serde_json::Value =
+        serde_json::from_str(&text).map_err(|e| format!("解析 conf.json 失败：{e}"))?;
+    let arr = value
+        .get_mut("subdir")
+        .and_then(|v| v.as_array_mut())
+        .ok_or_else(|| "conf.json 中没有 subdir 字段".to_string())?;
+    let before = arr.len();
+    arr.retain(|v| v.as_str() != Some(name.as_str()));
+    if arr.len() == before {
+        return Err(format!("subdir 中不存在条目「{name}」"));
+    }
+    let pretty = serde_json::to_string_pretty(&value).map_err(|e| format!("序列化失败：{e}"))?;
+    fs::write(&conf_path, pretty).map_err(|e| format!("写入 conf.json 失败：{e}"))
+}
+
 #[tauri::command]
 fn resize_pty(id: u64, cols: u16, rows: u16, state: tauri::State<AppState>) -> Result<(), String> {
     if cols == 0 || rows == 0 {
@@ -968,6 +987,7 @@ pub fn run() {
             home_dir,
             read_config,
             write_config,
+            remove_node,
             open_in_file_manager,
             get_file_manager,
             set_file_manager,

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useState } from "react";
-import { ChevronRight, ChevronDown, FileText, ExternalLink } from "lucide-react";
+import { ChevronRight, ChevronDown, FileText, ExternalLink, Plus, Minus } from "lucide-react";
 import { Button } from "../components/ui/button";
 import type { ContestNode, DayNode, NodeKind, ProblemNode, Project } from "../ipc/types";
 import { openInFileManager } from "../ipc";
@@ -11,9 +11,11 @@ interface Props {
   project: Project | null;
   selectedDir: string;
   onSelect: (dir: string, kind: NodeKind) => void;
+  onAdd: (cwd: string, target: "day" | "problem") => void;
+  onRemove: (parentDir: string, name: string, kind: "day" | "problem") => void;
 }
 
-export default function SideBar({ project, selectedDir, onSelect }: Props) {
+export default function SideBar({ project, selectedDir, onSelect, onAdd, onRemove }: Props) {
   return (
     <aside
       className="flex w-64 shrink-0 flex-col"
@@ -27,7 +29,13 @@ export default function SideBar({ project, selectedDir, onSelect }: Props) {
       </div>
       {project ? (
         <div className="flex-1 overflow-auto py-1">
-          <ContestItem node={project.contest} selectedDir={selectedDir} onSelect={onSelect} />
+          <ContestItem
+            node={project.contest}
+            selectedDir={selectedDir}
+            onSelect={onSelect}
+            onAdd={onAdd}
+            onRemove={onRemove}
+          />
         </div>
       ) : (
         <div
@@ -49,32 +57,48 @@ function rowStyle(active: boolean) {
   };
 }
 
-function OpenFolder({ dir }: { dir: string }) {
+/** 行尾悬浮显示的图标按钮（+ / − / 文件管理器） */
+function RowIcon({
+  title,
+  onClick,
+  children,
+}: {
+  title: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <Button
       variant="ghost"
       size="icon"
       onClick={(e) => {
         e.stopPropagation();
-        openInFileManager(dir);
+        onClick();
       }}
-      title="在文件管理器中打开"
+      title={title}
       className="mr-1 h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 [&_svg]:size-[13px]"
     >
-      <ExternalLink size={13} />
+      {children}
     </Button>
   );
 }
 
-function ContestItem({
-  node,
-  selectedDir,
-  onSelect,
-}: {
-  node: ContestNode;
+function OpenFolder({ dir }: { dir: string }) {
+  return (
+    <RowIcon title="在文件管理器中打开" onClick={() => openInFileManager(dir)}>
+      <ExternalLink size={13} />
+    </RowIcon>
+  );
+}
+
+interface ItemHandlers {
   selectedDir: string;
   onSelect: (dir: string, kind: NodeKind) => void;
-}) {
+  onAdd: (cwd: string, target: "day" | "problem") => void;
+  onRemove: (parentDir: string, name: string, kind: "day" | "problem") => void;
+}
+
+function ContestItem({ node, selectedDir, onSelect, onAdd, onRemove }: { node: ContestNode } & ItemHandlers) {
   const [open, setOpen] = useState(true);
   return (
     <div>
@@ -90,12 +114,23 @@ function ContestItem({
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           <span className="truncate">{node.title || node.name}</span>
         </Button>
+        <RowIcon title="新建场次" onClick={() => onAdd(node.dir, "day")}>
+          <Plus size={13} />
+        </RowIcon>
         <OpenFolder dir={node.dir} />
       </div>
       {open && (
         <div className="pl-4">
           {node.days.map((d) => (
-            <DayItem key={d.dir} node={d} selectedDir={selectedDir} onSelect={onSelect} />
+            <DayItem
+              key={d.dir}
+              node={d}
+              parentDir={node.dir}
+              selectedDir={selectedDir}
+              onSelect={onSelect}
+              onAdd={onAdd}
+              onRemove={onRemove}
+            />
           ))}
         </div>
       )}
@@ -105,13 +140,12 @@ function ContestItem({
 
 function DayItem({
   node,
+  parentDir,
   selectedDir,
   onSelect,
-}: {
-  node: DayNode;
-  selectedDir: string;
-  onSelect: (dir: string, kind: NodeKind) => void;
-}) {
+  onAdd,
+  onRemove,
+}: { node: DayNode; parentDir: string } & ItemHandlers) {
   const [open, setOpen] = useState(false);
   return (
     <div>
@@ -127,12 +161,25 @@ function DayItem({
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           <span className="truncate">{node.title || node.name}</span>
         </Button>
+        <RowIcon title="新建题目" onClick={() => onAdd(node.dir, "problem")}>
+          <Plus size={13} />
+        </RowIcon>
+        <RowIcon title="删除场次（仅从配置移除）" onClick={() => onRemove(parentDir, node.name, "day")}>
+          <Minus size={13} />
+        </RowIcon>
         <OpenFolder dir={node.dir} />
       </div>
       {open && (
         <div className="pl-4">
           {node.problems.map((p) => (
-            <ProblemItem key={p.dir} node={p} selectedDir={selectedDir} onSelect={onSelect} />
+            <ProblemItem
+              key={p.dir}
+              node={p}
+              parentDir={node.dir}
+              selectedDir={selectedDir}
+              onSelect={onSelect}
+              onRemove={onRemove}
+            />
           ))}
         </div>
       )}
@@ -142,13 +189,11 @@ function DayItem({
 
 function ProblemItem({
   node,
+  parentDir,
   selectedDir,
   onSelect,
-}: {
-  node: ProblemNode;
-  selectedDir: string;
-  onSelect: (dir: string, kind: NodeKind) => void;
-}) {
+  onRemove,
+}: { node: ProblemNode; parentDir: string } & Omit<ItemHandlers, "onAdd">) {
   return (
     <div className="group flex items-center hover:bg-[var(--row-hover)]" style={rowStyle(selectedDir === node.dir)}>
       <Button
@@ -159,6 +204,9 @@ function ProblemItem({
         <FileText size={13} />
         <span className="truncate">{node.title || node.name}</span>
       </Button>
+      <RowIcon title="删除题目（仅从配置移除）" onClick={() => onRemove(parentDir, node.name, "problem")}>
+        <Minus size={13} />
+      </RowIcon>
       <OpenFolder dir={node.dir} />
     </div>
   );
