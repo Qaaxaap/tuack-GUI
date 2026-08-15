@@ -11,4 +11,5 @@ export function applyFonts(uiFont: string, monoFont: string) {
   const root = document.documentElement;
   root.style.setProperty("--font-ui", uiFont ? `"${uiFont}", ${UI_FALLBACK}` : UI_FALLBACK);
   root.style.setProperty("--font-mono", monoFont ? `"${monoFont}", ${MONO_FALLBACK}` : MONO_FALLBACK);
+  window.dispatchEvent(new CustomEvent("tuack-styles-changed"));
 }

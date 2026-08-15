@@ -6,6 +6,7 @@ export type AppTheme = "dark" | "light";
 /** 把主题应用到 DOM（theme.css 按 `data-theme` 切换令牌），前端内容区配色由它驱动 */
 export function applyTheme(theme: AppTheme) {
   document.documentElement.dataset.theme = theme;
+  window.dispatchEvent(new CustomEvent("tuack-styles-changed"));
 }
 
 export function normalizeTheme(value: string): AppTheme {

@@ -3,9 +3,11 @@
 
 import { Button } from "../components/ui/button";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronUp, ChevronDown, Square } from "lucide-react";
-import { parseAnsi } from "../ansi";
+import { Terminal } from "@xterm/xterm";
+import { FitAddon } from "@xterm/addon-fit";
+import "@xterm/xterm/css/xterm.css";
 import type { ProcessEvent } from "../ipc/types";
 
 interface Props {
@@ -14,9 +16,122 @@ interface Props {
   onCancel: () => void;
 }
 
+function cssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/** 从 CSS 令牌构造 xterm 主题（随深浅色切换） */
+function buildTheme() {
+  return {
+    background: cssVar("--bg"),
+    foreground: cssVar("--text"),
+    cursor: cssVar("--text"),
+    black: cssVar("--ansi-0"),
+    red: cssVar("--ansi-1"),
+    green: cssVar("--ansi-2"),
+    yellow: cssVar("--ansi-3"),
+    blue: cssVar("--ansi-4"),
+    magenta: cssVar("--ansi-5"),
+    cyan: cssVar("--ansi-6"),
+    white: cssVar("--ansi-7"),
+    brightBlack: cssVar("--ansi-bright-0"),
+    brightRed: cssVar("--ansi-bright-1"),
+    brightGreen: cssVar("--ansi-bright-2"),
+    brightYellow: cssVar("--ansi-bright-3"),
+    brightBlue: cssVar("--ansi-bright-4"),
+    brightMagenta: cssVar("--ansi-bright-5"),
+    brightCyan: cssVar("--ansi-bright-6"),
+    brightWhite: cssVar("--ansi-bright-7"),
+  };
+}
+
 export default function OutputDrawer({ logs, running, onCancel }: Props) {
   const [open, setOpen] = useState(false);
   const isOpen = open || running;
+
+  const hostRef = useRef<HTMLDivElement>(null);
+  const termRef = useRef<Terminal | null>(null);
+  const fitRef = useRef<FitAddon | null>(null);
+  const writtenRef = useRef(0);
+
+  // 创建终端（一次）
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host || termRef.current) return;
+    const term = new Terminal({
+      convertEol: false,
+      disableStdin: true,
+      cursorBlink: false,
+      fontSize: 12,
+      fontFamily: cssVar("--font-mono"),
+      theme: buildTheme(),
+      scrollback: 5000,
+    });
+    const fit = new FitAddon();
+    term.loadAddon(fit);
+    term.open(host);
+    termRef.current = term;
+    fitRef.current = fit;
+    return () => {
+      term.dispose();
+      termRef.current = null;
+      fitRef.current = null;
+    };
+  }, []);
+
+  // 主题/字体变化时同步 xterm
+  useEffect(() => {
+    const sync = () => {
+      const term = termRef.current;
+      if (!term) return;
+      term.options.theme = buildTheme();
+      const fam = cssVar("--font-mono");
+      if (fam && fam !== term.options.fontFamily) {
+        term.options.fontFamily = fam;
+      }
+      term.refresh(0, term.rows - 1);
+    };
+    window.addEventListener("tuack-styles-changed", sync);
+    sync();
+    return () => window.removeEventListener("tuack-styles-changed", sync);
+  }, []);
+
+  // 面板展开 / 容器尺寸变化时 fit
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const doFit = () => {
+      if (isOpen) fitRef.current?.fit();
+    };
+    const t = setTimeout(doFit, 0);
+    const ro = new ResizeObserver(doFit);
+    ro.observe(host);
+    return () => {
+      clearTimeout(t);
+      ro.disconnect();
+    };
+  }, [isOpen]);
+
+  // 增量写入日志（logs 被清空视为新一轮运行，重置终端）
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) return;
+    if (logs.length < writtenRef.current) {
+      term.reset();
+      writtenRef.current = 0;
+    }
+    for (let i = writtenRef.current; i < logs.length; i++) {
+      const e = logs[i];
+      if (e.kind === "exited") {
+        term.write(`\x1b[2m—— 进程已退出（code ${e.code ?? "信号"}）——\x1b[0m\r\n`);
+      } else if (e.kind === "stderr") {
+        term.write(`\x1b[31m${e.line}\x1b[0m\r\n`);
+      } else {
+        term.write(`${e.line}\r\n`);
+      }
+    }
+    writtenRef.current = logs.length;
+  }, [logs]);
 
   return (
     <section className="shrink-0" style={{ borderTop: "1px solid var(--border)" }}>
@@ -31,36 +146,16 @@ export default function OutputDrawer({ logs, running, onCancel }: Props) {
       </Button>
       {isOpen && (
         <div className="flex h-48 flex-col">
-          <div
-            className="flex-1 overflow-auto px-3 py-2 text-xs"
-            style={{ backgroundColor: "var(--bg)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}
-          >
-            {logs.length === 0 && <span>暂无输出</span>}
-            {logs.map((e, i) => {
-              if (e.kind === "exited") {
-                return (
-                  <div key={i} style={{ color: "var(--text-muted)" }}>
-                    —— 进程已退出（code {e.code ?? "信号"}）——
-                  </div>
-                );
-              }
-              const baseColor = e.kind === "stderr" ? "var(--danger)" : "var(--text)";
-              return (
-                <div key={i} style={{ color: baseColor }}>
-                  {parseAnsi(e.line).map((seg, j) => (
-                    <span
-                      key={j}
-                      style={{
-                        color: seg.color ?? baseColor,
-                        fontWeight: seg.bold ? 700 : undefined,
-                      }}
-                    >
-                      {seg.text}
-                    </span>
-                  ))}
-                </div>
-              );
-            })}
+          <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "var(--bg)" }}>
+            <div ref={hostRef} className="absolute inset-0" />
+            {logs.length === 0 && (
+              <div
+                className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs"
+                style={{ color: "var(--text-muted)" }}
+              >
+                暂无输出
+              </div>
+            )}
           </div>
           {running && (
             <div className="flex justify-end px-3 py-1">
