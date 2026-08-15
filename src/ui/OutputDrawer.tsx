@@ -1,6 +1,8 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { Button } from "../components/ui/button";
+
 import { useState } from "react";
 import { ChevronUp, ChevronDown, Square } from "lucide-react";
 import { parseAnsi } from "../ansi";
@@ -62,12 +64,12 @@ export default function OutputDrawer({ logs, running, onCancel }: Props) {
           </div>
           {running && (
             <div className="flex justify-end px-3 py-1">
-              <button className="btn btn-ghost" onClick={onCancel}>
+              <Button variant="ghost" onClick={onCancel}>
                 <span className="inline-flex items-center gap-1">
                   <Square size={11} />
                   取消
                 </span>
-              </button>
+              </Button>
             </div>
           )}
         </div>

@@ -1,6 +1,8 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { Button } from "../components/ui/button";
+
 import { useEffect, useState } from "react";
 import { ArrowUp, Folder, FileText, X } from "lucide-react";
 import { homeDir, listDir } from "../ipc";
@@ -60,9 +62,9 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
         </div>
 
         <div className="mb-2 flex gap-2">
-          <button className="btn btn-ghost" onClick={() => load(parent)} disabled={!parent || parent === cwd}>
+          <Button variant="ghost" onClick={() => load(parent)} disabled={!parent || parent === cwd}>
             <ArrowUp size={14} />
-          </button>
+          </Button>
           <input
             value={cwd}
             onChange={(e) => setCwd(e.currentTarget.value)}
@@ -72,9 +74,9 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
             className="flex-1 rounded px-2 py-1 text-xs"
             style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}
           />
-          <button className="btn btn-ghost" onClick={() => load(cwd)}>
+          <Button variant="ghost" onClick={() => load(cwd)}>
             跳转
-          </button>
+          </Button>
         </div>
 
         <div className="mb-2 flex-1 overflow-auto rounded" style={{ border: "1px solid var(--border)" }}>
@@ -113,16 +115,16 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
             {directory ? `将选择：${cwd}` : selected ? selected : "请选择一个文件"}
           </span>
           <div className="flex gap-2">
-            <button className="btn btn-ghost" onClick={onClose}>
+            <Button variant="ghost" onClick={onClose}>
               取消
-            </button>
-            <button
-              className="btn btn-primary"
+            </Button>
+            <Button
+              variant="default"
               onClick={() => (directory ? onSelect(cwd) : selected && onSelect(selected))}
               disabled={!directory && !selected}
             >
               选择
-            </button>
+            </Button>
           </div>
         </div>
       </div>

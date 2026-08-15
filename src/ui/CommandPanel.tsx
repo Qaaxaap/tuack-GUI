@@ -1,6 +1,8 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { Button } from "../components/ui/button";
+
 import { useEffect, useState } from "react";
 import Select from "./Select";
 import type { Command, DataTarget, DmkAction, DumpTarget } from "../ipc/types";
@@ -188,8 +190,8 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
         />
 
         <div className="flex justify-end gap-2">
-          <button className="btn btn-ghost" onClick={onClose}>取消</button>
-          <button className="btn btn-primary" onClick={submit}>运行</button>
+          <Button variant="ghost" onClick={onClose}>取消</Button>
+          <Button variant="default" onClick={submit}>运行</Button>
         </div>
       </div>
     </div>

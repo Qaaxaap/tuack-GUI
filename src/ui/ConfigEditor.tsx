@@ -1,6 +1,8 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { Button } from "../components/ui/button";
+
 import { useEffect, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
@@ -236,9 +238,9 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
                   </div>
                 );
               })}
-              <button className="btn btn-primary self-start" onClick={saveForm}>
+              <Button variant="default" className="self-start" onClick={saveForm}>
                 保存
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -261,9 +263,9 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
                 style={{ fontSize: 12, height: "100%" }}
               />
             </div>
-            <button className="btn btn-primary self-start" onClick={saveJson}>
+            <Button variant="default" className="self-start" onClick={saveJson}>
               保存
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -1,6 +1,8 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { Button } from "../components/ui/button";
+
 import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { readFileBase64 } from "../ipc";
@@ -65,9 +67,9 @@ export default function PdfViewer({ path, onClose }: Props) {
           <span className="text-sm" style={{ color: "var(--text)" }}>
             PDF 预览
           </span>
-          <button className="btn btn-ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose}>
             关闭
-          </button>
+          </Button>
         </div>
         <div
           ref={containerRef}

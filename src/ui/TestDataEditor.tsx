@@ -1,6 +1,8 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { Button } from "../components/ui/button";
+
 import { useState } from "react";
 import { Plus, Trash2, Combine, Split } from "lucide-react";
 import Select from "./Select";
@@ -145,27 +147,27 @@ export default function TestDataEditor({ value, onChange }: Props) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <button className="btn btn-ghost" onClick={addRow}>
+        <Button variant="ghost" onClick={addRow}>
           <span className="inline-flex items-center gap-1">
             <Plus size={13} />
             添加测试点
           </span>
-        </button>
-        <button className="btn btn-ghost" onClick={deleteSelected} disabled={selected.size === 0}>
+        </Button>
+        <Button variant="ghost" onClick={deleteSelected} disabled={selected.size === 0}>
           <span className="inline-flex items-center gap-1">
             <Trash2 size={13} />
             删除选中
           </span>
-        </button>
-        <button className="btn btn-ghost" onClick={mergeSelected} disabled={selected.size < 2}>
+        </Button>
+        <Button variant="ghost" onClick={mergeSelected} disabled={selected.size < 2}>
           <span className="inline-flex items-center gap-1">
             <Combine size={13} />
             合并选中
           </span>
-        </button>
-        <button className="btn btn-ghost" onClick={distribute}>
+        </Button>
+        <Button variant="ghost" onClick={distribute}>
           均分 100 分
-        </button>
+        </Button>
       </div>
 
       <div className="overflow-auto rounded border" style={{ borderColor: "var(--border)" }}>

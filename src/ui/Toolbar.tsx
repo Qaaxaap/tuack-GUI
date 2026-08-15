@@ -1,6 +1,8 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { Button } from "../components/ui/button";
+
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, Play, Plus, ChevronDown, FolderOpen, Settings } from "lucide-react";
 import CommandPanel from "./CommandPanel";
@@ -86,20 +88,20 @@ export default function Toolbar({
       </span>
 
       <div className="ml-auto flex items-center gap-2">
-        <button className="btn btn-ghost" onClick={() => setShowNew(true)}>
+        <Button variant="ghost" onClick={() => setShowNew(true)}>
           <span className="inline-flex items-center gap-1">
             <Plus size={13} />
             新建工程
           </span>
-        </button>
+        </Button>
 
         <div ref={projMenuRef} className="relative">
-          <button className="btn btn-ghost" onClick={() => setProjMenu(!projMenu)}>
+          <Button variant="ghost" onClick={() => setProjMenu(!projMenu)}>
             <span className="inline-flex items-center gap-1">
               打开工程
               <ChevronDown size={12} />
             </span>
-          </button>
+          </Button>
           {projMenu && (
             <div
               className="absolute right-0 z-20 mt-1 w-80 overflow-hidden rounded"
@@ -134,24 +136,24 @@ export default function Toolbar({
           )}
         </div>
 
-        <button className="btn btn-ghost" onClick={() => setPicker("tuack")}>
+        <Button variant="ghost" onClick={() => setPicker("tuack")}>
           设置 tuack-ng
-        </button>
-        <button className="btn btn-primary" onClick={() => setShowCmd(true)} disabled={!hasProject}>
+        </Button>
+        <Button variant="default" onClick={() => setShowCmd(true)} disabled={!hasProject}>
           <span className="inline-flex items-center gap-1">
             <Play size={13} />
             运行命令
           </span>
-        </button>
+        </Button>
 
         <div ref={settingsRef} className="relative">
-          <button
-            className="btn btn-ghost"
+          <Button
+            variant="ghost"
             onClick={() => setSettingsMenu(!settingsMenu)}
             title="设置"
           >
             <Settings size={14} />
-          </button>
+          </Button>
           {settingsMenu && (
             <div
               className="absolute right-0 z-20 mt-1 w-72 overflow-hidden rounded"

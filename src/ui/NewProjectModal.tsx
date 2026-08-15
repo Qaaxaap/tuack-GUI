@@ -1,6 +1,8 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { Button } from "../components/ui/button";
+
 import { useState } from "react";
 import PathPicker from "./PathPicker";
 import type { Command } from "../ipc/types";
@@ -58,18 +60,18 @@ export default function NewProjectModal({ onRun, onClose }: Props) {
             className="flex-1 rounded px-3 py-2 text-sm"
             style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}
           />
-          <button className="btn btn-ghost" onClick={() => setShowPicker(true)}>
+          <Button variant="ghost" onClick={() => setShowPicker(true)}>
             选择
-          </button>
+          </Button>
         </div>
 
         <div className="flex justify-end gap-2">
-          <button className="btn btn-ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose}>
             取消
-          </button>
-          <button className="btn btn-primary" onClick={submit}>
+          </Button>
+          <Button variant="default" onClick={submit}>
             创建
-          </button>
+          </Button>
         </div>
       </div>
 
