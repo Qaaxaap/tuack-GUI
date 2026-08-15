@@ -9,6 +9,8 @@ import OutputDrawer from "./ui/OutputDrawer";
 import PdfViewer from "./ui/PdfViewer";
 import AddNodeModal from "./ui/AddNodeModal";
 import RemoveConfirmModal from "./ui/RemoveConfirmModal";
+import SettingsDialog from "./ui/SettingsDialog";
+import BinaryMissingDialog from "./ui/BinaryMissingDialog";
 import {
   cancelCommand,
   detectTuack,
@@ -43,6 +45,8 @@ export default function App() {
     name: string;
     parentDir: string;
   } | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showMissing, setShowMissing] = useState(false);
 
   async function refreshTuack() {
     try {
@@ -137,18 +141,22 @@ export default function App() {
     setTheme(next).catch(() => {});
   }
 
+  /** 执行命令类操作前的守卫：未检测到 tuack-ng 时弹提示并拦截 */
+  function requireTuack(): boolean {
+    if (binaryOk) return true;
+    setShowMissing(true);
+    return false;
+  }
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <Toolbar
-        binaryOk={binaryOk}
-        binaryStatus={binaryStatus}
         hasProject={project != null}
         selectedDir={selected?.dir ?? ""}
         lastProject={lastProject}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
+        onRequireTuack={requireTuack}
+        onOpenSettings={() => setShowSettings(true)}
         onOpenProject={handleOpenProject}
-        onSetTuack={handleSetTuack}
         onRunCommand={handleRun}
       />
       <div className="flex min-h-0 flex-1">
@@ -156,8 +164,14 @@ export default function App() {
           project={project}
           selectedDir={selected?.dir ?? ""}
           onSelect={(dir, kind) => setSelected({ dir, kind })}
-          onAdd={(cwd, target) => setAddNode({ target, cwd })}
-          onRemove={(parentDir, name, kind) => setRemoveTarget({ parentDir, name, kind })}
+          onAdd={(cwd, target) => {
+            if (!requireTuack()) return;
+            setAddNode({ target, cwd });
+          }}
+          onRemove={(parentDir, name, kind) => {
+            if (!requireTuack()) return;
+            setRemoveTarget({ parentDir, name, kind });
+          }}
         />
         <MainPanel project={project} selected={selected} theme={theme} />
       </div>
@@ -187,6 +201,24 @@ export default function App() {
             }
           }}
           onClose={() => setRemoveTarget(null)}
+        />
+      )}
+      {showSettings && (
+        <SettingsDialog
+          binaryStatus={binaryStatus}
+          onSetTuack={handleSetTuack}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+      {showMissing && (
+        <BinaryMissingDialog
+          onOpenSettings={() => {
+            setShowMissing(false);
+            setShowSettings(true);
+          }}
+          onClose={() => setShowMissing(false)}
         />
       )}
     </div>

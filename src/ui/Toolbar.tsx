@@ -15,38 +15,29 @@ import TuackLogo from "./TuackLogo";
 import CommandPanel from "./CommandPanel";
 import NewProjectModal from "./NewProjectModal";
 import PathPicker from "./PathPicker";
-import SettingsDialog from "./SettingsDialog";
 import type { Command } from "../ipc/types";
-import type { AppTheme } from "../theme";
 
 interface Props {
-  binaryOk: boolean;
-  binaryStatus: string;
   hasProject: boolean;
   selectedDir: string;
   lastProject: { path: string; name: string } | null;
-  theme: AppTheme;
-  onToggleTheme: () => void;
+  onRequireTuack: () => boolean;
+  onOpenSettings: () => void;
   onOpenProject: (path: string) => Promise<void>;
-  onSetTuack: (path: string) => Promise<void>;
   onRunCommand: (cmd: Command, cwd: string) => void;
 }
 
 export default function Toolbar({
-  binaryOk,
-  binaryStatus,
   hasProject,
   selectedDir,
   lastProject,
-  theme,
-  onToggleTheme,
+  onRequireTuack,
+  onOpenSettings,
   onOpenProject,
-  onSetTuack,
   onRunCommand,
 }: Props) {
   const [showCmd, setShowCmd] = useState(false);
   const [showNew, setShowNew] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [openPicker, setOpenPicker] = useState(false);
 
   async function openLast() {
@@ -66,16 +57,14 @@ export default function Toolbar({
         </span>
       </div>
 
-      <span
-        className="truncate text-xs"
-        title={binaryStatus}
-        style={{ color: binaryOk ? "var(--success)" : "var(--text-muted)" }}
-      >
-        tuack-ng：{binaryOk ? "已检测" : "未检测到"}
-      </span>
-
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" onClick={() => setShowNew(true)}>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            if (!onRequireTuack()) return;
+            setShowNew(true);
+          }}
+        >
           <Plus />
           新建工程
         </Button>
@@ -102,12 +91,19 @@ export default function Toolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="default" onClick={() => setShowCmd(true)} disabled={!hasProject}>
+        <Button
+          variant="default"
+          onClick={() => {
+            if (!onRequireTuack()) return;
+            setShowCmd(true);
+          }}
+          disabled={!hasProject}
+        >
           <Play />
           运行命令
         </Button>
 
-        <Button variant="ghost" size="icon" title="设置" onClick={() => setShowSettings(true)}>
+        <Button variant="ghost" size="icon" title="设置" onClick={onOpenSettings}>
           <Settings />
         </Button>
       </div>
@@ -140,15 +136,6 @@ export default function Toolbar({
             onOpenProject(p).catch(() => {});
           }}
           onClose={() => setOpenPicker(false)}
-        />
-      )}
-      {showSettings && (
-        <SettingsDialog
-          binaryStatus={binaryStatus}
-          onSetTuack={onSetTuack}
-          theme={theme}
-          onToggleTheme={onToggleTheme}
-          onClose={() => setShowSettings(false)}
         />
       )}
     </header>
