@@ -6,18 +6,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 
-import { useEffect, useState } from "react";
-import { Play, Plus, ChevronDown, FolderOpen, Settings, Type, Sun, Moon } from "lucide-react";
+import { useState } from "react";
+import { Play, Plus, ChevronDown, FolderOpen, Settings } from "lucide-react";
 import TuackLogo from "./TuackLogo";
 import CommandPanel from "./CommandPanel";
-import FontSettingsModal from "./FontSettingsModal";
 import NewProjectModal from "./NewProjectModal";
 import PathPicker from "./PathPicker";
-import { getFileManager, saveFileManager } from "../ipc";
+import SettingsDialog from "./SettingsDialog";
 import type { Command } from "../ipc/types";
 import type { AppTheme } from "../theme";
 
@@ -48,16 +46,8 @@ export default function Toolbar({
 }: Props) {
   const [showCmd, setShowCmd] = useState(false);
   const [showNew, setShowNew] = useState(false);
-  const [picker, setPicker] = useState<"open" | "tuack" | null>(null);
-  const [fmPicker, setFmPicker] = useState(false);
-  const [showFonts, setShowFonts] = useState(false);
-  const [fileManager, setFileManager] = useState<string | null>(null);
-
-  useEffect(() => {
-    getFileManager()
-      .then((fm) => setFileManager(fm))
-      .catch(() => {});
-  }, []);
+  const [showSettings, setShowSettings] = useState(false);
+  const [openPicker, setOpenPicker] = useState(false);
 
   async function openLast() {
     if (!lastProject) return;
@@ -98,7 +88,7 @@ export default function Toolbar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-80">
-            <DropdownMenuItem onClick={() => setPicker("open")}>
+            <DropdownMenuItem onClick={() => setOpenPicker(true)}>
               <FolderOpen />
               浏览目录…
             </DropdownMenuItem>
@@ -112,50 +102,14 @@ export default function Toolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="ghost" onClick={() => setPicker("tuack")}>
-          设置 tuack-ng
-        </Button>
         <Button variant="default" onClick={() => setShowCmd(true)} disabled={!hasProject}>
           <Play />
           运行命令
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" title="设置">
-              <Settings />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-72">
-            <DropdownMenuLabel className="text-[11px] text-muted-foreground">
-              文件管理器：{fileManager ?? "自动检测"}
-            </DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => setFmPicker(true)}>
-              <Settings />
-              设置文件管理器…
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setShowFonts(true)}>
-              <Type />
-              字体设置…
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onToggleTheme}>
-              {theme === "dark" ? <Sun /> : <Moon />}
-              {theme === "dark" ? "切换浅色模式" : "切换深色模式"}
-            </DropdownMenuItem>
-            {fileManager && (
-              <DropdownMenuItem
-                onClick={() =>
-                  saveFileManager("")
-                    .then(() => setFileManager(null))
-                    .catch(() => {})
-                }
-                title={fileManager}
-              >
-                <span className="truncate text-muted-foreground">恢复自动检测（{fileManager}）</span>
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button variant="ghost" size="icon" title="设置" onClick={() => setShowSettings(true)}>
+          <Settings />
+        </Button>
       </div>
 
       {showCmd && (
@@ -177,42 +131,26 @@ export default function Toolbar({
           onClose={() => setShowNew(false)}
         />
       )}
-      {picker === "open" && (
+      {openPicker && (
         <PathPicker
           title="选择 contest 目录"
           directory
           onSelect={(p) => {
-            setPicker(null);
+            setOpenPicker(false);
             onOpenProject(p).catch(() => {});
           }}
-          onClose={() => setPicker(null)}
+          onClose={() => setOpenPicker(false)}
         />
       )}
-      {picker === "tuack" && (
-        <PathPicker
-          title="选择 tuack-ng 可执行文件"
-          directory={false}
-          onSelect={(p) => {
-            setPicker(null);
-            onSetTuack(p).catch(() => {});
-          }}
-          onClose={() => setPicker(null)}
+      {showSettings && (
+        <SettingsDialog
+          binaryStatus={binaryStatus}
+          onSetTuack={onSetTuack}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+          onClose={() => setShowSettings(false)}
         />
       )}
-      {fmPicker && (
-        <PathPicker
-          title="选择文件管理器可执行文件"
-          directory={false}
-          onSelect={(p) => {
-            setFmPicker(false);
-            saveFileManager(p)
-              .then(() => setFileManager(p))
-              .catch(() => {});
-          }}
-          onClose={() => setFmPicker(false)}
-        />
-      )}
-      {showFonts && <FontSettingsModal onClose={() => setShowFonts(false)} />}
     </header>
   );
 }
