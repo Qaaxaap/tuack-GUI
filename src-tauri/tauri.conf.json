@@ -15,7 +15,6 @@
         "title": "Tuack-GUI",
         "width": 800,
         "height": 600,
-        "decorations": false,
         "backgroundColor": "#161616"
       }
     ],
