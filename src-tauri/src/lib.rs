@@ -800,6 +800,27 @@ fn list_dir(path: String) -> Result<DirListing, String> {
     Ok(DirListing { parent, entries })
 }
 
+#[derive(serde::Serialize)]
+struct PathStat {
+    exists: bool,
+    is_dir: bool,
+}
+
+/// 探测路径类型（文件选择器用于支持直接输入完整文件路径）
+#[tauri::command]
+fn stat_path(path: String) -> PathStat {
+    match fs::metadata(&path) {
+        Ok(m) => PathStat {
+            exists: true,
+            is_dir: m.is_dir(),
+        },
+        Err(_) => PathStat {
+            exists: false,
+            is_dir: false,
+        },
+    }
+}
+
 #[tauri::command]
 fn home_dir(app: tauri::AppHandle) -> Result<String, String> {
     app.path()
@@ -1017,6 +1038,7 @@ pub fn run() {
             get_last_project,
             save_last_project,
             list_dir,
+            stat_path,
             home_dir,
             read_config,
             write_config,

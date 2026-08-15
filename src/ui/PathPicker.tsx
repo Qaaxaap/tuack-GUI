@@ -5,9 +5,9 @@ import { Button } from "../components/ui/button";
 import { Dialog, DialogContent } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowUp, Folder, FileText } from "lucide-react";
-import { homeDir, listDir } from "../ipc";
+import { homeDir, listDir, statPath } from "../ipc";
 import type { DirEntry } from "../ipc/types";
 
 interface Props {
@@ -17,6 +17,40 @@ interface Props {
   onClose: () => void;
 }
 
+/** 条目列表 memo 化：输入框击键不重渲上千行（/bin 这类目录） */
+const EntryList = memo(function EntryList({
+  entries,
+  selected,
+  onPick,
+}: {
+  entries: DirEntry[];
+  selected: string | null;
+  onPick: (e: DirEntry) => void;
+}) {
+  return (
+    <>
+      {entries.map((e) => (
+        <div
+          key={e.path}
+          onClick={() => onPick(e)}
+          className="flex cursor-pointer items-center gap-2 px-2 py-1 hover:bg-[var(--row-hover)]"
+          style={{
+            color: selected === e.path ? "var(--accent-foreground)" : "var(--text)",
+            backgroundColor: selected === e.path ? "var(--accent)" : "transparent",
+          }}
+        >
+          {e.is_dir ? (
+            <Folder size={14} style={{ color: "var(--text-muted)" }} />
+          ) : (
+            <FileText size={14} style={{ color: "var(--text-muted)" }} />
+          )}
+          <span className="min-w-0 truncate text-xs">{e.name}</span>
+        </div>
+      ))}
+    </>
+  );
+});
+
 export default function PathPicker({ title, directory, onSelect, onClose }: Props) {
   const [cwd, setCwd] = useState("");
   const [parent, setParent] = useState("");
@@ -24,7 +58,7 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  async function load(path: string) {
+  const load = useCallback(async (path: string) => {
     try {
       const res = await listDir(path);
       setCwd(path);
@@ -35,15 +69,43 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
     } catch (e) {
       setError(String(e));
     }
-  }
+  }, []);
 
   useEffect(() => {
     homeDir()
       .then(load)
       .catch(() => load("/"));
-  }, []);
+  }, [load]);
 
-  const visible = directory ? entries.filter((e) => e.is_dir) : entries;
+  /** 回车 / 跳转：目录直接加载；文件模式下完整文件路径直接选中 */
+  const go = useCallback(async () => {
+    const path = cwd.trim();
+    if (!path) return;
+    const st = await statPath(path).catch(() => null);
+    if (st && st.exists && !st.is_dir) {
+      if (directory) {
+        setError("这是一个文件，请选择目录");
+        return;
+      }
+      setSelected(path);
+      setError("");
+      return;
+    }
+    load(path);
+  }, [cwd, directory, load]);
+
+  const onPick = useCallback(
+    (e: DirEntry) => {
+      if (e.is_dir) load(e.path);
+      else setSelected(e.path);
+    },
+    [load],
+  );
+
+  const visible = useMemo(
+    () => (directory ? entries.filter((e) => e.is_dir) : entries),
+    [entries, directory],
+  );
 
   return (
     <Dialog open onOpenChange={(o) => {
@@ -62,13 +124,17 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
           </Button>
           <Input
             value={cwd}
-            onChange={(e) => setCwd(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") load(cwd);
+            onChange={(e) => {
+              setCwd(e.currentTarget.value);
+              setSelected(null);
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") go();
+            }}
+            placeholder={directory ? "目录路径，回车跳转" : "文件或目录路径，回车确认"}
             className="h-8 flex-1 text-xs"
           />
-          <Button variant="ghost" onClick={() => load(cwd)}>
+          <Button variant="ghost" onClick={go}>
             跳转
           </Button>
         </div>
@@ -83,27 +149,7 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
               （空目录）
             </div>
           ) : (
-            visible.map((e) => (
-              <div
-                key={e.path}
-                onClick={() => {
-                  if (e.is_dir) load(e.path);
-                  else setSelected(e.path);
-                }}
-                className="flex cursor-pointer items-center gap-2 px-2 py-1 hover:bg-[var(--row-hover)]"
-                style={{
-                  color: selected === e.path ? "var(--accent-foreground)" : "var(--text)",
-                  backgroundColor: selected === e.path ? "var(--accent)" : "transparent",
-                }}
-              >
-                {e.is_dir ? (
-                  <Folder size={14} style={{ color: "var(--text-muted)" }} />
-                ) : (
-                  <FileText size={14} style={{ color: "var(--text-muted)" }} />
-                )}
-                <span className="min-w-0 truncate text-xs">{e.name}</span>
-              </div>
-            ))
+            <EntryList entries={visible} selected={selected} onPick={onPick} />
           )}
         </div>
 

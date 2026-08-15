@@ -50,6 +50,10 @@ export function listDir(path: string): Promise<DirListing> {
   return invoke<DirListing>("list_dir", { path });
 }
 
+export function statPath(path: string): Promise<{ exists: boolean; is_dir: boolean }> {
+  return invoke<{ exists: boolean; is_dir: boolean }>("stat_path", { path });
+}
+
 export function homeDir(): Promise<string> {
   return invoke<string>("home_dir");
 }
