@@ -395,6 +395,9 @@ fn open_project(start: String) -> Result<Project, String> {
 struct RunningProcess {
     child: Box<dyn Child + Send + Sync>,
     master: Box<dyn portable_pty::MasterPty + Send>,
+    /// Windows ConPTY：stdin 写入端必须保活到进程结束（提前丢会杀子进程）
+    #[allow(dead_code)]
+    stdin_writer: Option<Box<dyn std::io::Write + Send>>,
 }
 
 struct AppState {
@@ -579,6 +582,25 @@ async fn run_command(
         })
         .map_err(|e| format!("创建伪终端失败：{e}"))?;
 
+    // Windows ConPTY（portable-pty 0.9 带 PSEUDOCONSOLE_INHERIT_CURSOR）：
+    // 子进程挂接控制台时 conhost 会向输出管道发 DSR（\x1b[6n）并阻塞等待
+    // 主机在 stdin 上回应光标位置报告。立即应答，否则子进程永远卡在
+    // 控制台初始化（表现为无输出、gen 不生成文件、不退出）。
+    // 写入端需保活到进程结束（Windows 上丢 ConPTY stdin 会杀死子进程）。
+    #[cfg(windows)]
+    let stdin_writer = {
+        let mut w = pair
+            .master
+            .take_writer()
+            .map_err(|e| format!("获取伪终端写入端失败：{e}"))?;
+        use std::io::Write;
+        let _ = w.write_all(b"\x1b[1;1R");
+        let _ = w.flush();
+        Some(w)
+    };
+    #[cfg(not(windows))]
+    let stdin_writer = None;
+
     let mut builder = CommandBuilder::new(&exe);
     builder.args(build_argv(&cmd));
     builder.cwd(&cwd);
@@ -637,6 +659,7 @@ async fn run_command(
         RunningProcess {
             child,
             master: pair.master,
+            stdin_writer,
         },
     );
 
