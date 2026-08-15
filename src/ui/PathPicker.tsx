@@ -6,7 +6,7 @@ import { Dialog, DialogContent } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 
 import { useEffect, useState } from "react";
-import { ArrowUp, Folder, FileText, X } from "lucide-react";
+import { ArrowUp, Folder, FileText } from "lucide-react";
 import { homeDir, listDir } from "../ipc";
 import type { DirEntry } from "../ipc/types";
 
@@ -54,9 +54,6 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
           <span className="text-sm" style={{ color: "var(--text)" }}>
             {title}
           </span>
-          <Button variant="ghost" size="icon" onClick={onClose} title="关闭">
-            <X size={16} />
-          </Button>
         </div>
 
         <div className="mb-2 flex gap-2">
