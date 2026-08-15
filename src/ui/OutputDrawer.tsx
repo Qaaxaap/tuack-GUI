@@ -144,31 +144,33 @@ export default function OutputDrawer({ logs, running, onCancel }: Props) {
         {running && <span style={{ color: "var(--brand)" }}>运行中…</span>}
         {isOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
       </Button>
-      {isOpen && (
-        <div className="flex h-48 flex-col">
-          <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "var(--bg)" }}>
-            <div ref={hostRef} className="absolute inset-0" />
-            {logs.length === 0 && (
-              <div
-                className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs"
-                style={{ color: "var(--text-muted)" }}
-              >
-                暂无输出
-              </div>
-            )}
-          </div>
-          {running && (
-            <div className="flex justify-end px-3 py-1">
-              <Button variant="ghost" onClick={onCancel}>
-                <span className="inline-flex items-center gap-1">
-                  <Square size={11} />
-                  取消
-                </span>
-              </Button>
+      {/*
+        内容区必须常驻 DOM（只切 display）：xterm 宿主在挂载时就要存在，
+        否则初始化 effect 会因 hostRef 为空被跳过，之后永远建不出终端。
+      */}
+      <div className="flex h-48 flex-col" style={{ display: isOpen ? "flex" : "none" }}>
+        <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "var(--bg)" }}>
+          <div ref={hostRef} className="absolute inset-0" />
+          {logs.length === 0 && (
+            <div
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs"
+              style={{ color: "var(--text-muted)" }}
+            >
+              暂无输出
             </div>
           )}
         </div>
-      )}
+        {running && (
+          <div className="flex justify-end px-3 py-1">
+            <Button variant="ghost" onClick={onCancel}>
+              <span className="inline-flex items-center gap-1">
+                <Square size={11} />
+                取消
+              </span>
+            </Button>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
