@@ -252,14 +252,15 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
               <div className="flex flex-col gap-1">
                 <Label>ren 默认模板（项目）</Label>
                 <Select
-                  value={renProject}
+                  value={renProject || "__unset__"}
                   options={[
-                    { value: "", label: "未设置（跟随全局，默认 noi）" },
+                    { value: "__unset__", label: "未设置（跟随全局，默认 noi）" },
                     ...TEMPLATES.map((t) => ({ value: t, label: t })),
                   ]}
                   onChange={(v) => {
-                    setRenProjectState(v);
-                    setRenProject(dir, v).catch(() => {});
+                    const t = v === "__unset__" ? "" : v;
+                    setRenProjectState(t);
+                    setRenProject(dir, t).catch(() => {});
                   }}
                 />
                 <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>

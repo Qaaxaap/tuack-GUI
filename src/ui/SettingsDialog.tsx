@@ -100,14 +100,15 @@ export default function SettingsDialog({
         <Row label="ren 默认模板">
           <div className="w-48">
             <Select
-              value={renGlobal}
+              value={renGlobal || "__unset__"}
               options={[
-                { value: "", label: "未设置（默认 noi）" },
+                { value: "__unset__", label: "未设置（默认 noi）" },
                 ...TEMPLATES.map((t) => ({ value: t, label: t })),
               ]}
               onChange={(v) => {
-                setRenGlobalState(v);
-                setRenGlobal(v).catch(() => {});
+                const t = v === "__unset__" ? "" : v;
+                setRenGlobalState(t);
+                setRenGlobal(t).catch(() => {});
               }}
             />
           </div>

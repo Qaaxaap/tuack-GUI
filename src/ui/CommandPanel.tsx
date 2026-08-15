@@ -45,7 +45,7 @@ const COMMANDS: CommandSpec[] = [
   {
     id: "ren", label: "渲染题面（ren）",
     fields: [
-      { key: "template", label: "模板名", kind: "templates", defaultValue: "" },
+      { key: "template", label: "模板名", kind: "templates", defaultValue: "__default__" },
       { key: "keep_tmp", label: "保留临时目录", kind: "select", options: ["否", "是"] },
       { key: "no_auto_open", label: "不自动打开", kind: "select", options: ["否", "是"], defaultValue: "是" },
     ],
@@ -149,7 +149,7 @@ export default function CommandPanel({ defaultCwd, projectRoot, onRun, onClose }
     const eff = { ...values };
     if (spec.id === "ren") {
       const t = (eff["template"] ?? "").trim();
-      if (t) {
+      if (t && t !== "__default__") {
         // 显式选了模板：记忆为项目默认
         setRenProject(projectRoot, t).catch(() => {});
       } else {
@@ -204,9 +204,9 @@ export default function CommandPanel({ defaultCwd, projectRoot, onRun, onClose }
               </div>
             ) : f.kind === "templates" ? (
               <Select
-                value={values[f.key] ?? ""}
+                value={values[f.key] || "__default__"}
                 options={[
-                  { value: "", label: `默认（${resolvedTemplate}）` },
+                  { value: "__default__", label: `跟随默认（${resolvedTemplate}）` },
                   ...TEMPLATES.map((t) => ({ value: t, label: t })),
                 ]}
                 onChange={(v) => setVal(f.key, v)}
