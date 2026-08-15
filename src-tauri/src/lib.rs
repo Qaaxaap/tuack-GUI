@@ -1118,25 +1118,27 @@ fn ensure_assets(app: &tauri::AppHandle) {
     #[cfg(windows)]
     {
         let _ = app;
-        return;
     }
 
     // Linux/macOS：复制到应用专属数据目录，运行时通过 XDG_DATA_HOME
     // 让子进程 tuack-ng 读这里（而不是共享的 ~/.local/share/tuack-ng）
-    let Some(src) = bundled_assets_dir(app) else {
-        return;
-    };
-    if !src.exists() {
-        return;
+    #[cfg(not(windows))]
+    {
+        let Some(src) = bundled_assets_dir(app) else {
+            return;
+        };
+        if !src.exists() {
+            return;
+        }
+        let Some(dst) = tuack_data_dir().map(|d| d.join("tuack-ng")) else {
+            return;
+        };
+        // 已存在则跳过（简化：不做版本同步）
+        if dst.join("langs.json").exists() {
+            return;
+        }
+        let _ = copy_dir_recursive(&src, &dst);
     }
-    let Some(dst) = tuack_data_dir().map(|d| d.join("tuack-ng")) else {
-        return;
-    };
-    // 已存在则跳过（简化：不做版本同步）
-    if dst.join("langs.json").exists() {
-        return;
-    }
-    let _ = copy_dir_recursive(&src, &dst);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
