@@ -11,9 +11,10 @@ import {
 } from "../components/ui/dropdown-menu";
 
 import { useEffect, useState } from "react";
-import { Play, Plus, ChevronDown, FolderOpen, Settings } from "lucide-react";
+import { Play, Plus, ChevronDown, FolderOpen, Settings, Type } from "lucide-react";
 import tuackNgIcon from "../assets/tuack-ng.svg";
 import CommandPanel from "./CommandPanel";
+import FontSettingsModal from "./FontSettingsModal";
 import NewProjectModal from "./NewProjectModal";
 import PathPicker from "./PathPicker";
 import { getFileManager, saveFileManager } from "../ipc";
@@ -44,6 +45,7 @@ export default function Toolbar({
   const [showNew, setShowNew] = useState(false);
   const [picker, setPicker] = useState<"open" | "tuack" | null>(null);
   const [fmPicker, setFmPicker] = useState(false);
+  const [showFonts, setShowFonts] = useState(false);
   const [fileManager, setFileManager] = useState<string | null>(null);
 
   useEffect(() => {
@@ -127,6 +129,10 @@ export default function Toolbar({
               <Settings />
               设置文件管理器…
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowFonts(true)}>
+              <Type />
+              字体设置…
+            </DropdownMenuItem>
             {fileManager && (
               <DropdownMenuItem
                 onClick={() =>
@@ -197,6 +203,7 @@ export default function Toolbar({
           onClose={() => setFmPicker(false)}
         />
       )}
+      {showFonts && <FontSettingsModal onClose={() => setShowFonts(false)} />}
     </header>
   );
 }

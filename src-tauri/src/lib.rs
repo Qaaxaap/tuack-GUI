@@ -569,6 +569,8 @@ struct LastProject {
 struct Settings {
     last_project: Option<LastProject>,
     file_manager: Option<String>,
+    ui_font: Option<String>,
+    mono_font: Option<String>,
 }
 
 fn settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -730,6 +732,33 @@ fn set_file_manager(app: tauri::AppHandle, cmd: String) -> Result<(), String> {
     save_settings(&app, &settings)
 }
 
+#[derive(serde::Serialize)]
+struct FontPrefs {
+    ui_font: String,
+    mono_font: String,
+}
+
+#[tauri::command]
+fn get_fonts(app: tauri::AppHandle) -> FontPrefs {
+    let s = load_settings(&app);
+    FontPrefs {
+        ui_font: s.ui_font.unwrap_or_default(),
+        mono_font: s.mono_font.unwrap_or_default(),
+    }
+}
+
+#[tauri::command]
+fn set_fonts(app: tauri::AppHandle, ui_font: String, mono_font: String) -> Result<(), String> {
+    let mut settings = load_settings(&app);
+    let norm = |s: String| {
+        let t = s.trim().to_string();
+        if t.is_empty() { None } else { Some(t) }
+    };
+    settings.ui_font = norm(ui_font);
+    settings.mono_font = norm(mono_font);
+    save_settings(&app, &settings)
+}
+
 #[tauri::command]
 fn read_file_base64(path: String) -> Result<String, String> {
     let bytes = fs::read(&path).map_err(|e| format!("读取文件失败：{e}"))?;
@@ -801,6 +830,8 @@ pub fn run() {
             open_in_file_manager,
             get_file_manager,
             set_file_manager,
+            get_fonts,
+            set_fonts,
             read_file_base64,
             read_text_file
         ])

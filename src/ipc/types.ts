@@ -91,3 +91,8 @@ export interface DirListing {
 }
 
 export type NodeKind = "contest" | "day" | "problem";
+
+export interface FontPrefs {
+  ui_font: string;
+  mono_font: string;
+}

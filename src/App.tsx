@@ -10,6 +10,7 @@ import PdfViewer from "./ui/PdfViewer";
 import {
   cancelCommand,
   detectTuack,
+  getFonts,
   getLastProject,
   listDir,
   openProject,
@@ -17,6 +18,7 @@ import {
   saveLastProject,
   setTuackPath,
 } from "./ipc";
+import { applyFonts } from "./fonts";
 import type { Command, LastProject, NodeKind, ProcessEvent, Project } from "./ipc/types";
 
 export default function App() {
@@ -47,6 +49,9 @@ export default function App() {
       .then((lp) => {
         if (lp) setLastProject(lp);
       })
+      .catch(() => {});
+    getFonts()
+      .then((f) => applyFonts(f.ui_font, f.mono_font))
       .catch(() => {});
   }, []);
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Channel, invoke } from "@tauri-apps/api/core";
-import type { BinaryInfo, Command, DirListing, LastProject, ProcessEvent, Project } from "./types";
+import type { BinaryInfo, Command, DirListing, FontPrefs, LastProject, ProcessEvent, Project } from "./types";
 
 export function detectTuack(): Promise<BinaryInfo> {
   return invoke<BinaryInfo>("detect_tuack");
@@ -64,6 +64,14 @@ export function getFileManager(): Promise<string | null> {
 
 export function saveFileManager(cmd: string): Promise<void> {
   return invoke("set_file_manager", { cmd });
+}
+
+export function getFonts(): Promise<FontPrefs> {
+  return invoke<FontPrefs>("get_fonts");
+}
+
+export function setFonts(uiFont: string, monoFont: string): Promise<void> {
+  return invoke("set_fonts", { uiFont, monoFont });
 }
 
 export function readFileBase64(path: string): Promise<string> {
