@@ -180,3 +180,9 @@ body {
 :root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   background: #a0a0a0;
 }
+
+/* CodeMirror 跟随配置的等宽字体（覆盖 @uiw 内置主题写死的 font-family: monospace，
+   其样式运行时注入且优先级为单类选择器，这里用更高优先级压过） */
+body .cm-editor {
+  font-family: var(--font-mono);
+}
