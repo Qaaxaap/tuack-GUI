@@ -71,7 +71,7 @@ export default function Toolbar({
       style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
     >
       <div className="flex items-center gap-2">
-        <Sparkles size={18} style={{ color: "var(--accent)" }} />
+        <Sparkles size={18} style={{ color: "var(--brand)" }} />
         <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
           Tuack-GUI
         </span>
@@ -123,7 +123,7 @@ export default function Toolbar({
                   style={{ color: "var(--text)" }}
                   title={lastProject.path}
                 >
-                  <FolderOpen size={14} style={{ color: "var(--accent)" }} />
+                  <FolderOpen size={14} style={{ color: "var(--brand)" }} />
                   <span className="shrink-0 font-medium">{lastProject.name}</span>
                   <span className="truncate" style={{ color: "var(--text-muted)" }}>
                     {lastProject.path}

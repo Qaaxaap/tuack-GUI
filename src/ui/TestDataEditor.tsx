@@ -188,7 +188,7 @@ export default function TestDataEditor({ value, onChange }: Props) {
                 <td className="p-1 text-center">
                   <Checkbox checked={selected.has(i)} onChange={() => toggle(i)} />
                 </td>
-                <td className="p-1" style={{ color: r.kind === "bundle" ? "var(--accent)" : "var(--text)" }}>
+                <td className="p-1" style={{ color: r.kind === "bundle" ? "var(--brand)" : "var(--text)" }}>
                   {r.kind === "single" ? r.id : `${r.ids[0]}–${r.ids[r.ids.length - 1]}`}
                 </td>
                 <td className="p-1">

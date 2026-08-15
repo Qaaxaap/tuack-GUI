@@ -21,8 +21,8 @@ export default function Checkbox({ checked, onChange, label }: Props) {
       <span
         className="flex h-4 w-4 items-center justify-center rounded border transition-colors"
         style={{
-          backgroundColor: checked ? "var(--accent)" : "transparent",
-          borderColor: checked ? "var(--accent)" : "var(--border)",
+          backgroundColor: checked ? "var(--brand)" : "transparent",
+          borderColor: checked ? "var(--brand)" : "var(--border)",
         }}
       >
         {checked && <Check size={12} strokeWidth={3} style={{ color: "#ffffff" }} />}

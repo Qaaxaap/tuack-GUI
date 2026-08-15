@@ -5,22 +5,69 @@
 
 :root {
   color-scheme: dark;
+
+  /* —— 应用令牌 —— */
   --bg: #161616;
   --bg-raised: #1e1e1e;
   --bg-card: #242424;
   --border: #2c2c2c;
   --text: #e6e6e6;
   --text-muted: #8a8a8a;
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
+  --brand: #6366f1;
+  --brand-hover: #818cf8;
   --success: #34d399;
   --danger: #f87171;
-
   --radius: 8px;
 
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Microsoft YaHei", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+
+  /* —— shadcn 令牌（映射到调色板）—— */
+  --background: #161616;
+  --foreground: #e6e6e6;
+  --card: #1e1e1e;
+  --card-foreground: #e6e6e6;
+  --popover: #1e1e1e;
+  --popover-foreground: #e6e6e6;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #242424;
+  --secondary-foreground: #e6e6e6;
+  --muted: #242424;
+  --muted-foreground: #8a8a8a;
+  --accent: #2f2f2f;
+  --accent-foreground: #e6e6e6;
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+  --input: #2c2c2c;
+  --ring: #6366f1;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 html,
@@ -58,13 +105,13 @@ body {
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--brand);
   color: #ffffff;
   border: 1px solid transparent;
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
+  background: var(--brand-hover);
 }
 
 ::-webkit-scrollbar {
@@ -79,9 +126,4 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #444444;
-}
-
-select option {
-  background-color: #1e1e1e;
-  color: #e6e6e6;
 }

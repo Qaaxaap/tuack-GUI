@@ -54,7 +54,7 @@ export default function Select({ value, options, onChange }: Props) {
                 setOpen(false);
               }}
               className="block w-full px-3 py-1.5 text-left text-sm hover:bg-white/5"
-              style={{ color: o.value === value ? "var(--accent)" : "var(--text)" }}
+              style={{ color: o.value === value ? "var(--brand)" : "var(--text)" }}
             >
               {o.label}
             </button>

@@ -24,7 +24,7 @@ export default function OutputDrawer({ logs, running, onCancel }: Props) {
         style={{ backgroundColor: "var(--bg-raised)", color: "var(--text-muted)" }}
       >
         <span>输出</span>
-        {running && <span style={{ color: "var(--accent)" }}>运行中…</span>}
+        {running && <span style={{ color: "var(--brand)" }}>运行中…</span>}
         {isOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
       </button>
       {isOpen && (

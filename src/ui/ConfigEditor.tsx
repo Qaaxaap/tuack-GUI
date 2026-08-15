@@ -115,7 +115,7 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
           className="px-2 py-0.5 text-xs"
           style={{
             color: tab === "form" ? "var(--text)" : "var(--text-muted)",
-            borderBottom: tab === "form" ? "1px solid var(--accent)" : "1px solid transparent",
+            borderBottom: tab === "form" ? "1px solid var(--brand)" : "1px solid transparent",
           }}
         >
           表单
@@ -126,7 +126,7 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
             className="px-2 py-0.5 text-xs"
             style={{
               color: tab === "data" ? "var(--text)" : "var(--text-muted)",
-              borderBottom: tab === "data" ? "1px solid var(--accent)" : "1px solid transparent",
+              borderBottom: tab === "data" ? "1px solid var(--brand)" : "1px solid transparent",
             }}
           >
             测试点
@@ -138,7 +138,7 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
             className="px-2 py-0.5 text-xs"
             style={{
               color: tab === "score" ? "var(--text)" : "var(--text-muted)",
-              borderBottom: tab === "score" ? "1px solid var(--accent)" : "1px solid transparent",
+              borderBottom: tab === "score" ? "1px solid var(--brand)" : "1px solid transparent",
             }}
           >
             评测结果
@@ -152,7 +152,7 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
           className="px-2 py-0.5 text-xs"
           style={{
             color: tab === "json" ? "var(--text)" : "var(--text-muted)",
-            borderBottom: tab === "json" ? "1px solid var(--accent)" : "1px solid transparent",
+            borderBottom: tab === "json" ? "1px solid var(--brand)" : "1px solid transparent",
           }}
         >
           高级 JSON
