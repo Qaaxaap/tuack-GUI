@@ -137,7 +137,7 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="w-[min(440px,92vw)] rounded-lg p-4">
+      <DialogContent className="w-[min(640px,80vw)] rounded-lg p-4">
         <div className="mb-3 text-sm" style={{ color: "var(--text)" }}>运行命令</div>
 
         <Label className="mb-1 block">命令</Label>

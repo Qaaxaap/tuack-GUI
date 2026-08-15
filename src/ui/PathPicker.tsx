@@ -111,7 +111,7 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
     <Dialog open onOpenChange={(o) => {
       if (!o) onClose();
     }}>
-      <DialogContent className="flex h-[min(560px,82vh)] w-[min(680px,92vw)] flex-col rounded-lg p-4">
+      <DialogContent className="flex h-[min(640px,84vh)] w-[min(800px,88vw)] flex-col rounded-lg p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm" style={{ color: "var(--text)" }}>
             {title}
