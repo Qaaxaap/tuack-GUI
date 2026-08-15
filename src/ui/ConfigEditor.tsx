@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Button } from "../components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
 import { useEffect, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
@@ -103,8 +104,13 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
     }
   }
 
+  function handleTab(v: string) {
+    if (v === "json" && config) setJsonText(JSON.stringify(config, null, 2));
+    setTab(v as "form" | "json" | "data" | "score");
+  }
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <Tabs value={tab} onValueChange={handleTab} className="flex min-h-0 flex-1 flex-col">
       <div
         className="flex shrink-0 items-center gap-3 border-b px-4 py-2"
         style={{ borderColor: "var(--border)" }}
@@ -112,53 +118,12 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
         <span className="text-xs uppercase" style={{ color: "var(--text-muted)" }}>
           {kind}
         </span>
-        <button
-          onClick={() => setTab("form")}
-          className="px-2 py-0.5 text-xs"
-          style={{
-            color: tab === "form" ? "var(--text)" : "var(--text-muted)",
-            borderBottom: tab === "form" ? "1px solid var(--brand)" : "1px solid transparent",
-          }}
-        >
-          表单
-        </button>
-        {kind === "problem" && (
-          <button
-            onClick={() => setTab("data")}
-            className="px-2 py-0.5 text-xs"
-            style={{
-              color: tab === "data" ? "var(--text)" : "var(--text-muted)",
-              borderBottom: tab === "data" ? "1px solid var(--brand)" : "1px solid transparent",
-            }}
-          >
-            测试点
-          </button>
-        )}
-        {kind === "problem" && (
-          <button
-            onClick={() => setTab("score")}
-            className="px-2 py-0.5 text-xs"
-            style={{
-              color: tab === "score" ? "var(--text)" : "var(--text-muted)",
-              borderBottom: tab === "score" ? "1px solid var(--brand)" : "1px solid transparent",
-            }}
-          >
-            评测结果
-          </button>
-        )}
-        <button
-          onClick={() => {
-            if (config) setJsonText(JSON.stringify(config, null, 2));
-            setTab("json");
-          }}
-          className="px-2 py-0.5 text-xs"
-          style={{
-            color: tab === "json" ? "var(--text)" : "var(--text-muted)",
-            borderBottom: tab === "json" ? "1px solid var(--brand)" : "1px solid transparent",
-          }}
-        >
-          高级 JSON
-        </button>
+        <TabsList>
+          <TabsTrigger value="form">表单</TabsTrigger>
+          {kind === "problem" && <TabsTrigger value="data">测试点</TabsTrigger>}
+          {kind === "problem" && <TabsTrigger value="score">评测结果</TabsTrigger>}
+          <TabsTrigger value="json">高级 JSON</TabsTrigger>
+        </TabsList>
         <span
           className="ml-auto text-xs"
           style={{
@@ -174,8 +139,8 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto p-4">
-        {tab === "form" ? (
-          config ? (
+        <TabsContent value="form">
+          {config ? (
             <div className="flex max-w-md flex-col gap-3">
               {FIELDS[kind].map((f) => {
                 const raw = config[f.key];
@@ -246,12 +211,15 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
             <div className="text-xs" style={{ color: "var(--text-muted)" }}>
               加载中…
             </div>
-          )
-        ) : tab === "data" ? (
+          )}
+        </TabsContent>
+        <TabsContent value="data">
           <TestDataEditor value={config?.["data"]} onChange={(v) => setField("data", v)} />
-        ) : tab === "score" ? (
+        </TabsContent>
+        <TabsContent value="score">
           <Scoreboard dir={dir} />
-        ) : (
+        </TabsContent>
+        <TabsContent value="json">
           <div className="flex h-full min-h-0 flex-col gap-2">
             <div className="min-h-0 flex-1 overflow-hidden rounded" style={{ border: "1px solid var(--border)" }}>
               <CodeMirror
@@ -267,8 +235,8 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
               保存
             </Button>
           </div>
-        )}
+        </TabsContent>
       </div>
-    </div>
+    </Tabs>
   );
 }

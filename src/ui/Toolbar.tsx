@@ -2,8 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Button } from "../components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, Play, Plus, ChevronDown, FolderOpen, Settings } from "lucide-react";
 import CommandPanel from "./CommandPanel";
 import NewProjectModal from "./NewProjectModal";
@@ -34,13 +41,9 @@ export default function Toolbar({
 }: Props) {
   const [showCmd, setShowCmd] = useState(false);
   const [showNew, setShowNew] = useState(false);
-  const [projMenu, setProjMenu] = useState(false);
-  const [settingsMenu, setSettingsMenu] = useState(false);
   const [picker, setPicker] = useState<"open" | "tuack" | null>(null);
   const [fmPicker, setFmPicker] = useState(false);
   const [fileManager, setFileManager] = useState<string | null>(null);
-  const projMenuRef = useRef<HTMLDivElement>(null);
-  const settingsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     getFileManager()
@@ -48,22 +51,8 @@ export default function Toolbar({
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    function onDown(e: MouseEvent) {
-      if (projMenuRef.current && !projMenuRef.current.contains(e.target as Node)) {
-        setProjMenu(false);
-      }
-      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
-        setSettingsMenu(false);
-      }
-    }
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, []);
-
   async function openLast() {
     if (!lastProject) return;
-    setProjMenu(false);
     await onOpenProject(lastProject.path).catch(() => {});
   }
 
@@ -89,110 +78,68 @@ export default function Toolbar({
 
       <div className="ml-auto flex items-center gap-2">
         <Button variant="ghost" onClick={() => setShowNew(true)}>
-          <span className="inline-flex items-center gap-1">
-            <Plus size={13} />
-            新建工程
-          </span>
+          <Plus />
+          新建工程
         </Button>
 
-        <div ref={projMenuRef} className="relative">
-          <Button variant="ghost" onClick={() => setProjMenu(!projMenu)}>
-            <span className="inline-flex items-center gap-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost">
               打开工程
-              <ChevronDown size={12} />
-            </span>
-          </Button>
-          {projMenu && (
-            <div
-              className="absolute right-0 z-20 mt-1 w-80 overflow-hidden rounded"
-              style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}
-            >
-              <button
-                onClick={() => {
-                  setProjMenu(false);
-                  setPicker("open");
-                }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-white/5"
-                style={{ color: "var(--text)" }}
-              >
-                <FolderOpen size={14} style={{ color: "var(--text-muted)" }} />
-                浏览目录…
-              </button>
-              {lastProject && (
-                <button
-                  onClick={openLast}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-white/5"
-                  style={{ color: "var(--text)" }}
-                  title={lastProject.path}
-                >
-                  <FolderOpen size={14} style={{ color: "var(--brand)" }} />
-                  <span className="shrink-0 font-medium">{lastProject.name}</span>
-                  <span className="truncate" style={{ color: "var(--text-muted)" }}>
-                    {lastProject.path}
-                  </span>
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+              <ChevronDown />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-80">
+            <DropdownMenuItem onClick={() => setPicker("open")}>
+              <FolderOpen />
+              浏览目录…
+            </DropdownMenuItem>
+            {lastProject && (
+              <DropdownMenuItem onClick={openLast} title={lastProject.path}>
+                <FolderOpen />
+                <span className="shrink-0 font-medium">{lastProject.name}</span>
+                <span className="truncate text-muted-foreground">{lastProject.path}</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Button variant="ghost" onClick={() => setPicker("tuack")}>
           设置 tuack-ng
         </Button>
         <Button variant="default" onClick={() => setShowCmd(true)} disabled={!hasProject}>
-          <span className="inline-flex items-center gap-1">
-            <Play size={13} />
-            运行命令
-          </span>
+          <Play />
+          运行命令
         </Button>
 
-        <div ref={settingsRef} className="relative">
-          <Button
-            variant="ghost"
-            onClick={() => setSettingsMenu(!settingsMenu)}
-            title="设置"
-          >
-            <Settings size={14} />
-          </Button>
-          {settingsMenu && (
-            <div
-              className="absolute right-0 z-20 mt-1 w-72 overflow-hidden rounded"
-              style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}
-            >
-              <div className="px-3 py-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
-                文件管理器：{fileManager ?? "自动检测"}
-              </div>
-              <button
-                onClick={() => {
-                  setSettingsMenu(false);
-                  setFmPicker(true);
-                }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-white/5"
-                style={{ color: "var(--text)" }}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" title="设置">
+              <Settings />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-72">
+            <DropdownMenuLabel className="text-[11px] text-muted-foreground">
+              文件管理器：{fileManager ?? "自动检测"}
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => setFmPicker(true)}>
+              <Settings />
+              设置文件管理器…
+            </DropdownMenuItem>
+            {fileManager && (
+              <DropdownMenuItem
+                onClick={() =>
+                  saveFileManager("")
+                    .then(() => setFileManager(null))
+                    .catch(() => {})
+                }
+                title={fileManager}
               >
-                <Settings size={14} style={{ color: "var(--text-muted)" }} />
-                设置文件管理器…
-              </button>
-              {fileManager && (
-                <button
-                  onClick={() => {
-                    setSettingsMenu(false);
-                    saveFileManager("")
-                      .then(() => setFileManager(null))
-                      .catch(() => {});
-                  }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-white/5"
-                  style={{ color: "var(--text)" }}
-                  title={fileManager}
-                >
-                  <span className="truncate" style={{ color: "var(--text-muted)" }}>
-                    恢复自动检测（{fileManager}）
-                  </span>
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+                <span className="truncate text-muted-foreground">恢复自动检测（{fileManager}）</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {showCmd && (
