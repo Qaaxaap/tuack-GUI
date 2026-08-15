@@ -61,7 +61,7 @@ export default function SettingsDialog({
     <Dialog open onOpenChange={(o) => {
       if (!o) onClose();
     }}>
-      <DialogContent className="w-96 rounded-lg p-4">
+      <DialogContent className="w-[min(440px,92vw)] rounded-lg p-4">
         <div className="mb-1 text-sm" style={{ color: "var(--text)" }}>设置</div>
 
         <Row label="tuack-ng" value={binaryStatus}>

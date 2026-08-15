@@ -39,7 +39,7 @@ export default function RemoveConfirmModal({ kind, name, parentDir, onRemoved, o
     <Dialog open onOpenChange={(o) => {
       if (!o) onClose();
     }}>
-      <DialogContent className="w-96 rounded-lg p-4">
+      <DialogContent className="w-[min(440px,92vw)] rounded-lg p-4">
         <div className="text-sm" style={{ color: "var(--text)" }}>
           删除{what}「{name}」
         </div>

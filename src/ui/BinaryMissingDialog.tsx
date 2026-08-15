@@ -14,7 +14,7 @@ export default function BinaryMissingDialog({ onOpenSettings, onClose }: Props) 
     <Dialog open onOpenChange={(o) => {
       if (!o) onClose();
     }}>
-      <DialogContent className="w-96 rounded-lg p-4">
+      <DialogContent className="w-[min(440px,92vw)] rounded-lg p-4">
         <div className="text-sm" style={{ color: "var(--text)" }}>未检测到 tuack-ng</div>
         <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
           执行命令需要 tuack-ng 二进制。请在设置中选择其可执行文件，或先安装 tuack-ng。

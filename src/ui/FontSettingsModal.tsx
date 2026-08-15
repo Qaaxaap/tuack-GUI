@@ -42,7 +42,7 @@ export default function FontSettingsModal({ onClose }: Props) {
     <Dialog open onOpenChange={(o) => {
       if (!o) onClose();
     }}>
-      <DialogContent className="w-96 rounded-lg p-4">
+      <DialogContent className="w-[min(440px,92vw)] rounded-lg p-4">
         <div className="mb-3 text-sm" style={{ color: "var(--text)" }}>字体设置</div>
 
         <Label className="mb-1 block">界面字体（留空 = 系统默认）</Label>

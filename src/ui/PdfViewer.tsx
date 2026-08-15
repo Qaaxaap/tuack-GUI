@@ -58,7 +58,7 @@ export default function PdfViewer({ path, onClose }: Props) {
     <Dialog open onOpenChange={(o) => {
       if (!o) onClose();
     }}>
-      <DialogContent className="flex h-[90vh] w-[72vw] flex-col rounded-lg p-4">
+      <DialogContent className="flex h-[90vh] w-[85vw] flex-col rounded-lg p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm" style={{ color: "var(--text)" }}>
             PDF 预览
