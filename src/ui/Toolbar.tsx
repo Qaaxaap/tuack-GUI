@@ -11,7 +11,8 @@ import {
 } from "../components/ui/dropdown-menu";
 
 import { useEffect, useState } from "react";
-import { Sparkles, Play, Plus, ChevronDown, FolderOpen, Settings } from "lucide-react";
+import { Play, Plus, ChevronDown, FolderOpen, Settings } from "lucide-react";
+import tuackNgIcon from "../assets/tuack-ng.svg";
 import CommandPanel from "./CommandPanel";
 import NewProjectModal from "./NewProjectModal";
 import PathPicker from "./PathPicker";
@@ -62,7 +63,7 @@ export default function Toolbar({
       style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
     >
       <div className="flex items-center gap-2">
-        <Sparkles size={18} style={{ color: "var(--brand)" }} />
+        <img src={tuackNgIcon} alt="Tuack-NG" className="h-[18px] w-[18px]" />
         <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
           Tuack-GUI
         </span>
