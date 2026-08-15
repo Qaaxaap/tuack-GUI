@@ -95,3 +95,8 @@ export interface FontPrefs {
   ui_font: string;
   mono_font: string;
 }
+
+export interface RenDefaults {
+  global: string | null;
+  project: string | null;
+}

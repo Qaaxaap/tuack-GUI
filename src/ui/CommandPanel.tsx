@@ -8,9 +8,11 @@ import { Label } from "../components/ui/label";
 
 import { useEffect, useState } from "react";
 import Select from "./Select";
-import type { Command, DataTarget, DmkAction, DumpTarget } from "../ipc/types";
+import { getRenDefaults, setRenProject } from "../ipc";
+import { TEMPLATES } from "../templates";
+import type { Command, DataTarget, DmkAction, DumpTarget, RenDefaults } from "../ipc/types";
 
-type FieldKind = "text" | "select" | "object";
+type FieldKind = "text" | "select" | "object" | "templates";
 
 interface FieldSpec {
   key: string;
@@ -43,7 +45,7 @@ const COMMANDS: CommandSpec[] = [
   {
     id: "ren", label: "渲染题面（ren）",
     fields: [
-      { key: "template", label: "模板名", kind: "text", placeholder: "如 noi / ccpc" },
+      { key: "template", label: "模板名", kind: "templates", defaultValue: "" },
       { key: "keep_tmp", label: "保留临时目录", kind: "select", options: ["否", "是"] },
       { key: "no_auto_open", label: "不自动打开", kind: "select", options: ["否", "是"], defaultValue: "是" },
     ],
@@ -109,16 +111,24 @@ const COMMANDS: CommandSpec[] = [
 
 interface Props {
   defaultCwd: string;
+  projectRoot: string;
   onRun: (cmd: Command, cwd: string) => void;
   onClose: () => void;
 }
 
-export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
+export default function CommandPanel({ defaultCwd, projectRoot, onRun, onClose }: Props) {
   const [cmdId, setCmdId] = useState(COMMANDS[0].id);
   const [cwd, setCwd] = useState(defaultCwd);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [renDefaults, setRenDefaults] = useState<RenDefaults>({ global: null, project: null });
 
   const spec = COMMANDS.find((c) => c.id === cmdId)!;
+
+  useEffect(() => {
+    getRenDefaults(projectRoot)
+      .then(setRenDefaults)
+      .catch(() => {});
+  }, [projectRoot]);
 
   useEffect(() => {
     const next: Record<string, string> = {};
@@ -133,8 +143,20 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
     setValues((prev) => ({ ...prev, [key]: val }));
   }
 
+  const resolvedTemplate = renDefaults.project || renDefaults.global || "noi";
+
   function submit() {
-    onRun(spec.build(values), cwd.trim());
+    const eff = { ...values };
+    if (spec.id === "ren") {
+      const t = (eff["template"] ?? "").trim();
+      if (t) {
+        // 显式选了模板：记忆为项目默认
+        setRenProject(projectRoot, t).catch(() => {});
+      } else {
+        eff["template"] = resolvedTemplate;
+      }
+    }
+    onRun(spec.build(eff), cwd.trim());
   }
 
   return (
@@ -180,6 +202,15 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
                   />
                 )}
               </div>
+            ) : f.kind === "templates" ? (
+              <Select
+                value={values[f.key] ?? ""}
+                options={[
+                  { value: "", label: `默认（${resolvedTemplate}）` },
+                  ...TEMPLATES.map((t) => ({ value: t, label: t })),
+                ]}
+                onChange={(v) => setVal(f.key, v)}
+              />
             ) : (
               <Input
                 type="text"

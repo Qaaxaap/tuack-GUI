@@ -734,6 +734,10 @@ struct Settings {
     ui_font: Option<String>,
     mono_font: Option<String>,
     theme: Option<String>,
+    /// ren 全局默认模板
+    ren_template: Option<String>,
+    /// ren 项目级默认模板：工程根目录 → 模板名
+    ren_project_templates: Option<HashMap<String, String>>,
 }
 
 fn settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -1013,25 +1017,82 @@ fn tuack_data_dir() -> Option<PathBuf> {
     dirs::data_local_dir().map(|d| d.join("tuack-gui"))
 }
 
+/// 捆绑 assets 的源目录（与 ensure_assets 使用的源一致）
+#[cfg(debug_assertions)]
+fn bundled_assets_dir(_app: &tauri::AppHandle) -> Option<PathBuf> {
+    Some(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets"))
+}
+
+#[cfg(not(debug_assertions))]
+fn bundled_assets_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
+    app.path().resource_dir().ok().map(|d| d.join("assets"))
+}
+
+#[derive(serde::Serialize)]
+struct RenDefaults {
+    global: Option<String>,
+    project: Option<String>,
+}
+
+#[tauri::command]
+fn get_ren_defaults(app: tauri::AppHandle, project_root: String) -> RenDefaults {
+    let s = load_settings(&app);
+    RenDefaults {
+        global: s.ren_template.clone(),
+        project: if project_root.trim().is_empty() {
+            None
+        } else {
+            s.ren_project_templates
+                .as_ref()
+                .and_then(|m| m.get(project_root.trim()).cloned())
+        },
+    }
+}
+
+#[tauri::command]
+fn set_ren_global(app: tauri::AppHandle, template: String) -> Result<(), String> {
+    let mut s = load_settings(&app);
+    let t = template.trim().to_string();
+    s.ren_template = if t.is_empty() { None } else { Some(t) };
+    save_settings(&app, &s)
+}
+
+#[tauri::command]
+fn set_ren_project(
+    app: tauri::AppHandle,
+    project_root: String,
+    template: String,
+) -> Result<(), String> {
+    let root = project_root.trim().to_string();
+    if root.is_empty() {
+        return Ok(());
+    }
+    let t = template.trim().to_string();
+    let mut s = load_settings(&app);
+    let mut m = s.ren_project_templates.unwrap_or_default();
+    if t.is_empty() {
+        m.remove(&root);
+    } else {
+        m.insert(root, t);
+    }
+    s.ren_project_templates = Some(m);
+    save_settings(&app, &s)
+}
+
 /// 首次启动时，把捆绑的 assets 放到 tuack-ng 能读到的地方
-fn ensure_assets(_app: &tauri::AppHandle) {
+fn ensure_assets(app: &tauri::AppHandle) {
     // Windows：assets 作为 resources 打进安装目录（与 tuack-ng.exe 同级），
     // tuack-ng 原生从 exe 同目录 assets/ 读取，无需运行时复制、不碰 LocalAppData。
     #[cfg(windows)]
     {
+        let _ = app;
         return;
     }
 
     // Linux/macOS：复制到应用专属数据目录，运行时通过 XDG_DATA_HOME
     // 让子进程 tuack-ng 读这里（而不是共享的 ~/.local/share/tuack-ng）
-    #[cfg(debug_assertions)]
-    let src = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
-    #[cfg(not(debug_assertions))]
-    let src = {
-        let Ok(resource) = _app.path().resource_dir() else {
-            return;
-        };
-        resource.join("assets")
+    let Some(src) = bundled_assets_dir(app) else {
+        return;
     };
     if !src.exists() {
         return;
@@ -1083,6 +1144,9 @@ pub fn run() {
             set_fonts,
             get_theme,
             set_theme,
+            get_ren_defaults,
+            set_ren_global,
+            set_ren_project,
             read_file_base64,
             read_text_file
         ])

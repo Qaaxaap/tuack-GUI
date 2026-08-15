@@ -20,6 +20,7 @@ import type { Command } from "../ipc/types";
 interface Props {
   hasProject: boolean;
   selectedDir: string;
+  projectRoot: string;
   lastProject: { path: string; name: string } | null;
   onRequireTuack: () => boolean;
   onOpenSettings: () => void;
@@ -30,6 +31,7 @@ interface Props {
 export default function Toolbar({
   hasProject,
   selectedDir,
+  projectRoot,
   lastProject,
   onRequireTuack,
   onOpenSettings,
@@ -111,6 +113,7 @@ export default function Toolbar({
       {showCmd && (
         <CommandPanel
           defaultCwd={selectedDir}
+          projectRoot={projectRoot}
           onRun={(cmd, cwd) => {
             setShowCmd(false);
             onRunCommand(cmd, cwd);

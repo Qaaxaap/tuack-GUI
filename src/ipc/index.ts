@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Channel, invoke } from "@tauri-apps/api/core";
-import type { BinaryInfo, Command, DirListing, FontPrefs, LastProject, ProcessEvent, Project } from "./types";
+import type { BinaryInfo, Command, DirListing, FontPrefs, LastProject, ProcessEvent, Project, RenDefaults } from "./types";
 
 export function detectTuack(): Promise<BinaryInfo> {
   return invoke<BinaryInfo>("detect_tuack");
@@ -96,6 +96,18 @@ export function getTheme(): Promise<string> {
 
 export function setTheme(theme: string): Promise<void> {
   return invoke("set_theme", { theme });
+}
+
+export function getRenDefaults(projectRoot: string): Promise<RenDefaults> {
+  return invoke<RenDefaults>("get_ren_defaults", { projectRoot });
+}
+
+export function setRenGlobal(template: string): Promise<void> {
+  return invoke("set_ren_global", { template });
+}
+
+export function setRenProject(projectRoot: string, template: string): Promise<void> {
+  return invoke("set_ren_project", { projectRoot, template });
 }
 
 export function readFileBase64(path: string): Promise<string> {

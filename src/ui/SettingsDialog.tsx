@@ -8,7 +8,9 @@ import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import PathPicker from "./PathPicker";
 import FontSettingsModal from "./FontSettingsModal";
-import { getFileManager, saveFileManager } from "../ipc";
+import Select from "./Select";
+import { getFileManager, getRenDefaults, saveFileManager, setRenGlobal } from "../ipc";
+import { TEMPLATES } from "../templates";
 import type { AppTheme } from "../theme";
 
 interface Props {
@@ -50,10 +52,14 @@ export default function SettingsDialog({
   const [fmPicker, setFmPicker] = useState(false);
   const [tuackPicker, setTuackPicker] = useState(false);
   const [showFonts, setShowFonts] = useState(false);
+  const [renGlobal, setRenGlobalState] = useState("");
 
   useEffect(() => {
     getFileManager()
       .then((fm) => setFileManager(fm))
+      .catch(() => {});
+    getRenDefaults("")
+      .then((d) => setRenGlobalState(d.global ?? ""))
       .catch(() => {});
   }, []);
 
@@ -89,6 +95,22 @@ export default function SettingsDialog({
 
         <Row label="字体">
           <Button variant="ghost" onClick={() => setShowFonts(true)}>字体设置…</Button>
+        </Row>
+
+        <Row label="ren 默认模板">
+          <div className="w-48">
+            <Select
+              value={renGlobal}
+              options={[
+                { value: "", label: "未设置（默认 noi）" },
+                ...TEMPLATES.map((t) => ({ value: t, label: t })),
+              ]}
+              onChange={(v) => {
+                setRenGlobalState(v);
+                setRenGlobal(v).catch(() => {});
+              }}
+            />
+          </div>
         </Row>
 
         <Row label="主题">

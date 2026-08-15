@@ -172,6 +172,7 @@ export default function App() {
       <Toolbar
         hasProject={project != null}
         selectedDir={selected?.dir ?? ""}
+        projectRoot={project?.root ?? ""}
         lastProject={lastProject}
         onRequireTuack={requireTuack}
         onOpenSettings={() => setShowSettings(true)}
