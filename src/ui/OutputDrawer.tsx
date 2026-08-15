@@ -124,10 +124,9 @@ export default function OutputDrawer({ logs, running, onCancel }: Props) {
       const e = logs[i];
       if (e.kind === "exited") {
         term.write(`\x1b[2m—— 进程已退出（code ${e.code ?? "信号"}）——\x1b[0m\r\n`);
-      } else if (e.kind === "stderr") {
-        term.write(`\x1b[31m${e.line}\x1b[0m\r\n`);
       } else {
-        term.write(`${e.line}\r\n`);
+        // PTY 原始字节：ANSI/光标控制交给 xterm 解析（进度条原地刷新）
+        term.write(e.data);
       }
     }
     writtenRef.current = logs.length;

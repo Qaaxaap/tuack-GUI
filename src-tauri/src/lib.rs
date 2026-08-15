@@ -3,18 +3,17 @@
 
 use std::collections::HashMap;
 use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::Stdio;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use path_clean::PathClean;
+use portable_pty::{Child, CommandBuilder, PtySize};
 use serde_json::Value;
 use tauri::ipc::Channel;
 use tauri::Manager;
-use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Child;
 
 /// 窗口图标：深色主题用白描边版、浅色主题用黑描边版
 const ICON_LIGHT: &[u8] = include_bytes!("../icons/icon-light.png");
@@ -160,9 +159,13 @@ enum DumpTarget {
 #[derive(serde::Serialize, Clone)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 enum ProcessEvent {
-    Stdout { line: String },
-    Stderr { line: String },
-    Exited { code: Option<i32> },
+    /// PTY 原始输出（stdout/stderr 已合并，含 ANSI/光标控制序列）
+    Output {
+        data: String,
+    },
+    Exited {
+        code: Option<i32>,
+    },
 }
 
 fn gen_target_str(t: &GenTarget) -> &'static str {
@@ -391,7 +394,7 @@ fn open_project(start: String) -> Result<Project, String> {
 
 struct AppState {
     tuack_path: Mutex<Option<PathBuf>>,
-    children: Arc<Mutex<HashMap<u64, Child>>>,
+    children: Arc<Mutex<HashMap<u64, Box<dyn Child + Send + Sync>>>>,
     next_id: Arc<AtomicU64>,
 }
 
@@ -468,6 +471,43 @@ fn detect_tuack(state: tauri::State<AppState>) -> Result<BinaryInfo, String> {
         .ok_or_else(|| "未找到 tuack-ng，请点「设置」指定路径".to_string())
 }
 
+/// 增量 UTF-8 解码：把 data 追加到 pending，完整字符立即输出，结尾不完整的
+/// 多字节序列保留在 pending 等后续数据。
+fn push_utf8(pending: &mut Vec<u8>, data: &[u8], out: &mut Vec<String>) {
+    pending.extend_from_slice(data);
+    let len = pending.len();
+    let lead_width = |b: u8| -> usize {
+        match b {
+            0xf0..=0xf7 => 4,
+            0xe0..=0xef => 3,
+            0xc0..=0xdf => 2,
+            _ => 1,
+        }
+    };
+    let mut cut = len;
+    // 结尾有续字节：回退到前导字节
+    let mut i = len;
+    while i > 0 && pending[i - 1] & 0b1100_0000 == 0b1000_0000 {
+        i -= 1;
+    }
+    if i < len {
+        if i > 0 && pending[i - 1] & 0b1100_0000 == 0b1100_0000 {
+            let need = lead_width(pending[i - 1]);
+            if len - (i - 1) < need {
+                cut = i - 1; // 序列不完整，保留
+            }
+        } else {
+            cut = i; // 孤儿续字节，丢弃
+        }
+    } else if len > 0 && pending[len - 1] & 0b1100_0000 == 0b1100_0000 {
+        cut = len - 1; // 结尾恰是前导字节，序列未收完
+    }
+    if cut > 0 {
+        out.push(String::from_utf8_lossy(&pending[..cut]).into_owned());
+        pending.drain(..cut);
+    }
+}
+
 #[tauri::command]
 async fn run_command(
     cmd: Command,
@@ -480,51 +520,69 @@ async fn run_command(
 
     let id = state.next_id.fetch_add(1, Ordering::Relaxed);
 
-    let mut command = tokio::process::Command::new(&exe);
-    command
-        .args(build_argv(&cmd))
-        .current_dir(&cwd)
-        .env("CLICOLOR_FORCE", "1")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    // Windows：tuack-ng 是控制台程序，不设标志会闪一个黑终端窗口
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
-    }
+    // 用 PTY 运行 tuack-ng：其进度条（indicatif）只在检测到 TTY 时才绘制，
+    // 管道会被它判定为非终端而静默隐藏。
+    let pty_system = portable_pty::native_pty_system();
+    let pair = pty_system
+        .openpty(PtySize {
+            rows: 24,
+            cols: 100,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+        .map_err(|e| format!("创建伪终端失败：{e}"))?;
+
+    let mut builder = CommandBuilder::new(&exe);
+    builder.args(build_argv(&cmd));
+    builder.cwd(&cwd);
+    builder.env("CLICOLOR_FORCE", "1");
+    #[cfg(unix)]
+    builder.env("TERM", "xterm-256color");
     // 把 sidecar 目录加进 PATH，让 tuack-ng 能找到同捆的 typst
     if let Some(dir) = sidecar_dir() {
         let existing = std::env::var("PATH").unwrap_or_default();
         let sep = if cfg!(windows) { ";" } else { ":" };
-        command.env("PATH", format!("{}{}{}", dir.display(), sep, existing));
+        builder.env("PATH", format!("{}{}{}", dir.display(), sep, existing));
     }
-    let mut child = command
-        .spawn()
+
+    let child = pair
+        .slave
+        .spawn_command(builder)
         .map_err(|e| format!("启动 tuack-ng 失败：{e}"))?;
+    drop(pair.slave);
 
-    let stdout = child.stdout.take().ok_or("无法捕获 stdout")?;
-    let stderr = child.stderr.take().ok_or("无法捕获 stderr")?;
+    let mut reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| format!("读取伪终端失败：{e}"))?;
 
+    // 读取线程：原始字节 → 增量 UTF-8 解码 → Output 事件
     let ev = on_event.clone();
-    tauri::async_runtime::spawn(async move {
-        let mut lines = BufReader::new(stdout).lines();
-        while let Ok(Some(line)) = lines.next_line().await {
-            let _ = ev.send(ProcessEvent::Stdout { line });
+    std::thread::spawn(move || {
+        let mut buf = [0u8; 4096];
+        let mut pending: Vec<u8> = Vec::new();
+        loop {
+            match reader.read(&mut buf) {
+                Ok(0) | Err(_) => break,
+                Ok(n) => {
+                    let mut chunks: Vec<String> = Vec::new();
+                    push_utf8(&mut pending, &buf[..n], &mut chunks);
+                    for c in chunks {
+                        let _ = ev.send(ProcessEvent::Output { data: c });
+                    }
+                }
+            }
         }
-    });
-
-    let ev = on_event.clone();
-    tauri::async_runtime::spawn(async move {
-        let mut lines = BufReader::new(stderr).lines();
-        while let Ok(Some(line)) = lines.next_line().await {
-            let _ = ev.send(ProcessEvent::Stderr { line });
+        if !pending.is_empty() {
+            let _ = ev.send(ProcessEvent::Output {
+                data: String::from_utf8_lossy(&pending).into_owned(),
+            });
         }
     });
 
     state.children.lock().unwrap().insert(id, child);
 
+    // 退出轮询
     let children = state.children.clone();
     let ev = on_event.clone();
     tauri::async_runtime::spawn(async move {
@@ -535,7 +593,7 @@ async fn run_command(
                     Some(c) => match c.try_wait() {
                         Ok(Some(status)) => {
                             map.remove(&id);
-                            Some(status.code())
+                            Some(status.exit_code() as i32)
                         }
                         Ok(None) => None,
                         Err(_) => {
@@ -543,11 +601,11 @@ async fn run_command(
                             None
                         }
                     },
-                    None => Some(None),
+                    None => Some(-1),
                 }
             };
             if let Some(code) = code {
-                let _ = ev.send(ProcessEvent::Exited { code });
+                let _ = ev.send(ProcessEvent::Exited { code: Some(code) });
                 break;
             }
             tokio::time::sleep(std::time::Duration::from_millis(100)).await;
@@ -560,7 +618,7 @@ async fn run_command(
 #[tauri::command]
 fn cancel_command(id: u64, state: tauri::State<AppState>) -> Result<(), String> {
     if let Some(child) = state.children.lock().unwrap().get_mut(&id) {
-        let _ = child.start_kill();
+        let _ = child.kill();
     }
     Ok(())
 }

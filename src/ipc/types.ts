@@ -68,8 +68,7 @@ export type Command =
   | { command: "conf-migrate" };
 
 export type ProcessEvent =
-  | { kind: "stdout"; line: string }
-  | { kind: "stderr"; line: string }
+  | { kind: "output"; data: string }
   | { kind: "exited"; code: number | null };
 
 

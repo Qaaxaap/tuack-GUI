@@ -113,7 +113,7 @@ export default function App() {
     })
       .then(setRunId)
       .catch((err) => {
-        setLogs((prev) => [...prev, { kind: "stderr", line: String(err) }]);
+        setLogs((prev) => [...prev, { kind: "output", data: String(err) }]);
         setRunning(false);
       });
   }
