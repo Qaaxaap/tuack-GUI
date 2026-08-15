@@ -3,17 +3,19 @@
 
 import ConfigEditor from "./ConfigEditor";
 import type { NodeKind, Project } from "../ipc/types";
+import type { AppTheme } from "../theme";
 
 interface Props {
   project: Project | null;
   selected: { dir: string; kind: NodeKind } | null;
+  theme: AppTheme;
 }
 
-export default function MainPanel({ project, selected }: Props) {
+export default function MainPanel({ project, selected, theme }: Props) {
   return (
     <main className="flex min-h-0 flex-1 flex-col">
       {selected ? (
-        <ConfigEditor path={`${selected.dir}/conf.json`} dir={selected.dir} kind={selected.kind} />
+        <ConfigEditor path={`${selected.dir}/conf.json`} dir={selected.dir} kind={selected.kind} theme={theme} />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
           {project ? (

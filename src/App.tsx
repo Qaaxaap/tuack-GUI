@@ -12,13 +12,16 @@ import {
   detectTuack,
   getFonts,
   getLastProject,
+  getTheme,
   listDir,
   openProject,
   runCommand,
   saveLastProject,
+  setTheme,
   setTuackPath,
 } from "./ipc";
 import { applyFonts } from "./fonts";
+import { applyTheme, normalizeTheme, type AppTheme } from "./theme";
 import type { Command, LastProject, NodeKind, ProcessEvent, Project } from "./ipc/types";
 
 export default function App() {
@@ -31,6 +34,7 @@ export default function App() {
   const [runId, setRunId] = useState<number | null>(null);
   const [lastProject, setLastProject] = useState<LastProject | null>(null);
   const [pdfPath, setPdfPath] = useState<string | null>(null);
+  const [theme, setThemeState] = useState<AppTheme>("dark");
 
   async function refreshTuack() {
     try {
@@ -52,6 +56,13 @@ export default function App() {
       .catch(() => {});
     getFonts()
       .then((f) => applyFonts(f.ui_font, f.mono_font))
+      .catch(() => {});
+    getTheme()
+      .then((t) => {
+        const th = normalizeTheme(t);
+        applyTheme(th);
+        setThemeState(th);
+      })
       .catch(() => {});
   }, []);
 
@@ -99,6 +110,13 @@ export default function App() {
     if (runId != null) cancelCommand(runId);
   }
 
+  function handleToggleTheme() {
+    const next: AppTheme = theme === "dark" ? "light" : "dark";
+    applyTheme(next);
+    setThemeState(next);
+    setTheme(next).catch(() => {});
+  }
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <Toolbar
@@ -107,13 +125,15 @@ export default function App() {
         hasProject={project != null}
         selectedDir={selected?.dir ?? ""}
         lastProject={lastProject}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
         onOpenProject={handleOpenProject}
         onSetTuack={handleSetTuack}
         onRunCommand={handleRun}
       />
       <div className="flex min-h-0 flex-1">
         <SideBar project={project} selectedDir={selected?.dir ?? ""} onSelect={(dir, kind) => setSelected({ dir, kind })} />
-        <MainPanel project={project} selected={selected} />
+        <MainPanel project={project} selected={selected} theme={theme} />
       </div>
       <OutputDrawer logs={logs} running={running} onCancel={handleCancel} />
       {pdfPath && <PdfViewer path={pdfPath} onClose={() => setPdfPath(null)} />}

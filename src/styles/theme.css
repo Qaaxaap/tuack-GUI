@@ -3,6 +3,7 @@
 
 @import "tailwindcss";
 
+/* —— 深色（默认）—— */
 :root {
   color-scheme: dark;
 
@@ -17,11 +18,30 @@
   --brand-hover: #818cf8;
   --success: #34d399;
   --danger: #f87171;
+  --row-hover: rgba(255, 255, 255, 0.05);
   --radius: 8px;
 
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Microsoft YaHei", sans-serif;
   --font-mono: "Maple Mono NF CN", "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+
+  /* —— ANSI 前景色（输出抽屉用，跟随主题）—— */
+  --ansi-0: #000000;
+  --ansi-1: #cd3131;
+  --ansi-2: #0dbc79;
+  --ansi-3: #e5e510;
+  --ansi-4: #2472c8;
+  --ansi-5: #bc3fbc;
+  --ansi-6: #11a8cd;
+  --ansi-7: #e5e5e5;
+  --ansi-bright-0: #666666;
+  --ansi-bright-1: #f14c4c;
+  --ansi-bright-2: #23d18b;
+  --ansi-bright-3: #f5f543;
+  --ansi-bright-4: #3b8eea;
+  --ansi-bright-5: #d670d6;
+  --ansi-bright-6: #29b8db;
+  --ansi-bright-7: #ffffff;
 
   /* —— shadcn 令牌（映射到调色板）—— */
   --background: #161616;
@@ -41,6 +61,59 @@
   --destructive: #f87171;
   --destructive-foreground: #ffffff;
   --input: #2c2c2c;
+  --ring: #6366f1;
+}
+
+/* —— 浅色 —— */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #ffffff;
+  --bg-raised: #f3f3f3;
+  --bg-card: #f6f6f6;
+  --border: #e4e4e4;
+  --text: #1f1f1f;
+  --text-muted: #717171;
+  --brand: #6366f1;
+  --brand-hover: #4f46e5;
+  --success: #15803d;
+  --danger: #dc2626;
+  --row-hover: rgba(0, 0, 0, 0.05);
+
+  --ansi-0: #000000;
+  --ansi-1: #cd3131;
+  --ansi-2: #00bc00;
+  --ansi-3: #949800;
+  --ansi-4: #0451a5;
+  --ansi-5: #bc05bc;
+  --ansi-6: #0598bc;
+  --ansi-7: #555555;
+  --ansi-bright-0: #666666;
+  --ansi-bright-1: #cd3131;
+  --ansi-bright-2: #14ce14;
+  --ansi-bright-3: #b5ba00;
+  --ansi-bright-4: #0451a5;
+  --ansi-bright-5: #bc05bc;
+  --ansi-bright-6: #0598bc;
+  --ansi-bright-7: #a5a5a5;
+
+  --background: #ffffff;
+  --foreground: #1f1f1f;
+  --card: #f6f6f6;
+  --card-foreground: #1f1f1f;
+  --popover: #ffffff;
+  --popover-foreground: #1f1f1f;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f3f3;
+  --secondary-foreground: #1f1f1f;
+  --muted: #f3f3f3;
+  --muted-foreground: #717171;
+  --accent: #ececec;
+  --accent-foreground: #1f1f1f;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --input: #d4d4d4;
   --ring: #6366f1;
 }
 
@@ -86,7 +159,6 @@ body {
   overflow: hidden;
 }
 
-
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -99,4 +171,12 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #444444;
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
 }

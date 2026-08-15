@@ -7,8 +7,9 @@ export interface AnsiSegment {
   bold?: boolean;
 }
 
-const FG = ["#000000", "#cd3131", "#0dbc79", "#e5e510", "#2472c8", "#bc3fbc", "#11a8cd", "#e5e5e5"];
-const BRIGHT = ["#666666", "#f14c4c", "#23d18b", "#f5f543", "#3b8eea", "#d670d6", "#29b8db", "#ffffff"];
+// 颜色用 CSS 变量，跟随深色/浅色主题（theme.css 里定义）
+const FG = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => `var(--ansi-${i})`);
+const BRIGHT = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => `var(--ansi-bright-${i})`);
 
 const SGR = /\x1b\[([0-9;]*)m/g;
 

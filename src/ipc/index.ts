@@ -74,6 +74,14 @@ export function setFonts(uiFont: string, monoFont: string): Promise<void> {
   return invoke("set_fonts", { uiFont, monoFont });
 }
 
+export function getTheme(): Promise<string> {
+  return invoke<string>("get_theme");
+}
+
+export function setTheme(theme: string): Promise<void> {
+  return invoke("set_theme", { theme });
+}
+
 export function readFileBase64(path: string): Promise<string> {
   return invoke<string>("read_file_base64", { path });
 }

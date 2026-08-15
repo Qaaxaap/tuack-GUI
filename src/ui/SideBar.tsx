@@ -78,7 +78,7 @@ function ContestItem({
   const [open, setOpen] = useState(true);
   return (
     <div>
-      <div className="group flex items-center hover:bg-white/5" style={rowStyle(selectedDir === node.dir)}>
+      <div className="group flex items-center hover:bg-[var(--row-hover)]" style={rowStyle(selectedDir === node.dir)}>
         <Button
           variant="ghost"
           onClick={() => {
@@ -115,7 +115,7 @@ function DayItem({
   const [open, setOpen] = useState(false);
   return (
     <div>
-      <div className="group flex items-center hover:bg-white/5" style={rowStyle(selectedDir === node.dir)}>
+      <div className="group flex items-center hover:bg-[var(--row-hover)]" style={rowStyle(selectedDir === node.dir)}>
         <Button
           variant="ghost"
           onClick={() => {
@@ -150,7 +150,7 @@ function ProblemItem({
   onSelect: (dir: string, kind: NodeKind) => void;
 }) {
   return (
-    <div className="group flex items-center hover:bg-white/5" style={rowStyle(selectedDir === node.dir)}>
+    <div className="group flex items-center hover:bg-[var(--row-hover)]" style={rowStyle(selectedDir === node.dir)}>
       <Button
         variant="ghost"
         onClick={() => onSelect(node.dir, "problem")}

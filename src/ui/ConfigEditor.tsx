@@ -11,6 +11,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { readConfig, writeConfig } from "../ipc";
 import type { NodeKind } from "../ipc/types";
+import type { AppTheme } from "../theme";
 import Select from "./Select";
 import Checkbox from "./Checkbox";
 import TestDataEditor from "./TestDataEditor";
@@ -64,9 +65,10 @@ interface Props {
   path: string;
   dir: string;
   kind: NodeKind;
+  theme: AppTheme;
 }
 
-export default function ConfigEditor({ path, dir, kind }: Props) {
+export default function ConfigEditor({ path, dir, kind, theme }: Props) {
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [tab, setTab] = useState<"form" | "json" | "data" | "score">("form");
   const [jsonText, setJsonText] = useState("");
@@ -220,7 +222,7 @@ export default function ConfigEditor({ path, dir, kind }: Props) {
                 value={jsonText}
                 onChange={setJsonText}
                 extensions={[json()]}
-                theme="dark"
+                theme={theme}
                 height="100%"
                 style={{ fontSize: 12, height: "100%" }}
               />

@@ -571,6 +571,7 @@ struct Settings {
     file_manager: Option<String>,
     ui_font: Option<String>,
     mono_font: Option<String>,
+    theme: Option<String>,
 }
 
 fn settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -759,6 +760,36 @@ fn set_fonts(app: tauri::AppHandle, ui_font: String, mono_font: String) -> Resul
     save_settings(&app, &settings)
 }
 
+/// 让原生标题栏与窗口底色跟随主题（前端负责内容区配色）
+fn apply_window_theme(app: &tauri::AppHandle, theme: &str) {
+    if let Some(win) = app.get_webview_window("main") {
+        let t = if theme == "light" {
+            Some(tauri::Theme::Light)
+        } else {
+            Some(tauri::Theme::Dark)
+        };
+        let _ = win.set_theme(t);
+        let bg = if theme == "light" { "#ffffff" } else { "#161616" };
+        let _ = win.set_background_color(bg.parse::<tauri::utils::config::Color>().ok());
+    }
+}
+
+#[tauri::command]
+fn get_theme(app: tauri::AppHandle) -> String {
+    load_settings(&app)
+        .theme
+        .unwrap_or_else(|| "dark".to_string())
+}
+
+#[tauri::command]
+fn set_theme(app: tauri::AppHandle, theme: String) -> Result<(), String> {
+    let theme = theme.trim().to_string();
+    apply_window_theme(&app, &theme);
+    let mut settings = load_settings(&app);
+    settings.theme = Some(theme);
+    save_settings(&app, &settings)
+}
+
 #[tauri::command]
 fn read_file_base64(path: String) -> Result<String, String> {
     let bytes = fs::read(&path).map_err(|e| format!("读取文件失败：{e}"))?;
@@ -812,6 +843,10 @@ pub fn run() {
         .manage(AppState::default())
         .setup(|app| {
             ensure_assets(app.handle());
+            let theme = load_settings(app.handle()).theme.unwrap_or_default();
+            if !theme.is_empty() {
+                apply_window_theme(app.handle(), &theme);
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -832,6 +867,8 @@ pub fn run() {
             set_file_manager,
             get_fonts,
             set_fonts,
+            get_theme,
+            set_theme,
             read_file_base64,
             read_text_file
         ])

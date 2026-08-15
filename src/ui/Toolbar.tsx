@@ -11,7 +11,7 @@ import {
 } from "../components/ui/dropdown-menu";
 
 import { useEffect, useState } from "react";
-import { Play, Plus, ChevronDown, FolderOpen, Settings, Type } from "lucide-react";
+import { Play, Plus, ChevronDown, FolderOpen, Settings, Type, Sun, Moon } from "lucide-react";
 import tuackNgIcon from "../assets/tuack-ng.svg";
 import CommandPanel from "./CommandPanel";
 import FontSettingsModal from "./FontSettingsModal";
@@ -19,6 +19,7 @@ import NewProjectModal from "./NewProjectModal";
 import PathPicker from "./PathPicker";
 import { getFileManager, saveFileManager } from "../ipc";
 import type { Command } from "../ipc/types";
+import type { AppTheme } from "../theme";
 
 interface Props {
   binaryOk: boolean;
@@ -26,6 +27,8 @@ interface Props {
   hasProject: boolean;
   selectedDir: string;
   lastProject: { path: string; name: string } | null;
+  theme: AppTheme;
+  onToggleTheme: () => void;
   onOpenProject: (path: string) => Promise<void>;
   onSetTuack: (path: string) => Promise<void>;
   onRunCommand: (cmd: Command, cwd: string) => void;
@@ -37,6 +40,8 @@ export default function Toolbar({
   hasProject,
   selectedDir,
   lastProject,
+  theme,
+  onToggleTheme,
   onOpenProject,
   onSetTuack,
   onRunCommand,
@@ -132,6 +137,10 @@ export default function Toolbar({
             <DropdownMenuItem onClick={() => setShowFonts(true)}>
               <Type />
               字体设置…
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onToggleTheme}>
+              {theme === "dark" ? <Sun /> : <Moon />}
+              {theme === "dark" ? "切换浅色模式" : "切换深色模式"}
             </DropdownMenuItem>
             {fileManager && (
               <DropdownMenuItem

@@ -93,7 +93,7 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
                   if (e.is_dir) load(e.path);
                   else setSelected(e.path);
                 }}
-                className="flex cursor-pointer items-center gap-2 px-2 py-1 hover:bg-white/5"
+                className="flex cursor-pointer items-center gap-2 px-2 py-1 hover:bg-[var(--row-hover)]"
                 style={{ color: selected === e.path ? "var(--brand)" : "var(--text)" }}
               >
                 {e.is_dir ? (
