@@ -761,7 +761,8 @@ fn ensure_assets(app: &tauri::AppHandle) {
     let Ok(resource) = app.path().resource_dir() else {
         return;
     };
-    let src = resource.join("assets");
+    // bundle.resources 是 ["binaries/assets"]，所以 assets 落在 resource_dir()/binaries/assets/
+    let src = resource.join("binaries").join("assets");
     if !src.exists() {
         return;
     }
