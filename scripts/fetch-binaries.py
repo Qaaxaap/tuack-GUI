@@ -45,7 +45,9 @@ def main() -> None:
     typst_asset, tuack_asset, exe = TARGETS[target]
 
     bin_dir = Path(__file__).resolve().parent.parent / "src-tauri" / "binaries"
-    assets_dir = bin_dir / "assets"
+    # assets 单独放 src-tauri/assets：打包时作为 resources 落到安装目录根
+    # （Windows 下 tuack-ng 原生从 exe 同目录 assets/ 读取，无需运行时复制）
+    assets_dir = Path(__file__).resolve().parent.parent / "src-tauri" / "assets"
     assets_dir.mkdir(parents=True, exist_ok=True)
 
     # ---- typst ----

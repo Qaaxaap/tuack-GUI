@@ -481,11 +481,21 @@ fn resolve_tuack(state: &AppState) -> Option<(PathBuf, Source)> {
             return Some((p, Source::External));
         }
     }
-    // 2. 内置 sidecar（与可执行文件同目录）
+    // 2. 内置 sidecar（与可执行文件同目录，发布版布局）
     if let Some(dir) = sidecar_dir() {
         let exe = dir.join(format!("tuack-ng{}", std::env::consts::EXE_SUFFIX));
         if exe.is_file() {
             return Some((exe, Source::Bundled));
+        }
+    }
+    // 2b. 开发模式：scripts/fetch-binaries.py 下载到 src-tauri/binaries/
+    #[cfg(debug_assertions)]
+    if let Ok(target) = tauri::utils::platform::target_triple() {
+        let dev = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("binaries")
+            .join(format!("tuack-ng-{target}{}", std::env::consts::EXE_SUFFIX));
+        if dev.is_file() {
+            return Some((dev, Source::Bundled));
         }
     }
     // 3. 系统 PATH
@@ -575,6 +585,11 @@ async fn run_command(
     builder.env("CLICOLOR_FORCE", "1");
     #[cfg(unix)]
     builder.env("TERM", "xterm-256color");
+    // Linux：让子进程 tuack-ng 读应用专属数据目录里的 assets（与独立安装隔离）
+    #[cfg(unix)]
+    if let Some(dir) = tuack_data_dir() {
+        builder.env("XDG_DATA_HOME", dir);
+    }
     // 把 sidecar 目录加进 PATH，让 tuack-ng 能找到同捆的 typst
     if let Some(dir) = sidecar_dir() {
         let existing = std::env::var("PATH").unwrap_or_default();
@@ -993,17 +1008,35 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-/// 首次启动时，把捆绑的 assets 复制到 tuack-ng 的数据目录（tuack-ng 从这里找 scaffold/checkers/langs.json）
-fn ensure_assets(app: &tauri::AppHandle) {
-    let Ok(resource) = app.path().resource_dir() else {
+/// 应用专属的 tuack-ng 数据根目录（隔离独立安装的 tuack-ng，避免资产版本冲突）
+fn tuack_data_dir() -> Option<PathBuf> {
+    dirs::data_local_dir().map(|d| d.join("tuack-gui"))
+}
+
+/// 首次启动时，把捆绑的 assets 放到 tuack-ng 能读到的地方
+fn ensure_assets(_app: &tauri::AppHandle) {
+    // Windows：assets 作为 resources 打进安装目录（与 tuack-ng.exe 同级），
+    // tuack-ng 原生从 exe 同目录 assets/ 读取，无需运行时复制、不碰 LocalAppData。
+    #[cfg(windows)]
+    {
         return;
+    }
+
+    // Linux/macOS：复制到应用专属数据目录，运行时通过 XDG_DATA_HOME
+    // 让子进程 tuack-ng 读这里（而不是共享的 ~/.local/share/tuack-ng）
+    #[cfg(debug_assertions)]
+    let src = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
+    #[cfg(not(debug_assertions))]
+    let src = {
+        let Ok(resource) = _app.path().resource_dir() else {
+            return;
+        };
+        resource.join("assets")
     };
-    // bundle.resources 是 ["binaries/assets"]，所以 assets 落在 resource_dir()/binaries/assets/
-    let src = resource.join("binaries").join("assets");
     if !src.exists() {
         return;
     }
-    let Some(dst) = dirs::data_local_dir().map(|d| d.join("tuack-ng")) else {
+    let Some(dst) = tuack_data_dir().map(|d| d.join("tuack-ng")) else {
         return;
     };
     // 已存在则跳过（简化：不做版本同步）
