@@ -17,6 +17,8 @@ interface FieldSpec {
   label: string;
   kind: FieldKind;
   options?: string[];
+  /** 与 options 对齐的显示标签（本地化） */
+  labels?: string[];
   placeholder?: string;
   defaultValue?: string;
 }
@@ -50,8 +52,8 @@ const COMMANDS: CommandSpec[] = [
   {
     id: "dmk", label: "生成数据（dmk）",
     fields: [
-      { key: "target", label: "目标", kind: "select", options: ["data", "sample"] },
-      { key: "action", label: "操作", kind: "select", options: ["gen", "regen", "reset"] },
+      { key: "target", label: "目标", kind: "select", options: ["data", "sample"], labels: ["正式数据", "样例"] },
+      { key: "action", label: "操作", kind: "select", options: ["gen", "regen", "reset"], labels: ["生成", "重新生成", "重置"] },
       { key: "object", label: "对象", kind: "text", placeholder: "all（或 1,2-3）", defaultValue: "all" },
       { key: "validate", label: "生成后校验", kind: "select", options: ["默认", "是", "否"], defaultValue: "默认" },
     ],
@@ -66,7 +68,7 @@ const COMMANDS: CommandSpec[] = [
   {
     id: "validate", label: "校验输入（validate）",
     fields: [
-      { key: "target", label: "目标", kind: "select", options: ["data", "sample"] },
+      { key: "target", label: "目标", kind: "select", options: ["data", "sample"], labels: ["正式数据", "样例"] },
       { key: "object", label: "对象", kind: "text", placeholder: "all（或 1,2-3）", defaultValue: "all" },
     ],
     build: (v) => ({ command: "validate", target: v.target as DataTarget, object: v.object || "all" }),
@@ -153,7 +155,10 @@ export default function CommandPanel({ defaultCwd, onRun, onClose }: Props) {
             {f.kind === "select" ? (
               <Select
                 value={values[f.key] ?? f.options?.[0] ?? ""}
-                options={(f.options ?? []).map((o) => ({ value: o, label: o }))}
+                options={(f.options ?? []).map((o, i) => ({
+                  value: o,
+                  label: f.labels?.[i] ?? o,
+                }))}
                 onChange={(v) => setVal(f.key, v)}
               />
             ) : (

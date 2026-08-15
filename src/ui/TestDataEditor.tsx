@@ -15,7 +15,12 @@ type DataRow =
 
 type Patch = { score?: number; subtask?: number; dmk?: string; input?: string; output?: string };
 
-const DMK_OPTS = ["skip", "input", "output", "on"];
+const DMK_OPTS = [
+  { value: "skip", label: "忽略" },
+  { value: "input", label: "只生成输入" },
+  { value: "output", label: "只生成输出" },
+  { value: "on", label: "启用" },
+];
 
 function parse(value: unknown): DataRow[] {
   if (!Array.isArray(value)) return [];
@@ -218,7 +223,7 @@ export default function TestDataEditor({ value, onChange }: Props) {
                 <td className="p-1">
                   <Select
                     value={r.dmk}
-                    options={DMK_OPTS.map((o) => ({ value: o, label: o }))}
+                    options={DMK_OPTS}
                     onChange={(v) => updateRow(i, { dmk: v })}
                   />
                 </td>

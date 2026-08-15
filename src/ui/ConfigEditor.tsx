@@ -24,6 +24,8 @@ interface FieldDef {
   label: string;
   type: FieldType;
   options?: string[];
+  /** 与 options 对齐的显示标签（本地化） */
+  labels?: string[];
 }
 
 const FIELDS: Record<NodeKind, FieldDef[]> = {
@@ -47,10 +49,10 @@ const FIELDS: Record<NodeKind, FieldDef[]> = {
   problem: [
     { key: "name", label: "名称", type: "text" },
     { key: "title", label: "标题", type: "text" },
-    { key: "type", label: "类型", type: "enum", options: ["program", "output", "interactive"] },
+    { key: "type", label: "类型", type: "enum", options: ["program", "output", "interactive"], labels: ["传统题", "提交答案题", "交互题"] },
     { key: "time limit", label: "时间限制（秒）", type: "number" },
     { key: "memory limit", label: "内存限制", type: "text" },
-    { key: "dmk", label: "数据生成", type: "enum", options: ["skip", "input", "output", "on"] },
+    { key: "dmk", label: "数据生成", type: "enum", options: ["skip", "input", "output", "on"], labels: ["忽略", "只生成输入", "只生成输出", "启用"] },
   ],
 };
 
@@ -164,7 +166,10 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
                     {f.type === "enum" ? (
                       <Select
                         value={String(raw ?? "")}
-                        options={(f.options ?? []).map((o) => ({ value: o, label: o }))}
+                        options={(f.options ?? []).map((o, i) => ({
+                          value: o,
+                          label: f.labels?.[i] ?? o,
+                        }))}
                         onChange={(v) => setField(f.key, v)}
                       />
                     ) : f.type === "number" ? (
