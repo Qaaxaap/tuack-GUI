@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import ConfigEditor from "./ConfigEditor";
 import PreviewPane from "./PreviewPane";
+import StatementEditor from "./StatementEditor";
 import type { NodeKind, Project } from "../ipc/types";
 import type { AppTheme } from "../theme";
 
@@ -19,8 +20,10 @@ interface Props {
   onRender: () => void;
 }
 
-/** 低于该宽度时配置 / 预览退化为切换 tab（类比 Qt resizeEvent 动态换布局） */
+/** 低于该宽度时配置 / 编辑 / 预览退化为切换 tab（类比 Qt resizeEvent 动态换布局） */
 const SPLIT_WIDTH = 880;
+
+type MainView = "config" | "edit" | "preview";
 
 export default function MainPanel({
   project,
@@ -33,7 +36,7 @@ export default function MainPanel({
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [narrow, setNarrow] = useState(false);
-  const [view, setView] = useState<"config" | "preview">("config");
+  const [view, setView] = useState<MainView>("config");
 
   useEffect(() => {
     const el = containerRef.current;
@@ -44,6 +47,11 @@ export default function MainPanel({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // 变宽后「预览」不再作为左栏视图：预览常驻右栏
+  useEffect(() => {
+    if (!narrow && view === "preview") setView("config");
+  }, [narrow, view]);
 
   const showPreview = selected != null && selected.kind !== "contest";
 
@@ -58,6 +66,8 @@ export default function MainPanel({
     />
   ) : null;
 
+  const editor = selected && showPreview ? <StatementEditor dir={selected.dir} /> : null;
+
   const preview = selected && showPreview ? (
     <PreviewPane
       dir={selected.dir}
@@ -69,9 +79,9 @@ export default function MainPanel({
     />
   ) : null;
 
-  return (
-    <main ref={containerRef} className="flex min-h-0 flex-1 flex-col">
-      {!selected ? (
+  if (!selected) {
+    return (
+      <main ref={containerRef} className="flex min-h-0 flex-1 flex-col">
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
           {project ? (
             <>
@@ -94,40 +104,67 @@ export default function MainPanel({
             </>
           )}
         </div>
-      ) : showPreview && narrow ? (
-        <>
-          <div
-            className="flex shrink-0 items-center gap-1 px-3 py-2"
-            style={{ borderBottom: "1px solid var(--border)" }}
+      </main>
+    );
+  }
+
+  // 比赛根节点：只有配置，无编辑/预览
+  if (!showPreview) {
+    return (
+      <main ref={containerRef} className="flex min-h-0 flex-1 flex-col">
+        {config}
+      </main>
+    );
+  }
+
+  // 宽屏隐藏「预览」项（预览常驻右栏）；窄屏三项全显
+  const views: { id: MainView; label: string }[] = narrow
+    ? [
+        { id: "config", label: "配置" },
+        { id: "edit", label: "编辑" },
+        { id: "preview", label: "预览" },
+      ]
+    : [
+        { id: "config", label: "配置" },
+        { id: "edit", label: "编辑" },
+      ];
+
+  const leftContent = view === "edit" ? editor : config;
+
+  return (
+    <main ref={containerRef} className="flex min-h-0 flex-1 flex-col">
+      <div
+        className="flex shrink-0 items-center gap-1 px-3 py-2"
+        style={{ borderBottom: "1px solid var(--border)" }}
+      >
+        {views.map((v) => (
+          <button
+            key={v.id}
+            onClick={() => setView(v.id)}
+            className="rounded px-3 py-1 text-xs"
+            style={
+              view === v.id
+                ? { backgroundColor: "var(--brand)", color: "#fff" }
+                : { color: "var(--text-muted)" }
+            }
           >
-            {(["config", "preview"] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className="rounded px-3 py-1 text-xs"
-                style={
-                  view === v
-                    ? { backgroundColor: "var(--brand)", color: "#fff" }
-                    : { color: "var(--text-muted)" }
-                }
-              >
-                {v === "config" ? "配置" : "预览"}
-              </button>
-            ))}
-          </div>
-          <div className="min-h-0 flex-1">{view === "config" ? config : preview}</div>
-        </>
-      ) : showPreview ? (
+            {v.label}
+          </button>
+        ))}
+      </div>
+      {narrow ? (
+        <div className="min-h-0 flex-1">
+          {view === "config" ? config : view === "edit" ? editor : preview}
+        </div>
+      ) : (
         <div className="flex min-h-0 flex-1">
           <div className="min-w-0 overflow-hidden" style={{ flex: "50 1 0%" }}>
-            {config}
+            {leftContent}
           </div>
           <div className="min-w-0 overflow-hidden" style={{ flex: "50 1 0%" }}>
             {preview}
           </div>
         </div>
-      ) : (
-        config
       )}
     </main>
   );
