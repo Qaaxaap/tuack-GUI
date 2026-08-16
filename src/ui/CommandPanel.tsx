@@ -179,7 +179,7 @@ export default function CommandPanel({ defaultCwd, projectRoot, onRun, onClose }
 
         <div className="mb-2 flex gap-2">
           <div className="w-28 shrink-0">
-            <Label className="mb-1 block">分类</Label>
+            <Label className="mb-1 block">分组</Label>
             <Select
               value={catId}
               options={CATEGORIES.map((c) => ({ value: c.id, label: c.label }))}
