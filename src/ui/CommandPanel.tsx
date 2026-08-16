@@ -28,22 +28,34 @@ interface FieldSpec {
 interface CommandSpec {
   id: string;
   label: string;
+  /** 功能分类（见 CATEGORIES） */
+  cat: string;
   fields: FieldSpec[];
   build: (v: Record<string, string>) => Command;
 }
+
+const CATEGORIES = [
+  { id: "gen", label: "生成" },
+  { id: "test", label: "测试" },
+  { id: "data", label: "数据" },
+  { id: "ren", label: "渲染" },
+  { id: "dump", label: "导出" },
+  { id: "doc", label: "文档" },
+  { id: "conf", label: "配置" },
+];
 
 function splitNames(s: string): string[] {
   return s.trim() ? s.trim().split(/\s+/) : [];
 }
 
 const COMMANDS: CommandSpec[] = [
-  { id: "gen-data", label: "生成数据（gen data）", fields: [], build: () => ({ command: "gen", target: "data", names: [], confirm: true }) },
-  { id: "gen-samples", label: "生成样例（gen samples）", fields: [], build: () => ({ command: "gen", target: "samples", names: [], confirm: true }) },
-  { id: "gen-all", label: "生成全部（gen all）", fields: [], build: () => ({ command: "gen", target: "all", names: [], confirm: true }) },
-  { id: "test-data", label: "测试正式数据（test data）", fields: [], build: () => ({ command: "test", target: "data" }) },
-  { id: "test-sample", label: "测试样例（test sample）", fields: [], build: () => ({ command: "test", target: "sample" }) },
+  { id: "gen-data", label: "生成数据（gen data）", cat: "gen", fields: [], build: () => ({ command: "gen", target: "data", names: [], confirm: true }) },
+  { id: "gen-samples", label: "生成样例（gen samples）", cat: "gen", fields: [], build: () => ({ command: "gen", target: "samples", names: [], confirm: true }) },
+  { id: "gen-all", label: "生成全部（gen all）", cat: "gen", fields: [], build: () => ({ command: "gen", target: "all", names: [], confirm: true }) },
+  { id: "test-data", label: "测试正式数据（test data）", cat: "test", fields: [], build: () => ({ command: "test", target: "data" }) },
+  { id: "test-sample", label: "测试样例（test sample）", cat: "test", fields: [], build: () => ({ command: "test", target: "sample" }) },
   {
-    id: "ren", label: "渲染题面（ren）",
+    id: "ren", label: "渲染题面（ren）", cat: "ren",
     fields: [
       { key: "template", label: "模板名", kind: "templates", defaultValue: "__default__" },
       { key: "keep_tmp", label: "保留临时目录", kind: "select", options: ["否", "是"] },
@@ -52,7 +64,7 @@ const COMMANDS: CommandSpec[] = [
     build: (v) => ({ command: "ren", template: v.template, keep_tmp: v.keep_tmp === "是", no_auto_open: v.no_auto_open === "是" }),
   },
   {
-    id: "dmk", label: "生成数据（dmk）",
+    id: "dmk", label: "生成数据（dmk）", cat: "data",
     fields: [
       { key: "target", label: "目标", kind: "select", options: ["data", "sample"], labels: ["正式数据", "样例"] },
       { key: "action", label: "操作", kind: "select", options: ["gen", "regen", "reset"], labels: ["生成", "重新生成", "重置"] },
@@ -68,7 +80,7 @@ const COMMANDS: CommandSpec[] = [
     }),
   },
   {
-    id: "validate", label: "校验输入（validate）",
+    id: "validate", label: "校验输入（validate）", cat: "data",
     fields: [
       { key: "target", label: "目标", kind: "select", options: ["data", "sample"], labels: ["正式数据", "样例"] },
       { key: "object", label: "对象", kind: "object", placeholder: "如 1,2-3,4-10（留空 = 全部）", defaultValue: "all" },
@@ -76,37 +88,37 @@ const COMMANDS: CommandSpec[] = [
     build: (v) => ({ command: "validate", target: v.target as DataTarget, object: v.object || "all" }),
   },
   {
-    id: "dump", label: "导出（dump）",
+    id: "dump", label: "导出（dump）", cat: "dump",
     fields: [{ key: "target", label: "目标", kind: "select", options: ["lemon", "arbiter"] }],
     build: (v) => ({ command: "dump", target: v.target as DumpTarget }),
   },
   {
-    id: "doc-format", label: "文档格式化（doc format）",
+    id: "doc-format", label: "文档格式化（doc format）", cat: "doc",
     fields: [{ key: "explain", label: "解释规则（可选）", kind: "text", placeholder: "留空 = 全部" }],
     build: (v) => ({ command: "doc-format", explain: v.explain.trim() || null }),
   },
   {
-    id: "doc-check", label: "文档检查（doc check）",
+    id: "doc-check", label: "文档检查（doc check）", cat: "doc",
     fields: [{ key: "explain", label: "解释规则（可选）", kind: "text", placeholder: "留空 = 全部" }],
     build: (v) => ({ command: "doc-check", explain: v.explain.trim() || null }),
   },
-  { id: "doc-validate", label: "文档校验（doc validate）", fields: [], build: () => ({ command: "doc-validate" }) },
+  { id: "doc-validate", label: "文档校验（doc validate）", cat: "doc", fields: [], build: () => ({ command: "doc-validate" }) },
   {
-    id: "conf-title", label: "批量设置标题（conf title）",
+    id: "conf-title", label: "批量设置标题（conf title）", cat: "conf",
     fields: [{ key: "values", label: "标题（按顺序，空格分隔）", kind: "text", placeholder: "标题1 标题2" }],
     build: (v) => ({ command: "conf-title", values: splitNames(v.values) }),
   },
   {
-    id: "conf-time", label: "批量设置时限（conf time）",
+    id: "conf-time", label: "批量设置时限（conf time）", cat: "conf",
     fields: [{ key: "values", label: "时限（按顺序，空格分隔）", kind: "text", placeholder: "1.0 2.0" }],
     build: (v) => ({ command: "conf-time", values: splitNames(v.values) }),
   },
   {
-    id: "conf-length", label: "批量设置时长（conf length）",
+    id: "conf-length", label: "批量设置时长（conf length）", cat: "conf",
     fields: [{ key: "values", label: "时长（按顺序，空格分隔）", kind: "text", placeholder: "4.0 4.5" }],
     build: (v) => ({ command: "conf-length", values: splitNames(v.values) }),
   },
-  { id: "conf-migrate", label: "迁移配置（conf migrate）", fields: [], build: () => ({ command: "conf-migrate" }) },
+  { id: "conf-migrate", label: "迁移配置（conf migrate）", cat: "conf", fields: [], build: () => ({ command: "conf-migrate" }) },
 ];
 
 interface Props {
@@ -117,6 +129,7 @@ interface Props {
 }
 
 export default function CommandPanel({ defaultCwd, projectRoot, onRun, onClose }: Props) {
+  const [catId, setCatId] = useState(CATEGORIES[0].id);
   const [cmdId, setCmdId] = useState(COMMANDS[0].id);
   const [cwd, setCwd] = useState(defaultCwd);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -164,12 +177,31 @@ export default function CommandPanel({ defaultCwd, projectRoot, onRun, onClose }
       <DialogContent className="w-[min(640px,80vw)] rounded-lg p-4">
         <div className="mb-3 text-sm" style={{ color: "var(--text)" }}>运行命令</div>
 
-        <Label className="mb-1 block">命令</Label>
-        <Select
-          value={cmdId}
-          options={COMMANDS.map((c) => ({ value: c.id, label: c.label }))}
-          onChange={setCmdId}
-        />
+        <div className="mb-2 flex gap-2">
+          <div className="w-28 shrink-0">
+            <Label className="mb-1 block">分类</Label>
+            <Select
+              value={catId}
+              options={CATEGORIES.map((c) => ({ value: c.id, label: c.label }))}
+              onChange={(v) => {
+                setCatId(v);
+                const first = COMMANDS.find((c) => c.cat === v);
+                if (first) setCmdId(first.id);
+              }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <Label className="mb-1 block">命令</Label>
+            <Select
+              value={cmdId}
+              options={COMMANDS.filter((c) => c.cat === catId).map((c) => ({
+                value: c.id,
+                label: c.label,
+              }))}
+              onChange={setCmdId}
+            />
+          </div>
+        </div>
 
         {spec.fields.map((f) => (
           <div key={f.key} className="mb-2">
