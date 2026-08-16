@@ -24,11 +24,13 @@ interface Props {
   path: string;
   /** 相对「适应宽度」的缩放倍率（≤1）：1 = 适应宽度，0.5 = 缩小一半 */
   zoom?: number;
+  /** 文件被覆盖（如重新渲染）后自增，强制重新读取渲染 */
+  refreshKey?: number;
 }
 
 /** 内嵌 PDF 渲染器：按适应宽度整本渲染（物理像素级清晰），
     缩放 ≤1 通过 transform 即时完成，页面宽度永不超过容器 */
-export default function PdfCanvas({ path, zoom = 1 }: Props) {
+export default function PdfCanvas({ path, zoom = 1, refreshKey = 0 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pagesRef = useRef<PageEntry[]>([]);
   const renderSeq = useRef(0);
@@ -125,7 +127,7 @@ export default function PdfCanvas({ path, zoom = 1 }: Props) {
       renderSeq.current++;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path, width, dpr]);
+  }, [path, width, dpr, refreshKey]);
 
   // 缩放：仅 transform，即时生效
   useEffect(() => {

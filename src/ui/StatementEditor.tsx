@@ -1,7 +1,7 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { Save } from "lucide-react";
@@ -32,11 +32,15 @@ export default function StatementEditor({
   theme,
 }: Props) {
   const path = `${dir}/statement.md`;
+  /** CodeMirror 视图引用：保存时直接读编辑器里的真实文档，绕开受控值同步竞态 */
+  const viewRef = useRef<EditorView | null>(null);
   const [content, setContent] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [missing, setMissing] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  /** 保存时正有命令在跑：命令结束后补一次渲染 */
+  const [pendingRen, setPendingRen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -65,17 +69,35 @@ export default function StatementEditor({
     if (saving || !loaded) return;
     setSaving(true);
     try {
-      await writeTextFile(path, content);
+      // 直接读编辑器视图里的真实文档（屏幕上是什么就写什么），
+      // 绕开受控 value 的同步竞态
+      const text = viewRef.current?.state.doc.toString() ?? content;
+      await writeTextFile(path, text);
+      setContent(text);
       setDirty(false);
-      // 有命令在跑（如上一次自动渲染）时不叠加启动 ren，避免并发冲突；
-      // 文件已写盘，之后可手动点预览栏「重新渲染」
-      if (autoRen && !running) onRender();
+      // 有命令在跑（如上一次自动渲染）时不叠加启动 ren，排队等它结束再渲染
+      if (autoRen) {
+        if (running) {
+          setPendingRen(true);
+        } else {
+          onRender();
+        }
+      }
     } catch (e) {
       reportError(`保存题面失败：${e}`);
     } finally {
       setSaving(false);
     }
   }
+
+  // 命令结束后补一次排队中的渲染
+  useEffect(() => {
+    if (!running && pendingRen) {
+      setPendingRen(false);
+      onRender();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running, pendingRen]);
 
   const status = saving ? "保存中…" : dirty ? "未保存" : "已保存";
 
@@ -132,10 +154,15 @@ export default function StatementEditor({
         <CodeMirror
           key={dir}
           value={content}
+          onCreateEditor={(view) => {
+            viewRef.current = view;
+          }}
           onChange={(v) => {
             setContent(v);
             setDirty(true);
           }}
+          // 文件读完前禁编辑，避免加载回写覆盖刚输入的内容
+          editable={loaded}
           // 题面是长段落文本：软折行，编辑器宽度锁死，不随行宽横向增长
           extensions={[markdown(), EditorView.lineWrapping]}
           theme={theme}

@@ -141,7 +141,7 @@ export default function PreviewPane({ dir, template, refreshKey, running, onRend
       </div>
       <div className="min-h-0 flex-1">
         {pdf ? (
-          <PdfCanvas path={pdf} zoom={zoom} />
+          <PdfCanvas path={pdf} zoom={zoom} refreshKey={refreshKey} />
         ) : probing ? (
           <div className="flex h-full items-center justify-center p-4 text-xs" style={{ color: "var(--text-muted)" }}>
             查找渲染结果…
