@@ -22,11 +22,12 @@ interface PageEntry {
 
 interface Props {
   path: string;
-  /** 相对「适应宽度」的缩放倍率：1 = 适应宽度，1.5 = 放大 50% */
+  /** 相对「适应宽度」的缩放倍率（≤1）：1 = 适应宽度，0.5 = 缩小一半 */
   zoom?: number;
 }
 
-/** 内嵌 PDF 渲染器：整本渲染。缩放先 transform 即时响应，后台再重渲染清晰版 */
+/** 内嵌 PDF 渲染器：按适应宽度整本渲染（物理像素级清晰），
+    缩放 ≤1 通过 transform 即时完成，页面宽度永不超过容器 */
 export default function PdfCanvas({ path, zoom = 1 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pagesRef = useRef<PageEntry[]>([]);
@@ -55,8 +56,8 @@ export default function PdfCanvas({ path, zoom = 1 }: Props) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  /** 按 targetZoom（相对适应宽度）渲染整本并替换内容；旧的在途渲染用 seq 失效 */
-  async function renderAll(targetZoom: number) {
+  /** 按适应宽度渲染整本并替换内容；旧的在途渲染用 seq 失效 */
+  async function renderAll() {
     if (width <= 0) return;
     const seq = ++renderSeq.current;
     setError("");
@@ -77,7 +78,7 @@ export default function PdfCanvas({ path, zoom = 1 }: Props) {
         const base = page.getViewport({ scale: 1 });
         const fit = Math.max(0.5, width / base.width);
         // 位图按物理像素渲染（×dpr），高分屏 125%/150% 缩放下文字不糊
-        const viewport = page.getViewport({ scale: fit * targetZoom * dpr });
+        const viewport = page.getViewport({ scale: fit * dpr });
         const cssW = viewport.width / dpr;
         const cssH = viewport.height / dpr;
         const canvas = document.createElement("canvas");
@@ -104,7 +105,8 @@ export default function PdfCanvas({ path, zoom = 1 }: Props) {
     }
   }
 
-  /** 对已渲染的「适应宽度」位图做 transform 缩放：即时、零开销 */
+  /** 对已渲染的「适应宽度」位图做 transform 缩放：即时、零开销；
+      zoom ≤ 1 时位图只会被缩小显示，清晰度不变差 */
   function applyZoom(z: number) {
     for (const p of pagesRef.current) {
       p.wrapper.style.width = `${p.fitW * z}px`;
@@ -116,7 +118,7 @@ export default function PdfCanvas({ path, zoom = 1 }: Props) {
   // 主渲染：宽度 / dpr / 文件变化时按适应宽度渲染，再补上当前缩放变换
   useEffect(() => {
     (async () => {
-      await renderAll(1);
+      await renderAll();
       applyZoom(zoomRef.current);
     })();
     return () => {
@@ -125,13 +127,9 @@ export default function PdfCanvas({ path, zoom = 1 }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, width, dpr]);
 
-  // 缩放：先 transform（即时反馈），150ms 后后台重渲染清晰版替换
+  // 缩放：仅 transform，即时生效
   useEffect(() => {
     applyZoom(zoom);
-    if (zoom === 1) return;
-    const t = setTimeout(() => renderAll(zoom), 150);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoom]);
 
   return (

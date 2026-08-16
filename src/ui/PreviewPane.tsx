@@ -39,7 +39,8 @@ async function findPdfAny(parent: string): Promise<string | null> {
 }
 
 const ZOOM_MIN = 0.5;
-const ZOOM_MAX = 3;
+/** 上限 = 适应宽度（100%）：页面永不超过预览列宽，不出现横向裁剪 */
+const ZOOM_MAX = 1;
 const clampZoom = (v: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v));
 
 export default function PreviewPane({ dir, template, refreshKey, running, onRender, bordered }: Props) {
