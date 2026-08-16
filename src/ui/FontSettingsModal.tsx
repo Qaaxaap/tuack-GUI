@@ -24,7 +24,7 @@ export default function FontSettingsModal({ onClose }: Props) {
         setUiFont(f.ui_font);
         setMonoFont(f.mono_font);
       })
-      .catch(() => {});
+      .catch((e) => reportError(`读取字体设置失败：${e}`));
   }, []);
 
   function save() {
@@ -35,7 +35,7 @@ export default function FontSettingsModal({ onClose }: Props) {
         applyFonts(ui, mono);
         onClose();
       })
-      .catch(() => {});
+      .catch((e) => reportError(`保存字体设置失败：${e}`));
   }
 
   return (

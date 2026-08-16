@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import Select from "./Select";
 import { getRenDefaults, setRenProject } from "../ipc";
 import { TEMPLATES } from "../templates";
+import { reportError } from "../errors";
 import type { Command, DataTarget, DmkAction, DumpTarget, RenDefaults } from "../ipc/types";
 
 type FieldKind = "text" | "select" | "object" | "templates";
@@ -140,7 +141,7 @@ export default function CommandPanel({ defaultCwd, projectRoot, onRun, onClose }
   useEffect(() => {
     getRenDefaults(projectRoot)
       .then(setRenDefaults)
-      .catch(() => {});
+      .catch((e) => reportError(`读取 ren 默认模板失败：${e}`));
   }, [projectRoot]);
 
   useEffect(() => {
@@ -164,7 +165,7 @@ export default function CommandPanel({ defaultCwd, projectRoot, onRun, onClose }
       const t = (eff["template"] ?? "").trim();
       if (t && t !== "__default__") {
         // 显式选了模板：记忆为项目默认
-        setRenProject(projectRoot, t).catch(() => {});
+        setRenProject(projectRoot, t).catch((e) => reportError(`记忆项目模板失败：${e}`));
       } else {
         eff["template"] = resolvedTemplate;
       }

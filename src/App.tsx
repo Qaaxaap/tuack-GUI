@@ -30,7 +30,7 @@ import {
 } from "./ipc";
 import { applyFonts } from "./fonts";
 import { applyTheme, normalizeTheme, type AppTheme } from "./theme";
-import { reportError } from "../errors";
+import { reportError } from "./errors";
 import type { Command, LastProject, NodeKind, ProcessEvent, Project, Source } from "./ipc/types";
 
 export default function App() {

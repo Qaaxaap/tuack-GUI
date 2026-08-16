@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { readConfig, writeConfig, getRenDefaults, setRenProject } from "../ipc";
+import { reportError } from "../errors";
 import type { NodeKind } from "../ipc/types";
 import type { AppTheme } from "../theme";
 import { TEMPLATES } from "../templates";
@@ -90,7 +91,7 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
       // 项目级 GUI 配置（存于项目根 .tuack-gui.json）
       getRenDefaults(dir)
         .then((d) => setRenProjectState(d.project ?? ""))
-        .catch(() => {});
+        .catch((e) => reportError(`读取项目 ren 模板失败：${e}`));
     }
   }, [path, kind, dir]);
 
@@ -260,7 +261,7 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
                   onChange={(v) => {
                     const t = v === "__unset__" ? "" : v;
                     setRenProjectState(t);
-                    setRenProject(dir, t).catch(() => {});
+                    setRenProject(dir, t).catch((e) => reportError(`保存项目 ren 模板失败：${e}`));
                   }}
                 />
                 <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
