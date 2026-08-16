@@ -70,9 +70,11 @@ interface Props {
   dir: string;
   kind: NodeKind;
   theme: AppTheme;
+  running: boolean;
+  projectRoot: string;
 }
 
-export default function ConfigEditor({ path, dir, kind, theme }: Props) {
+export default function ConfigEditor({ path, dir, kind, theme, running, projectRoot }: Props) {
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [tab, setTab] = useState<"form" | "json" | "data" | "score" | "gui">("form");
   const [jsonText, setJsonText] = useState("");
@@ -228,7 +230,7 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
           <TestDataEditor value={config?.["data"]} onChange={(v) => setField("data", v)} />
         </TabsContent>
         <TabsContent value="score">
-          <Scoreboard dir={dir} />
+          <Scoreboard dir={dir} running={running} projectRoot={projectRoot} />
         </TabsContent>
         <TabsContent value="json">
           <div className="flex h-full min-h-0 flex-col gap-2">

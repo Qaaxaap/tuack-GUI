@@ -27,6 +27,7 @@ import {
   saveLastProject,
   setTheme,
   setTuackPath,
+  snapshotScore,
 } from "./ipc";
 import { applyFonts } from "./fonts";
 import { applyTheme, normalizeTheme, type AppTheme } from "./theme";
@@ -139,6 +140,10 @@ export default function App() {
               .catch((e) => reportError(`刷新工程失败：${e}`));
           }
         }
+        if (e.code === 0 && cmd.command === "test" && project) {
+          // 记分板历史：test 成功后保存快照
+          snapshotScore(project.root, cwd).catch(() => {});
+        }
         if (cmd.command === "ren") {
           const dir = `${cwd}/statements/${cmd.template}`;
           listDir(dir)
@@ -202,7 +207,7 @@ export default function App() {
             setRemoveTarget({ parentDir, name, kind });
           }}
         />
-        <MainPanel project={project} selected={selected} theme={theme} />
+        <MainPanel project={project} selected={selected} theme={theme} running={running} />
       </div>
       <OutputDrawer logs={logs} running={running} runId={runId} onCancel={handleCancel} />
       {pdfPath && <PdfViewer path={pdfPath} onClose={() => setPdfPath(null)} />}

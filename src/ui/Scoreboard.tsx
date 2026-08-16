@@ -1,8 +1,10 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { useEffect, useState } from "react";
-import { readTextFile } from "../ipc";
+import { useCallback, useEffect, useState } from "react";
+import { getScoreHistory, readTextFile } from "../ipc";
+import type { ScoreSnapshot } from "../ipc/types";
+import Select from "./Select";
 
 interface Row {
   tester: string;
@@ -61,6 +63,33 @@ function col(header: string[], ...names: string[]): number {
   return -1;
 }
 
+function parseRows(text: string): Row[] {
+  const grid = parseCsv(text);
+  if (grid.length < 2) return [];
+  const h = grid[0];
+  const c = {
+    tester: col(h, "测试者"),
+    id: col(h, "测试点 ID"),
+    status: col(h, "状态"),
+    score: col(h, "得分"),
+    full: col(h, "满分", "最高分"),
+    time: col(h, "时间"),
+    mem: col(h, "空间"),
+  };
+  return grid
+    .slice(1)
+    .map((r) => ({
+      tester: r[c.tester] ?? "",
+      testId: r[c.id] ?? "",
+      status: r[c.status] ?? "",
+      score: r[c.score] ?? "",
+      full: r[c.full] ?? "",
+      time: r[c.time] ?? "",
+      memory: r[c.mem] ?? "",
+    }))
+    .filter((r) => r.tester !== "");
+}
+
 function statusColor(s: string): string {
   if (s === "AC") return "#23d18b";
   if (s === "WA") return "#f14c4c";
@@ -115,48 +144,79 @@ function Table({ rows }: { rows: Row[] }) {
   );
 }
 
-export default function Scoreboard({ dir }: { dir: string }) {
+interface Props {
+  dir: string;
+  running: boolean;
+  projectRoot: string;
+}
+
+export default function Scoreboard({ dir, running, projectRoot }: Props) {
   const [rows, setRows] = useState<Row[]>([]);
   const [sampleRows, setSampleRows] = useState<Row[]>([]);
+  const [history, setHistory] = useState<ScoreSnapshot[]>([]);
+  const [selected, setSelected] = useState(""); // "" = 当前
+
+  const loadCurrent = useCallback(async () => {
+    try {
+      setRows(parseRows(await readTextFile(`${dir}/result.csv`)));
+    } catch {
+      setRows([]);
+    }
+    try {
+      setSampleRows(parseRows(await readTextFile(`${dir}/result-sample.csv`)));
+    } catch {
+      setSampleRows([]);
+    }
+  }, [dir]);
 
   useEffect(() => {
-    async function loadCsv(path: string): Promise<Row[]> {
-      try {
-        const text = await readTextFile(path);
-        const grid = parseCsv(text);
-        if (grid.length < 2) return [];
-        const h = grid[0];
-        const c = {
-          tester: col(h, "测试者"),
-          id: col(h, "测试点 ID"),
-          status: col(h, "状态"),
-          score: col(h, "得分"),
-          full: col(h, "满分", "最高分"),
-          time: col(h, "时间"),
-          mem: col(h, "空间"),
-        };
-        return grid
-          .slice(1)
-          .map((r) => ({
-            tester: r[c.tester] ?? "",
-            testId: r[c.id] ?? "",
-            status: r[c.status] ?? "",
-            score: r[c.score] ?? "",
-            full: r[c.full] ?? "",
-            time: r[c.time] ?? "",
-            memory: r[c.mem] ?? "",
-          }))
-          .filter((r) => r.tester !== "");
-      } catch {
-        return [];
-      }
+    loadCurrent();
+    getScoreHistory(projectRoot, dir)
+      .then(setHistory)
+      .catch(() => {});
+  }, [dir, projectRoot, loadCurrent]);
+
+  // 测试运行中每秒轮询，评测过程实时可见
+  useEffect(() => {
+    if (!running) return;
+    const timer = setInterval(loadCurrent, 1000);
+    return () => clearInterval(timer);
+  }, [running, loadCurrent]);
+
+  // 选中历史快照时展示快照内容
+  useEffect(() => {
+    const snap = history.find((h) => h.time === selected);
+    if (snap) {
+      setRows(parseRows(snap.csv));
+      setSampleRows(parseRows(snap.sample_csv));
+    } else {
+      loadCurrent();
     }
-    loadCsv(`${dir}/result.csv`).then(setRows);
-    loadCsv(`${dir}/result-sample.csv`).then(setSampleRows);
-  }, [dir]);
+  }, [selected, history, loadCurrent]);
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+          记录
+        </span>
+        <div className="w-52">
+          <Select
+            value={selected}
+            options={[
+              { value: "", label: running ? "当前（运行中…）" : "当前" },
+              ...history.map((h) => ({ value: h.time, label: h.time })),
+            ]}
+            onChange={setSelected}
+          />
+        </div>
+        {running && (
+          <span className="text-xs" style={{ color: "var(--brand)" }}>
+            实时刷新中
+          </span>
+        )}
+      </div>
+
       <div>
         <div className="mb-1 text-xs font-medium" style={{ color: "var(--text)" }}>
           正式数据（result.csv）

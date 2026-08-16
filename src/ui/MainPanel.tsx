@@ -9,13 +9,21 @@ interface Props {
   project: Project | null;
   selected: { dir: string; kind: NodeKind } | null;
   theme: AppTheme;
+  running: boolean;
 }
 
-export default function MainPanel({ project, selected, theme }: Props) {
+export default function MainPanel({ project, selected, theme, running }: Props) {
   return (
     <main className="flex min-h-0 flex-1 flex-col">
       {selected ? (
-        <ConfigEditor path={`${selected.dir}/conf.json`} dir={selected.dir} kind={selected.kind} theme={theme} />
+        <ConfigEditor
+          path={`${selected.dir}/conf.json`}
+          dir={selected.dir}
+          kind={selected.kind}
+          theme={theme}
+          running={running}
+          projectRoot={project?.root ?? ""}
+        />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
           {project ? (
