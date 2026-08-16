@@ -28,7 +28,7 @@ export default function LinuxTitlebar({ title }: { title: string }) {
   return (
     <div
       data-tauri-drag-region="deep"
-      className="flex h-8 shrink-0 items-center justify-between pl-3 pr-1"
+      className="flex h-7 shrink-0 items-center justify-between pl-3 pr-1"
       style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
     >
       <span className="truncate text-xs" style={{ color: "var(--text-muted)" }}>
