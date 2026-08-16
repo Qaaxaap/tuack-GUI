@@ -1,7 +1,7 @@
 {
   "name": "tuack-gui",
   "private": true,
-  "version": "1.0.0-rc3",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
