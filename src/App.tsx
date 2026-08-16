@@ -17,6 +17,7 @@ import {
   cancelCommand,
   clearTuackPath,
   detectTuack,
+  getAutoRen,
   getFonts,
   getLastProject,
   getRenDefaults,
@@ -24,6 +25,7 @@ import {
   openProject,
   runCommand,
   saveLastProject,
+  setAutoRen,
   setTheme,
   setTuackPath,
   snapshotScore,
@@ -54,6 +56,8 @@ export default function App() {
   } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showMissing, setShowMissing] = useState(false);
+  /** 保存题面后自动 ren（默认开，持久化于 settings.json） */
+  const [autoRen, setAutoRenState] = useState(true);
 
   async function refreshTuack() {
     try {
@@ -85,6 +89,9 @@ export default function App() {
         setThemeState(th);
       })
       .catch((e) => reportError(`加载主题设置失败：${e}`));
+    getAutoRen()
+      .then(setAutoRenState)
+      .catch((e) => reportError(`读取自动渲染设置失败：${e}`));
   }, []);
 
   // 打开 / 刷新工程后读取 ren 默认模板（预览探测 statements/<template>/ 用）
@@ -190,6 +197,12 @@ export default function App() {
     setTheme(next).catch((e) => reportError(`保存主题设置失败：${e}`));
   }
 
+  /** 切换「保存题面后自动渲染」并持久化 */
+  function handleToggleAutoRen(v: boolean) {
+    setAutoRenState(v);
+    setAutoRen(v).catch((e) => reportError(`保存自动渲染设置失败：${e}`));
+  }
+
   /** 执行命令类操作前的守卫：未检测到 tuack-ng 时弹提示并拦截 */
   function requireTuack(): boolean {
     if (binaryOk) return true;
@@ -232,6 +245,8 @@ export default function App() {
           template={resolvedTemplate}
           refreshKey={previewRefresh}
           onRender={handleRenderSelected}
+          autoRen={autoRen}
+          onAutoRenChange={handleToggleAutoRen}
         />
       </div>
       <OutputDrawer logs={logs} running={running} runId={runId} onCancel={handleCancel} />

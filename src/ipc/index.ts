@@ -129,3 +129,15 @@ export function readFileBase64(path: string): Promise<string> {
 export function readTextFile(path: string): Promise<string> {
   return invoke<string>("read_text_file", { path });
 }
+
+export function writeTextFile(path: string, content: string): Promise<void> {
+  return invoke<void>("write_text_file", { path, content });
+}
+
+export function getAutoRen(): Promise<boolean> {
+  return invoke<boolean>("get_auto_ren");
+}
+
+export function setAutoRen(enabled: boolean): Promise<void> {
+  return invoke<void>("set_auto_ren", { enabled });
+}

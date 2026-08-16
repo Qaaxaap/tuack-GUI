@@ -764,6 +764,8 @@ struct Settings {
     theme: Option<String>,
     /// ren 全局默认模板
     ren_template: Option<String>,
+    /// 保存题面后是否自动 ren 刷新预览（默认开）
+    auto_ren: Option<bool>,
 }
 
 fn settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -1004,6 +1006,18 @@ fn get_theme(app: tauri::AppHandle) -> String {
 }
 
 #[tauri::command]
+fn get_auto_ren(app: tauri::AppHandle) -> bool {
+    load_settings(&app).auto_ren.unwrap_or(true)
+}
+
+#[tauri::command]
+fn set_auto_ren(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    let mut settings = load_settings(&app);
+    settings.auto_ren = Some(enabled);
+    save_settings(&app, &settings)
+}
+
+#[tauri::command]
 fn set_theme(app: tauri::AppHandle, theme: String) -> Result<(), String> {
     let theme = theme.trim().to_string();
     apply_window_theme(&app, &theme);
@@ -1021,6 +1035,11 @@ fn read_file_base64(path: String) -> Result<String, String> {
 #[tauri::command]
 fn read_text_file(path: String) -> Result<String, String> {
     fs::read_to_string(&path).map_err(|e| format!("读取文件失败：{e}"))
+}
+
+#[tauri::command]
+fn write_text_file(path: String, content: String) -> Result<(), String> {
+    fs::write(&path, content).map_err(|e| format!("写入文件失败：{e}"))
 }
 
 fn copy_dir_recursive(src: &Path, dst: &Path) -> std::io::Result<()> {
@@ -1257,7 +1276,10 @@ pub fn run() {
             snapshot_score,
             get_score_history,
             read_file_base64,
-            read_text_file
+            read_text_file,
+            write_text_file,
+            get_auto_ren,
+            set_auto_ren
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

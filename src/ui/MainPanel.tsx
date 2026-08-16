@@ -18,6 +18,9 @@ interface Props {
   /** ren 成功后自增，触发预览重新探测 */
   refreshKey: number;
   onRender: () => void;
+  /** 保存题面后自动 ren（默认开） */
+  autoRen: boolean;
+  onAutoRenChange: (v: boolean) => void;
 }
 
 /** 低于该宽度时配置 / 编辑 / 预览退化为切换 tab（类比 Qt resizeEvent 动态换布局） */
@@ -33,6 +36,8 @@ export default function MainPanel({
   template,
   refreshKey,
   onRender,
+  autoRen,
+  onAutoRenChange,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [narrow, setNarrow] = useState(false);
@@ -66,7 +71,16 @@ export default function MainPanel({
     />
   ) : null;
 
-  const editor = selected && showPreview ? <StatementEditor dir={selected.dir} /> : null;
+  const editor = selected && selected.kind === "problem" ? (
+    <StatementEditor
+      dir={selected.dir}
+      autoRen={autoRen}
+      onAutoRenChange={onAutoRenChange}
+      onRender={onRender}
+      running={running}
+      theme={theme}
+    />
+  ) : null;
 
   const preview = selected && showPreview ? (
     <PreviewPane
@@ -117,17 +131,14 @@ export default function MainPanel({
     );
   }
 
-  // 宽屏隐藏「预览」项（预览常驻右栏）；窄屏三项全显
-  const views: { id: MainView; label: string }[] = narrow
-    ? [
-        { id: "config", label: "配置" },
-        { id: "edit", label: "编辑" },
-        { id: "preview", label: "预览" },
-      ]
-    : [
-        { id: "config", label: "配置" },
-        { id: "edit", label: "编辑" },
-      ];
+  // 宽屏隐藏「预览」项（预览常驻右栏）；窄屏全显；
+  // 场次节点无单一题面源，不出「编辑」项
+  const isProblem = selected.kind === "problem";
+  const views: { id: MainView; label: string }[] = [
+    { id: "config", label: "配置" },
+    ...(isProblem ? ([{ id: "edit", label: "编辑" }] as const) : []),
+    ...(narrow ? ([{ id: "preview", label: "预览" }] as const) : []),
+  ];
 
   const leftContent = view === "edit" ? editor : config;
 
