@@ -183,7 +183,7 @@ export default function App() {
 
   /** 预览占位区的「渲染」按钮：对当前选中节点按默认模板跑 ren */
   function handleRenderSelected() {
-    if (!selected || selected.kind === "contest" || !requireTuack()) return;
+    if (!selected || selected.kind === "contest" || running || !requireTuack()) return;
     handleRun(
       { command: "ren", template: resolvedTemplate, keep_tmp: false, no_auto_open: true },
       selected.dir,

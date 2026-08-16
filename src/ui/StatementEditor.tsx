@@ -62,13 +62,14 @@ export default function StatementEditor({
   }, [path]);
 
   async function save() {
-    if (saving || running) return;
+    if (saving || !loaded) return;
     setSaving(true);
     try {
       await writeTextFile(path, content);
       setDirty(false);
-      // 保存后按设置自动渲染刷新预览
-      if (autoRen) onRender();
+      // 有命令在跑（如上一次自动渲染）时不叠加启动 ren，避免并发冲突；
+      // 文件已写盘，之后可手动点预览栏「重新渲染」
+      if (autoRen && !running) onRender();
     } catch (e) {
       reportError(`保存题面失败：${e}`);
     } finally {
@@ -112,7 +113,7 @@ export default function StatementEditor({
             variant="default"
             size="sm"
             onClick={save}
-            disabled={saving || running || !loaded}
+            disabled={saving || !loaded}
           >
             <Save className="mr-1 h-3.5 w-3.5" />
             保存
