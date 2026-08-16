@@ -8,35 +8,15 @@ import { useState } from "react";
 import { Plus, Trash2, Combine, Split } from "lucide-react";
 import Select from "./Select";
 import Checkbox from "./Checkbox";
+import ArgsEditorDialog from "./ArgsEditorDialog";
 
 type DataRow =
-  | { kind: "single"; id: number; score: number; subtask: number; input: string; output: string; dmk: string; args: string }
-  | { kind: "bundle"; ids: number[]; score: number; subtask: number; dmk: string; args: string };
+  | { kind: "single"; id: number; score: number; subtask: number; input: string; output: string; dmk: string; args: Record<string, unknown> }
+  | { kind: "bundle"; ids: number[]; score: number; subtask: number; dmk: string; args: Record<string, unknown> };
 
-type Patch = { score?: number; subtask?: number; dmk?: string; input?: string; output?: string; args?: string };
+type Patch = { score?: number; subtask?: number; dmk?: string; input?: string; output?: string; args?: Record<string, unknown> };
 
-function argsText(v: unknown): string {
-  if (v === null || v === undefined) return "{}";
-  if (typeof v === "object") return JSON.stringify(v);
-  return String(v);
-}
 
-function parseArgs(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text; // 非法 JSON 原样保留，交由高级 JSON 修正
-  }
-}
-
-function isValidJson(text: string): boolean {
-  try {
-    JSON.parse(text);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 const DMK_OPTS = [
   { value: "skip", label: "忽略" },
@@ -56,7 +36,10 @@ function parse(value: unknown): DataRow[] {
         score: Number(item.score ?? 0),
         subtask: Number(item.subtask ?? 0),
         dmk: String(item.dmk ?? "skip"),
-        args: argsText(item.args),
+        args:
+          item.args && typeof item.args === "object"
+            ? ({ ...(item.args as Record<string, unknown>) })
+            : {},
       });
     } else {
       const id = Number(item.id ?? 0);
@@ -68,7 +51,10 @@ function parse(value: unknown): DataRow[] {
         input: typeof item.input === "string" ? item.input : `${id}.in`,
         output: typeof item.output === "string" ? item.output : `${id}.ans`,
         dmk: String(item.dmk ?? "skip"),
-        args: argsText(item.args),
+        args:
+          item.args && typeof item.args === "object"
+            ? ({ ...(item.args as Record<string, unknown>) })
+            : {},
       });
     }
   }
@@ -78,9 +64,9 @@ function parse(value: unknown): DataRow[] {
 function serialize(rows: DataRow[]): unknown[] {
   return rows.map((r) => {
     if (r.kind === "bundle") {
-      return { id: r.ids, score: r.score, subtask: r.subtask, dmk: r.dmk, args: parseArgs(r.args) };
+      return { id: r.ids, score: r.score, subtask: r.subtask, dmk: r.dmk, args: r.args };
     }
-    return { id: r.id, score: r.score, subtask: r.subtask, input: r.input, output: r.output, dmk: r.dmk, args: parseArgs(r.args) };
+    return { id: r.id, score: r.score, subtask: r.subtask, input: r.input, output: r.output, dmk: r.dmk, args: r.args };
   });
 }
 
@@ -110,6 +96,7 @@ const POLICY_OPTS = [
 export default function TestDataEditor({ value, onChange, subtasks, onSubtasksChange }: Props) {
   const rows = parse(value);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [argsRow, setArgsRow] = useState<number | null>(null);
 
   // 展示策略的编号：subtasks 已有键 + 数据行里引用但未配置的
   const subtaskIds = (() => {
@@ -140,7 +127,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
     const id = maxId(rows) + 1;
     commit([
       ...rows,
-      { kind: "single", id, score: 0, subtask: 0, input: `${id}.in`, output: `${id}.ans`, dmk: "skip", args: "{}" },
+      { kind: "single", id, score: 0, subtask: 0, input: `${id}.in`, output: `${id}.ans`, dmk: "skip", args: {} },
     ]);
   }
 
@@ -302,14 +289,14 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
                   />
                 </td>
                 <td className="p-1">
-                  <Input
-                    type="text"
-                    className="h-6 px-1.5 text-xs"
-                    style={isValidJson(r.args) ? undefined : { borderColor: "var(--danger)" }}
-                    value={r.args}
-                    title={isValidJson(r.args) ? undefined : "JSON 格式无效"}
-                    onChange={(e) => updateRow(i, { args: e.target.value })}
-                  />
+                  <Button
+                    variant="ghost"
+                    className="h-6 min-w-0 px-1.5 text-xs font-normal text-muted-foreground"
+                    onClick={() => setArgsRow(i)}
+                    title="编辑参数"
+                  >
+                    {Object.keys(r.args).length > 0 ? `${Object.keys(r.args).length} 项` : "—"}
+                  </Button>
                 </td>
                 <td className="p-1 text-center">
                   {r.kind === "bundle" && (
@@ -330,6 +317,17 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
           </tbody>
         </table>
       </div>
+
+      {argsRow != null && rows[argsRow] && (
+        <ArgsEditorDialog
+          value={rows[argsRow].args}
+          onSave={(v) => {
+            updateRow(argsRow, { args: v });
+            setArgsRow(null);
+          }}
+          onClose={() => setArgsRow(null)}
+        />
+      )}
     </div>
   );
 }
