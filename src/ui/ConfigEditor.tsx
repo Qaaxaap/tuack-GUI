@@ -18,6 +18,7 @@ import Select from "./Select";
 import Checkbox from "./Checkbox";
 import TestDataEditor from "./TestDataEditor";
 import Scoreboard from "./Scoreboard";
+import CheckerEditor from "./CheckerEditor";
 
 type FieldType = "text" | "number" | "bool" | "enum" | "json";
 
@@ -216,6 +217,20 @@ export default function ConfigEditor({ path, dir, kind, theme, running, projectR
                   </div>
                 );
               })}
+              {kind === "problem" && (
+                <>
+                  <CheckerEditor
+                    title="checker（校验器）"
+                    value={config?.["checker"]}
+                    onChange={(v) => setField("checker", v)}
+                  />
+                  <CheckerEditor
+                    title="validator（数据校验器）"
+                    value={config?.["validator"]}
+                    onChange={(v) => setField("validator", v)}
+                  />
+                </>
+              )}
               <Button variant="default" className="self-start" onClick={saveForm}>
                 保存
               </Button>
