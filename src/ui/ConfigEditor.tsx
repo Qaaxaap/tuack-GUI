@@ -242,16 +242,23 @@ export default function ConfigEditor({ path, dir, kind, theme, running, projectR
           )}
         </TabsContent>
         <TabsContent value="data">
-          <TestDataEditor
-            value={config?.["data"]}
-            onChange={(v) => setField("data", v)}
-            subtasks={
-              config?.["subtasks"] && typeof config["subtasks"] === "object"
-                ? (config["subtasks"] as Record<string, string>)
-                : undefined
-            }
-            onSubtasksChange={(v) => setField("subtasks", v)}
-          />
+          <div className="flex min-h-0 flex-col gap-2">
+            <div className="min-h-0 flex-1 overflow-auto">
+              <TestDataEditor
+                value={config?.["data"]}
+                onChange={(v) => setField("data", v)}
+                subtasks={
+                  config?.["subtasks"] && typeof config["subtasks"] === "object"
+                    ? (config["subtasks"] as Record<string, string>)
+                    : undefined
+                }
+                onSubtasksChange={(v) => setField("subtasks", v)}
+              />
+            </div>
+            <Button variant="default" className="self-start" onClick={saveForm}>
+              保存
+            </Button>
+          </div>
         </TabsContent>
         <TabsContent value="score">
           <Scoreboard dir={dir} running={running} projectRoot={projectRoot} />
