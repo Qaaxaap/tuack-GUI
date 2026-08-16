@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useEffect, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
+import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { Save } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -135,10 +135,11 @@ export default function StatementEditor({
             setContent(v);
             setDirty(true);
           }}
-          extensions={[markdown()]}
+          // 题面是长段落文本：软折行，编辑器宽度锁死，不随行宽横向增长
+          extensions={[markdown(), EditorView.lineWrapping]}
           theme={theme}
           height="100%"
-          style={{ fontSize: 13, height: "100%" }}
+          style={{ fontSize: 13, height: "100%", width: "100%" }}
         />
       </div>
     </div>
