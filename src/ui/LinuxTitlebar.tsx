@@ -6,7 +6,6 @@ import { Minus, Square, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Button } from "../components/ui/button";
 import { currentPlatform } from "../ipc";
-import TuackLogo from "./TuackLogo";
 
 /**
  * Linux 专用自绘 CSD（客户端装饰）标题栏：置于工具栏上方。
@@ -29,15 +28,9 @@ export default function LinuxTitlebar() {
   return (
     <div
       data-tauri-drag-region="deep"
-      className="flex h-8 shrink-0 items-center justify-between pl-3 pr-1"
+      className="flex h-8 shrink-0 items-center justify-end pl-3 pr-1"
       style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
     >
-      <div className="flex items-center gap-2">
-        <TuackLogo size={14} />
-        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-          Tuack-GUI
-        </span>
-      </div>
       <div className="flex items-center">
         <Button
           variant="ghost"
