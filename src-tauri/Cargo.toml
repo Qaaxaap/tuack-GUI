@@ -1,6 +1,6 @@
 [package]
 name = "tuack-gui"
-version = "1.0.0-rc2"
+version = "1.0.0-rc3"
 description = "美观、跨平台的 Tuack-NG 图形化前端"
 authors = ["Tuack-GUI Develop Team"]
 edition = "2021"
