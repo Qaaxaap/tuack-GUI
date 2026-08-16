@@ -7,7 +7,7 @@ import { Label } from "../components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
 import { useEffect, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
+import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { readConfig, writeConfig, getRenDefaults, setRenProject } from "../ipc";
 import { reportError } from "../errors";
@@ -158,7 +158,7 @@ export default function ConfigEditor({ path, dir, kind, theme, running, projectR
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto p-4">
-        <TabsContent value="form">
+        <TabsContent value="form" className="h-full min-h-0">
           {config ? (
             <div className="flex max-w-md flex-col gap-3">
               {FIELDS[kind].map((f) => {
@@ -241,7 +241,7 @@ export default function ConfigEditor({ path, dir, kind, theme, running, projectR
             </div>
           )}
         </TabsContent>
-        <TabsContent value="data">
+        <TabsContent value="data" className="h-full min-h-0">
           <div className="flex min-h-0 flex-col gap-2">
             <div className="min-h-0 flex-1 overflow-auto">
               <TestDataEditor
@@ -260,19 +260,19 @@ export default function ConfigEditor({ path, dir, kind, theme, running, projectR
             </Button>
           </div>
         </TabsContent>
-        <TabsContent value="score">
+        <TabsContent value="score" className="h-full min-h-0">
           <Scoreboard dir={dir} running={running} projectRoot={projectRoot} />
         </TabsContent>
-        <TabsContent value="json">
+        <TabsContent value="json" className="h-full min-h-0">
           <div className="flex h-full min-h-0 flex-col gap-2">
             <div className="min-h-0 flex-1 overflow-hidden rounded" style={{ border: "1px solid var(--border)" }}>
               <CodeMirror
                 value={jsonText}
                 onChange={setJsonText}
-                extensions={[json()]}
+                extensions={[json(), EditorView.lineWrapping]}
                 theme={theme}
                 height="100%"
-                style={{ fontSize: 12, height: "100%" }}
+                style={{ fontSize: 12, height: "100%", width: "100%" }}
               />
             </div>
             <Button variant="default" className="self-start" onClick={saveJson}>
@@ -281,7 +281,7 @@ export default function ConfigEditor({ path, dir, kind, theme, running, projectR
           </div>
         </TabsContent>
         {kind === "contest" && (
-          <TabsContent value="gui">
+          <TabsContent value="gui" className="h-full min-h-0">
             <div className="flex max-w-md flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <Label>ren 默认模板（项目）</Label>
