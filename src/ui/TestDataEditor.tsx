@@ -71,11 +71,29 @@ function maxId(rows: DataRow[]): number {
 interface Props {
   value: unknown;
   onChange: (v: unknown[]) => void;
+  /** conf.json 的 subtasks 映射（子任务号 → 策略） */
+  subtasks?: Record<string, string>;
+  onSubtasksChange?: (v: Record<string, string>) => void;
 }
 
-export default function TestDataEditor({ value, onChange }: Props) {
+const POLICY_OPTS = [
+  { value: "sum", label: "求和" },
+  { value: "max", label: "最大值" },
+  { value: "min", label: "最小值" },
+];
+
+export default function TestDataEditor({ value, onChange, subtasks, onSubtasksChange }: Props) {
   const rows = parse(value);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+
+  // 展示策略的编号：subtasks 已有键 + 数据行里引用但未配置的
+  const subtaskIds = (() => {
+    const ids = new Set<string>(Object.keys(subtasks ?? {}));
+    for (const r of rows) {
+      ids.add(String(r.subtask));
+    }
+    return [...ids].sort((a, b) => Number(a) - Number(b));
+  })();
 
   function commit(next: DataRow[]) {
     onChange(serialize(next));
@@ -172,6 +190,35 @@ export default function TestDataEditor({ value, onChange }: Props) {
           均分 100 分
         </Button>
       </div>
+
+      {onSubtasksChange && (
+        <div>
+          <div className="mb-1 text-xs font-medium" style={{ color: "var(--text)" }}>
+            子任务策略
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-1 rounded border p-2" style={{ borderColor: "var(--border)" }}>
+            {subtaskIds.map((id) => (
+              <div key={id} className="flex items-center gap-2">
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {id === "0" ? "默认" : `子任务 ${id}`}
+                </span>
+                <div className="w-28">
+                  <Select
+                    value={subtasks?.[id] ?? "sum"}
+                    options={POLICY_OPTS}
+                    onChange={(v) => onSubtasksChange({ ...(subtasks ?? {}), [id]: v })}
+                  />
+                </div>
+              </div>
+            ))}
+            {subtaskIds.length === 0 && (
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                无子任务（按默认策略求和）
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="overflow-auto rounded border" style={{ borderColor: "var(--border)" }}>
         <table className="w-full text-xs" style={{ borderCollapse: "collapse" }}>
