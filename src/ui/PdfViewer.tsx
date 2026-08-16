@@ -44,7 +44,9 @@ export default function PdfCanvas({ path }: Props) {
         if (cancelled) return;
         const container = containerRef.current;
         if (!container) return;
-        container.replaceChildren();
+        // 先在离屏容器里渲染完整本，完成后再一次性替换，
+        // 避免 resize / 重渲染时整页闪白
+        const holder = document.createElement("div");
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const base = page.getViewport({ scale: 1 });
@@ -59,8 +61,9 @@ export default function PdfCanvas({ path }: Props) {
           canvas.style.marginBottom = "8px";
           await page.render({ canvas, viewport }).promise;
           if (cancelled) return;
-          container.appendChild(canvas);
+          holder.appendChild(canvas);
         }
+        if (!cancelled) container.replaceChildren(holder);
       } catch (e) {
         if (!cancelled) setError(String(e));
       }
@@ -71,12 +74,19 @@ export default function PdfCanvas({ path }: Props) {
   }, [path, width]);
 
   return (
-    <div ref={containerRef} className="h-full overflow-auto" style={{ backgroundColor: "var(--bg)" }}>
+    <div className="flex h-full min-h-0 flex-col">
       {error && (
-        <div className="p-3 text-xs" style={{ color: "var(--danger)" }}>
+        <div className="shrink-0 p-3 text-xs" style={{ color: "var(--danger)" }}>
           {error}
         </div>
       )}
+      {/* overflow-y: scroll 常驻滚动条槽：内容区宽度不随滚动条出现/消失变化，
+          否则会形成「滚动条出现 → 变窄 → 重渲染 → 滚动条消失 → 变宽」的死循环闪烁 */}
+      <div
+        ref={containerRef}
+        className="min-h-0 flex-1 overflow-y-scroll"
+        style={{ backgroundColor: "var(--bg)", scrollbarGutter: "stable" }}
+      />
     </div>
   );
 }
