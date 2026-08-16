@@ -14,10 +14,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 interface Props {
   path: string;
+  /** 固定缩放倍率（如 1.5 = 150%）；null = 适应容器宽度（默认） */
+  scale?: number | null;
 }
 
-/** 内嵌 PDF 渲染器：整本渲染，页宽自适应容器宽度（无弹窗、无工具栏） */
-export default function PdfCanvas({ path }: Props) {
+/** 内嵌 PDF 渲染器：整本渲染，页宽自适应容器宽度或按固定倍率（无弹窗） */
+export default function PdfCanvas({ path, scale = null }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [dpr, setDpr] = useState(() => window.devicePixelRatio || 1);
@@ -59,10 +61,11 @@ export default function PdfCanvas({ path }: Props) {
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const base = page.getViewport({ scale: 1 });
-          // 页宽贴合容器，最小 0.5 倍防止极端窄容器下退化；
+          // 固定倍率优先；否则页宽贴合容器（最小 0.5 倍防退化）。
           // 乘 dpr 按物理像素渲染，高分屏（125%/150% 缩放）下文字不糊
-          const scale = Math.max(0.5, width / base.width) * dpr;
-          const viewport = page.getViewport({ scale });
+          const fit = Math.max(0.5, width / base.width);
+          const pageScale = (scale ?? fit) * dpr;
+          const viewport = page.getViewport({ scale: pageScale });
           const canvas = document.createElement("canvas");
           canvas.width = Math.floor(viewport.width);
           canvas.height = Math.floor(viewport.height);
@@ -82,7 +85,7 @@ export default function PdfCanvas({ path }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [path, width, dpr]);
+  }, [path, width, dpr, scale]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
