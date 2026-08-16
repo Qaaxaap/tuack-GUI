@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import LinuxTitlebar from "./ui/LinuxTitlebar";
 import Toolbar from "./ui/Toolbar";
+import ErrorToasts from "./ui/ErrorToasts";
 import SideBar from "./ui/SideBar";
 import MainPanel from "./ui/MainPanel";
 import OutputDrawer from "./ui/OutputDrawer";
@@ -29,6 +30,7 @@ import {
 } from "./ipc";
 import { applyFonts } from "./fonts";
 import { applyTheme, normalizeTheme, type AppTheme } from "./theme";
+import { reportError } from "../errors";
 import type { Command, LastProject, NodeKind, ProcessEvent, Project, Source } from "./ipc/types";
 
 export default function App() {
@@ -71,17 +73,17 @@ export default function App() {
       .then((lp) => {
         if (lp) setLastProject(lp);
       })
-      .catch(() => {});
+      .catch((e) => reportError(`读取上次工程失败：${e}`));
     getFonts()
       .then((f) => applyFonts(f.ui_font, f.mono_font))
-      .catch(() => {});
+      .catch((e) => reportError(`加载字体设置失败：${e}`));
     getTheme()
       .then((t) => {
         const th = normalizeTheme(t);
         applyTheme(th);
         setThemeState(th);
       })
-      .catch(() => {});
+      .catch((e) => reportError(`加载主题设置失败：${e}`));
   }, []);
 
   async function handleOpenProject(path: string) {
@@ -91,7 +93,7 @@ export default function App() {
     const name =
       p.contest.name || p.contest.title || path.split(/[\\/]/).filter(Boolean).pop() || path;
     setLastProject({ path, name });
-    saveLastProject(path, name).catch(() => {});
+    saveLastProject(path, name).catch((e) => reportError(`保存上次工程失败：${e}`));
     // 标题栏显示打开的项目名（Windows/macOS 原生标题栏；Linux 为自绘 CSD）
     getCurrentWindow()
       .setTitle(`${name} — Tuack-GUI`)
@@ -129,12 +131,12 @@ export default function App() {
           if (cmd.target === "contest" && cmd.names.length > 0) {
             // 新建比赛成功后直接打开它
             const root = `${cwd.replace(/[\\/]+$/, "")}/${cmd.names[0]}`;
-            handleOpenProject(root).catch(() => {});
+            handleOpenProject(root).catch((e) => reportError(`打开新工程失败：${e}`));
           } else if (project) {
             // 场次/题目/数据生成后刷新当前工程树
             openProject(project.root)
               .then((p) => setProject(p))
-              .catch(() => {});
+              .catch((e) => reportError(`刷新工程失败：${e}`));
           }
         }
         if (cmd.command === "ren") {
@@ -144,7 +146,7 @@ export default function App() {
               const pdf = res.entries.find((x) => x.name.endsWith(".pdf"));
               if (pdf) setPdfPath(pdf.path);
             })
-            .catch(() => {});
+            .catch((e) => reportError(`查找渲染结果失败：${e}`));
         }
       }
     })
@@ -163,7 +165,7 @@ export default function App() {
     const next: AppTheme = theme === "dark" ? "light" : "dark";
     applyTheme(next);
     setThemeState(next);
-    setTheme(next).catch(() => {});
+    setTheme(next).catch((e) => reportError(`保存主题设置失败：${e}`));
   }
 
   /** 执行命令类操作前的守卫：未检测到 tuack-ng 时弹提示并拦截 */
@@ -224,7 +226,7 @@ export default function App() {
             if (project) {
               openProject(project.root)
                 .then((p) => setProject(p))
-                .catch(() => {});
+                .catch((e) => reportError(`刷新工程失败：${e}`));
             }
           }}
           onClose={() => setRemoveTarget(null)}
@@ -250,6 +252,7 @@ export default function App() {
           onClose={() => setShowMissing(false)}
         />
       )}
+      <ErrorToasts />
     </div>
   );
 }
