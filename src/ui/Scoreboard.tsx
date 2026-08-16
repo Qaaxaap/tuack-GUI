@@ -213,11 +213,6 @@ export default function Scoreboard({ dir, running, projectRoot }: Props) {
             onChange={setSelected}
           />
         </div>
-        {running && (
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-            测试进行中，结束后自动刷新
-          </span>
-        )}
       </div>
 
       <div>
