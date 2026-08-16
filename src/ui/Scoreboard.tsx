@@ -1,7 +1,7 @@
 // Copyright (C) 2025-2026 Tuack-GUI Develop Team.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getScoreHistory, readTextFile } from "../ipc";
 import type { ScoreSnapshot } from "../ipc/types";
 import Select from "./Select";
@@ -176,11 +176,14 @@ export default function Scoreboard({ dir, running, projectRoot }: Props) {
       .catch(() => {});
   }, [dir, projectRoot, loadCurrent]);
 
-  // 测试运行中每秒轮询，评测过程实时可见
+  // tuack-ng 的 result.csv 是测试结束后一次性写入，运行中读取的
+  // 是旧内容/不存在；因此不做轮询，改为测试结束时刷新最终结果
+  const prevRunning = useRef(running);
   useEffect(() => {
-    if (!running) return;
-    const timer = setInterval(loadCurrent, 1000);
-    return () => clearInterval(timer);
+    if (prevRunning.current && !running) {
+      loadCurrent();
+    }
+    prevRunning.current = running;
   }, [running, loadCurrent]);
 
   // 选中历史快照时展示快照内容
@@ -204,15 +207,15 @@ export default function Scoreboard({ dir, running, projectRoot }: Props) {
           <Select
             value={selected}
             options={[
-              { value: "", label: running ? "当前（运行中…）" : "当前" },
+              { value: "", label: "当前" },
               ...history.map((h) => ({ value: h.time, label: h.time })),
             ]}
             onChange={setSelected}
           />
         </div>
         {running && (
-          <span className="text-xs" style={{ color: "var(--brand)" }}>
-            实时刷新中
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+            测试进行中，结束后自动刷新
           </span>
         )}
       </div>
