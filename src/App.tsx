@@ -9,7 +9,6 @@ import ErrorToasts from "./ui/ErrorToasts";
 import SideBar from "./ui/SideBar";
 import MainPanel from "./ui/MainPanel";
 import OutputDrawer from "./ui/OutputDrawer";
-import PdfViewer from "./ui/PdfViewer";
 import AddNodeModal from "./ui/AddNodeModal";
 import RemoveConfirmModal from "./ui/RemoveConfirmModal";
 import SettingsDialog from "./ui/SettingsDialog";
@@ -20,8 +19,8 @@ import {
   detectTuack,
   getFonts,
   getLastProject,
+  getRenDefaults,
   getTheme,
-  listDir,
   openProject,
   runCommand,
   saveLastProject,
@@ -32,7 +31,7 @@ import {
 import { applyFonts } from "./fonts";
 import { applyTheme, normalizeTheme, type AppTheme } from "./theme";
 import { reportError } from "./errors";
-import type { Command, LastProject, NodeKind, ProcessEvent, Project, Source } from "./ipc/types";
+import type { Command, LastProject, NodeKind, ProcessEvent, Project, RenDefaults, Source } from "./ipc/types";
 
 export default function App() {
   const [project, setProject] = useState<Project | null>(null);
@@ -44,7 +43,8 @@ export default function App() {
   const [running, setRunning] = useState(false);
   const [runId, setRunId] = useState<number | null>(null);
   const [lastProject, setLastProject] = useState<LastProject | null>(null);
-  const [pdfPath, setPdfPath] = useState<string | null>(null);
+  const [renDefaults, setRenDefaults] = useState<RenDefaults>({ global: null, project: null });
+  const [previewRefresh, setPreviewRefresh] = useState(0);
   const [theme, setThemeState] = useState<AppTheme>("dark");
   const [addNode, setAddNode] = useState<{ target: "day" | "problem"; cwd: string } | null>(null);
   const [removeTarget, setRemoveTarget] = useState<{
@@ -86,6 +86,16 @@ export default function App() {
       })
       .catch((e) => reportError(`加载主题设置失败：${e}`));
   }, []);
+
+  // 打开 / 刷新工程后读取 ren 默认模板（预览探测 statements/<template>/ 用）
+  useEffect(() => {
+    if (!project) return;
+    getRenDefaults(project.root)
+      .then(setRenDefaults)
+      .catch((e) => reportError(`读取 ren 默认模板失败：${e}`));
+  }, [project]);
+
+  const resolvedTemplate = renDefaults.project || renDefaults.global || "noi";
 
   async function handleOpenProject(path: string) {
     const p = await openProject(path);
@@ -144,14 +154,12 @@ export default function App() {
           // 记分板历史：test 成功后保存快照
           snapshotScore(project.root, cwd).catch(() => {});
         }
-        if (cmd.command === "ren") {
-          const dir = `${cwd}/statements/${cmd.template}`;
-          listDir(dir)
-            .then((res) => {
-              const pdf = res.entries.find((x) => x.name.endsWith(".pdf"));
-              if (pdf) setPdfPath(pdf.path);
-            })
-            .catch((e) => reportError(`查找渲染结果失败：${e}`));
+        if (e.code === 0 && cmd.command === "ren") {
+          // 渲染成功后刷新内嵌预览；模板可能刚在命令面板里改过，一并重读默认值
+          setPreviewRefresh((r) => r + 1);
+          if (project) {
+            getRenDefaults(project.root).then(setRenDefaults).catch(() => {});
+          }
         }
       }
     })
@@ -164,6 +172,15 @@ export default function App() {
 
   function handleCancel() {
     if (runId != null) cancelCommand(runId);
+  }
+
+  /** 预览占位区的「渲染」按钮：对当前选中节点按默认模板跑 ren */
+  function handleRenderSelected() {
+    if (!selected || selected.kind === "contest" || !requireTuack()) return;
+    handleRun(
+      { command: "ren", template: resolvedTemplate, keep_tmp: false, no_auto_open: true },
+      selected.dir,
+    );
   }
 
   function handleToggleTheme() {
@@ -207,10 +224,17 @@ export default function App() {
             setRemoveTarget({ parentDir, name, kind });
           }}
         />
-        <MainPanel project={project} selected={selected} theme={theme} running={running} />
+        <MainPanel
+          project={project}
+          selected={selected}
+          theme={theme}
+          running={running}
+          template={resolvedTemplate}
+          refreshKey={previewRefresh}
+          onRender={handleRenderSelected}
+        />
       </div>
       <OutputDrawer logs={logs} running={running} runId={runId} onCancel={handleCancel} />
-      {pdfPath && <PdfViewer path={pdfPath} onClose={() => setPdfPath(null)} />}
       {addNode && (
         <AddNodeModal
           title={addNode.target === "day" ? "新建场次" : "新建题目"}
