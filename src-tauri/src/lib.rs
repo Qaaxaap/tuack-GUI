@@ -1152,6 +1152,13 @@ pub fn run() {
             if !theme.is_empty() {
                 apply_window_theme(app.handle(), &theme);
             }
+            // Linux（niri 等无服务端装饰的合成器）：GTK 会按 CSD 画标题栏，
+            // 与 VS Code 等应用一致——去掉原生装饰，窗口拖动由应用顶栏的
+            // drag-region 提供；Windows/macOS 保留原生标题栏。
+            #[cfg(target_os = "linux")]
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.set_decorations(false);
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

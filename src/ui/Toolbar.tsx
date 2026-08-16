@@ -49,6 +49,7 @@ export default function Toolbar({
 
   return (
     <header
+      data-tauri-drag-region="deep"
       className="flex h-12 shrink-0 items-center gap-4 px-4"
       style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
     >
