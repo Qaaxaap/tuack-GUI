@@ -169,10 +169,12 @@ export default function MainPanel({
         </div>
       ) : (
         <div className="flex min-h-0 flex-1">
-          <div className="min-w-0 overflow-hidden" style={{ flex: "50 1 0%" }}>
+          {/* 列容器必须是 flex-col：ConfigEditor 根部的 flex-1 依赖 flex 父级
+              才拿到确定高度，否则高度塌成内容高，内部滚动全部失效 */}
+          <div className="flex min-w-0 flex-col overflow-hidden" style={{ flex: "50 1 0%" }}>
             {leftContent}
           </div>
-          <div className="min-w-0 overflow-hidden" style={{ flex: "50 1 0%" }}>
+          <div className="flex min-w-0 flex-col overflow-hidden" style={{ flex: "50 1 0%" }}>
             {preview}
           </div>
         </div>
