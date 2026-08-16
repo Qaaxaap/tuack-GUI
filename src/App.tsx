@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useEffect, useState } from "react";
+import LinuxTitlebar from "./ui/LinuxTitlebar";
 import Toolbar from "./ui/Toolbar";
 import SideBar from "./ui/SideBar";
 import MainPanel from "./ui/MainPanel";
@@ -169,6 +170,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
+      <LinuxTitlebar />
       <Toolbar
         hasProject={project != null}
         selectedDir={selected?.dir ?? ""}

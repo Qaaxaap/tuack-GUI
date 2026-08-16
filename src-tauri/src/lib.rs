@@ -366,6 +366,11 @@ fn parse_day(dir: &Path) -> Result<DayNode, String> {
 // ---------- 命令 ----------
 
 #[tauri::command]
+fn current_platform() -> String {
+    std::env::consts::OS.to_string()
+}
+
+#[tauri::command]
 fn ping() -> String {
     "pong".to_string()
 }
@@ -1163,6 +1168,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             ping,
+            current_platform,
             open_project,
             set_tuack_path,
             clear_tuack_path,

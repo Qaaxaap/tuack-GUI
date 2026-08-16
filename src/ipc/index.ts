@@ -98,6 +98,10 @@ export function setTheme(theme: string): Promise<void> {
   return invoke("set_theme", { theme });
 }
 
+export function currentPlatform(): Promise<string> {
+  return invoke<string>("current_platform");
+}
+
 export function getRenDefaults(projectRoot: string): Promise<RenDefaults> {
   return invoke<RenDefaults>("get_ren_defaults", { projectRoot });
 }
