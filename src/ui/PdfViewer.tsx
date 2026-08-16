@@ -12,15 +12,27 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-interface Props {
-  path: string;
-  /** 固定缩放倍率（如 1.5 = 150%）；null = 适应容器宽度（默认） */
-  scale?: number | null;
+interface PageEntry {
+  wrapper: HTMLDivElement;
+  canvas: HTMLCanvasElement;
+  /** 适应宽度下的 CSS 像素尺寸 */
+  fitW: number;
+  fitH: number;
 }
 
-/** 内嵌 PDF 渲染器：整本渲染，页宽自适应容器宽度或按固定倍率（无弹窗） */
-export default function PdfCanvas({ path, scale = null }: Props) {
+interface Props {
+  path: string;
+  /** 相对「适应宽度」的缩放倍率：1 = 适应宽度，1.5 = 放大 50% */
+  zoom?: number;
+}
+
+/** 内嵌 PDF 渲染器：整本渲染。缩放先 transform 即时响应，后台再重渲染清晰版 */
+export default function PdfCanvas({ path, zoom = 1 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const pagesRef = useRef<PageEntry[]>([]);
+  const renderSeq = useRef(0);
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
   const [width, setWidth] = useState(0);
   const [dpr, setDpr] = useState(() => window.devicePixelRatio || 1);
   const [error, setError] = useState("");
@@ -43,49 +55,84 @@ export default function PdfCanvas({ path, scale = null }: Props) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  useEffect(() => {
+  /** 按 targetZoom（相对适应宽度）渲染整本并替换内容；旧的在途渲染用 seq 失效 */
+  async function renderAll(targetZoom: number) {
     if (width <= 0) return;
-    let cancelled = false;
+    const seq = ++renderSeq.current;
     setError("");
-    (async () => {
-      try {
-        const b64 = await readFileBase64(path);
-        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-        if (cancelled) return;
-        const container = containerRef.current;
-        if (!container) return;
-        // 先在离屏容器里渲染完整本，完成后再一次性替换，
-        // 避免 resize / 重渲染时整页闪白
-        const holder = document.createElement("div");
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const base = page.getViewport({ scale: 1 });
-          // 固定倍率优先；否则页宽贴合容器（最小 0.5 倍防退化）。
-          // 乘 dpr 按物理像素渲染，高分屏（125%/150% 缩放）下文字不糊
-          const fit = Math.max(0.5, width / base.width);
-          const pageScale = (scale ?? fit) * dpr;
-          const viewport = page.getViewport({ scale: pageScale });
-          const canvas = document.createElement("canvas");
-          canvas.width = Math.floor(viewport.width);
-          canvas.height = Math.floor(viewport.height);
-          // 显示尺寸仍为 CSS 像素，显式给定避免分数拉伸
-          canvas.style.width = `${Math.floor(viewport.width / dpr)}px`;
-          canvas.style.height = "auto";
-          canvas.style.marginBottom = "8px";
-          await page.render({ canvas, viewport }).promise;
-          if (cancelled) return;
-          holder.appendChild(canvas);
-        }
-        if (!cancelled) container.replaceChildren(holder);
-      } catch (e) {
-        if (!cancelled) setError(String(e));
+    try {
+      const b64 = await readFileBase64(path);
+      if (seq !== renderSeq.current) return;
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+      if (seq !== renderSeq.current) return;
+      const container = containerRef.current;
+      if (!container) return;
+      // 先在离屏容器里渲染完整本，完成后再一次性替换，避免整页闪白
+      const holder = document.createElement("div");
+      const pages: PageEntry[] = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        if (seq !== renderSeq.current) return;
+        const base = page.getViewport({ scale: 1 });
+        const fit = Math.max(0.5, width / base.width);
+        // 位图按物理像素渲染（×dpr），高分屏 125%/150% 缩放下文字不糊
+        const viewport = page.getViewport({ scale: fit * targetZoom * dpr });
+        const cssW = viewport.width / dpr;
+        const cssH = viewport.height / dpr;
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        canvas.style.width = `${cssW}px`;
+        canvas.style.height = `${cssH}px`;
+        canvas.style.transformOrigin = "top left";
+        const wrapper = document.createElement("div");
+        wrapper.style.width = `${cssW}px`;
+        wrapper.style.height = `${cssH}px`;
+        wrapper.style.marginBottom = "8px";
+        wrapper.appendChild(canvas);
+        await page.render({ canvas, viewport }).promise;
+        if (seq !== renderSeq.current) return;
+        pages.push({ wrapper, canvas, fitW: fit * base.width, fitH: fit * base.height });
+        holder.appendChild(wrapper);
       }
+      if (seq !== renderSeq.current) return;
+      pagesRef.current = pages;
+      container.replaceChildren(holder);
+    } catch (e) {
+      if (seq === renderSeq.current) setError(String(e));
+    }
+  }
+
+  /** 对已渲染的「适应宽度」位图做 transform 缩放：即时、零开销 */
+  function applyZoom(z: number) {
+    for (const p of pagesRef.current) {
+      p.wrapper.style.width = `${p.fitW * z}px`;
+      p.wrapper.style.height = `${p.fitH * z}px`;
+      p.canvas.style.transform = z === 1 ? "none" : `scale(${z})`;
+    }
+  }
+
+  // 主渲染：宽度 / dpr / 文件变化时按适应宽度渲染，再补上当前缩放变换
+  useEffect(() => {
+    (async () => {
+      await renderAll(1);
+      applyZoom(zoomRef.current);
     })();
     return () => {
-      cancelled = true;
+      renderSeq.current++;
     };
-  }, [path, width, dpr, scale]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path, width, dpr]);
+
+  // 缩放：先 transform（即时反馈），150ms 后后台重渲染清晰版替换
+  useEffect(() => {
+    applyZoom(zoom);
+    if (zoom === 1) return;
+    const t = setTimeout(() => renderAll(zoom), 150);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">

@@ -119,10 +119,10 @@ export default function MainPanel({
         </>
       ) : showPreview ? (
         <div className="flex min-h-0 flex-1">
-          <div className="min-w-0" style={{ flex: "50 1 0%" }}>
+          <div className="min-w-0 overflow-hidden" style={{ flex: "50 1 0%" }}>
             {config}
           </div>
-          <div className="min-w-0" style={{ flex: "50 1 0%" }}>
+          <div className="min-w-0 overflow-hidden" style={{ flex: "50 1 0%" }}>
             {preview}
           </div>
         </div>

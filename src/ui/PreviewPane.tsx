@@ -46,8 +46,8 @@ export default function PreviewPane({ dir, template, refreshKey, running, onRend
   const rootRef = useRef<HTMLDivElement>(null);
   const [pdf, setPdf] = useState<string | null>(null);
   const [probing, setProbing] = useState(true);
-  /** null = 适应宽度 */
-  const [zoom, setZoom] = useState<number | null>(null);
+  /** 相对「适应宽度」的缩放倍率，1 = 适应宽度 */
+  const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
     let alive = true;
@@ -65,7 +65,7 @@ export default function PreviewPane({ dir, template, refreshKey, running, onRend
   }, [dir, template, refreshKey]);
 
   // 切换节点回到「适应宽度」
-  useEffect(() => setZoom(null), [dir]);
+  useEffect(() => setZoom(1), [dir]);
 
   // Ctrl/Cmd + 滚轮缩放。必须原生监听且 passive:false，
   // React 的 onWheel 挂在 passive 监听器上，preventDefault 无效
@@ -75,13 +75,13 @@ export default function PreviewPane({ dir, template, refreshKey, running, onRend
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      setZoom((z) => clampZoom((z ?? 1) * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+      setZoom((z) => clampZoom(z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const zoomLabel = zoom == null ? "适应宽度" : `${Math.round(zoom * 100)}%`;
+  const zoomLabel = zoom === 1 ? "适应宽度" : `${Math.round(zoom * 100)}%`;
 
   return (
     <div
@@ -103,7 +103,7 @@ export default function PreviewPane({ dir, template, refreshKey, running, onRend
               size="sm"
               className="h-6 w-6 p-0"
               title="缩小"
-              onClick={() => setZoom((z) => clampZoom((z ?? 1) / 1.1))}
+              onClick={() => setZoom((z) => clampZoom(z / 1.1))}
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </Button>
@@ -112,7 +112,7 @@ export default function PreviewPane({ dir, template, refreshKey, running, onRend
               size="sm"
               className="h-6 px-2 text-xs"
               title="适应宽度"
-              onClick={() => setZoom(null)}
+              onClick={() => setZoom(1)}
             >
               {zoomLabel}
             </Button>
@@ -121,7 +121,7 @@ export default function PreviewPane({ dir, template, refreshKey, running, onRend
               size="sm"
               className="h-6 w-6 p-0"
               title="放大"
-              onClick={() => setZoom((z) => clampZoom((z ?? 1) * 1.1))}
+              onClick={() => setZoom((z) => clampZoom(z * 1.1))}
             >
               <ZoomIn className="h-3.5 w-3.5" />
             </Button>
@@ -140,7 +140,7 @@ export default function PreviewPane({ dir, template, refreshKey, running, onRend
       </div>
       <div className="min-h-0 flex-1">
         {pdf ? (
-          <PdfCanvas path={pdf} scale={zoom} />
+          <PdfCanvas path={pdf} zoom={zoom} />
         ) : probing ? (
           <div className="flex h-full items-center justify-center p-4 text-xs" style={{ color: "var(--text-muted)" }}>
             查找渲染结果…
