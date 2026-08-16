@@ -4,11 +4,13 @@
 import { Dialog, DialogContent } from "../components/ui/dialog";
 
 import { useEffect, useRef, useState } from "react";
-import * as pdfjsLib from "pdfjs-dist";
+// legacy 构建自带 Map.prototype.getOrInsertComputed 等新 API 的 polyfill，
+// 兼容旧版 WebView2（如精简版系统自带的、无法自动更新的运行时）
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import { readFileBase64 } from "../ipc";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
+  "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
   import.meta.url,
 ).toString();
 
