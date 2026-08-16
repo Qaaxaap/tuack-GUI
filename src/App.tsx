@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useEffect, useState } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import LinuxTitlebar from "./ui/LinuxTitlebar";
 import Toolbar from "./ui/Toolbar";
 import SideBar from "./ui/SideBar";
@@ -91,6 +92,10 @@ export default function App() {
       p.contest.name || p.contest.title || path.split(/[\\/]/).filter(Boolean).pop() || path;
     setLastProject({ path, name });
     saveLastProject(path, name).catch(() => {});
+    // 标题栏显示打开的项目名（Windows/macOS 原生标题栏；Linux 为自绘 CSD）
+    getCurrentWindow()
+      .setTitle(`${name} — Tuack-GUI`)
+      .catch(() => {});
   }
 
   async function handleSetTuack(path: string) {
@@ -170,7 +175,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      <LinuxTitlebar />
+      <LinuxTitlebar title={project ? project.contest.name || project.contest.title : ""} />
       <Toolbar
         hasProject={project != null}
         selectedDir={selected?.dir ?? ""}

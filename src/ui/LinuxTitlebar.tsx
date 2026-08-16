@@ -12,7 +12,7 @@ import { currentPlatform } from "../ipc";
  * 整条为拖拽区（deep，可交互元素自动排除），双击最大化/还原由
  * Tauri 拖拽脚本内建支持；Windows/macOS 使用原生标题栏，不渲染本组件。
  */
-export default function LinuxTitlebar() {
+export default function LinuxTitlebar({ title }: { title: string }) {
   const [linux, setLinux] = useState(false);
 
   useEffect(() => {
@@ -28,9 +28,12 @@ export default function LinuxTitlebar() {
   return (
     <div
       data-tauri-drag-region="deep"
-      className="flex h-8 shrink-0 items-center justify-end pl-3 pr-1"
+      className="flex h-8 shrink-0 items-center justify-between pl-3 pr-1"
       style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
     >
+      <span className="truncate text-xs" style={{ color: "var(--text-muted)" }}>
+        {title}
+      </span>
       <div className="flex items-center">
         <Button
           variant="ghost"
