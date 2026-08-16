@@ -20,9 +20,6 @@
 
 Tuack-GUI 旨在解决这一问题：**为 Tuack-NG 提供一个美观、跨平台的图形化界面**，让使用者无需记忆和输入命令，即可完成题目工程的配置与各项操作，扩大用户群体、降低上手难度。
 
-> [!NOTE]
-> ~本项目目前处于早期开发阶段，尚未发布可用版本。~ 本项目处于开发阶段，仅有测试预发布版本可用。
-
 ## 功能
 
 ### 核心目标
@@ -56,9 +53,57 @@ Tuack-GUI 旨在解决这一问题：**为 Tuack-NG 提供一个美观、跨平�
 - [x] 支持切换外部 Tuack-NG 可执行文件路径
 - [x] Windows / macOS / Linux 三平台安装包
 
-### 现阶段不考虑的功能
+## 开发路线
 
-- ~题面编辑与预览~ 题面编辑（生成后预览已实现）
+### 里程碑
+
+```mermaid
+flowchart LR
+    RC["v1.0.0-rc3（当前）"] --> M1["M1 稳定化：错误提示 / 打包自检"]
+    M1 --> V1["v1.0.0 正式版"]
+    V1 --> M2["M2 评测与数据：记分板增强 / 测试点高级字段"]
+    V1 --> M3["M3 渲染与模板：ren 模板管理 / PDF 预览增强"]
+    M2 --> V11["v1.1"]
+    M3 --> V11
+    V11 --> M4["M4 分发与生态：自动更新 / 签名 / 包管理器"]
+    M4 --> M5["M5 macOS（Nix 构建）"]
+    M5 --> M6["M6 编辑能力：内置编辑器、i18n"]
+```
+
+### 分支策略
+
+日常开发在 `dev` 分支进行，稳定版本切出维护分支并行修 bug，与 Tuack-NG 的分支模型一致：
+
+```mermaid
+%%{init: {'gitGraph': {'showBranches': true, 'showCommitLabel':true, 'mainBranchName': 'main'}} }%%
+gitGraph
+    commit tag: "v1.0.0-rc3"
+
+    branch dev
+    commit
+    commit
+
+    checkout main
+    commit tag: "v1.0.0（稳定通道）"
+
+    branch 1.0
+    commit
+    commit tag: "v1.0.1"
+
+    checkout dev
+    commit tag: "v1.1.0-alpha.1"
+```
+
+### 里程碑说明
+
+| 里程碑 | 内容 |
+|---|---|
+| M1 稳定化 | 报错信息再完善（反馈问题时能直接看到原因）、打包产物装后自检、正式版发布准备 |
+| M2 评测与数据 | 记分板实时刷新与历史记录、`args` / `subtasks` / `checker` 依赖的可视化编辑 |
+| M3 渲染与模板 | ren 模板管理（预览图 / 自定义模板目录）、PDF 预览缩放翻页 |
+| M4 分发与生态 | 自动更新、代码签名、AUR / Nix / winget / Scoop |
+| M5 macOS | 用 Nix 构建 Tuack-NG 与 Tuack-GUI，提供 macOS 包（Tuack-NG 尚无 macOS 预编译二进制） |
+| M6 编辑能力 | statement.md / 生成脚本内置编辑器、工程模板预设、中英文切换 |
 
 ## 技术栈
 
@@ -81,7 +126,7 @@ Tuack-GUI 旨在解决这一问题：**为 Tuack-NG 提供一个美观、跨平�
 ## 开始使用
 
 > [!WARNING]
-> 当前 ~尚无~ 已有可用版本，以下为开发环境搭建说明，仅使用请参考 `下载` 栏目
+> 以下为开发环境搭建说明，仅使用请参考 `下载` 栏目
 
 ### 前置依赖
 
@@ -98,7 +143,7 @@ pnpm tauri dev
 
 ## 下载
 
-~敬请期待。届时将通过~   请通过 [GitHub Releases](https://github.com/Qaaxaap/tuack-gui/releases/) 下载所需平台版本。
+通过 [GitHub Releases](https://github.com/Qaaxaap/tuack-gui/releases/) 下载所需平台版本。Nix 与 AUR 的支持在计划中。
 
 ## 致谢
 
