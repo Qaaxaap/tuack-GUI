@@ -1060,10 +1060,20 @@ struct RenDefaults {
     project: Option<String>,
 }
 
+/// 一次评测的记分板快照（CSV 原文，展示时再解析）
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+struct ScoreSnapshot {
+    time: String,
+    csv: String,
+    sample_csv: String,
+}
+
 /// 项目级 GUI 配置：存于项目根目录 .tuack-gui.json
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 struct ProjectConfig {
     ren_template: Option<String>,
+    /// 记分板历史：题目目录 → 最近若干次快照
+    score_history: Option<HashMap<String, Vec<ScoreSnapshot>>>,
 }
 
 fn project_config_path(project_root: &str) -> PathBuf {
@@ -1114,6 +1124,56 @@ fn set_ren_project(project_root: String, template: String) -> Result<(), String>
     let t = template.trim().to_string();
     cfg.ren_template = if t.is_empty() { None } else { Some(t) };
     save_project_config(&root, &cfg)
+}
+
+/// 记分板历史单题最多保留的快照数
+const SCORE_HISTORY_LIMIT: usize = 5;
+
+/// test 成功后调用：读取 result.csv / result-sample.csv 并存入项目历史
+#[tauri::command]
+fn snapshot_score(project_root: String, problem_dir: String) -> Result<(), String> {
+    let root = project_root.trim().to_string();
+    let dir = problem_dir.trim().to_string();
+    if root.is_empty() || dir.is_empty() {
+        return Ok(());
+    }
+    let read = |name: &str| fs::read_to_string(Path::new(&dir).join(name)).unwrap_or_default();
+    let csv = read("result.csv");
+    let sample_csv = read("result-sample.csv");
+    if csv.is_empty() && sample_csv.is_empty() {
+        return Ok(());
+    }
+
+    let mut cfg = load_project_config(&root);
+    let mut map = cfg.score_history.unwrap_or_default();
+    let list = map.entry(dir).or_default();
+    list.push(ScoreSnapshot {
+        time: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+        csv,
+        sample_csv,
+    });
+    while list.len() > SCORE_HISTORY_LIMIT {
+        list.remove(0);
+    }
+    cfg.score_history = Some(map);
+    save_project_config(&root, &cfg)
+}
+
+/// 读取某题目的记分板历史（新→旧）
+#[tauri::command]
+fn get_score_history(project_root: String, problem_dir: String) -> Vec<ScoreSnapshot> {
+    let root = project_root.trim().to_string();
+    let dir = problem_dir.trim().to_string();
+    if root.is_empty() || dir.is_empty() {
+        return Vec::new();
+    }
+    let cfg = load_project_config(&root);
+    cfg.score_history
+        .and_then(|mut m| m.remove(&dir))
+        .unwrap_or_default()
+        .into_iter()
+        .rev()
+        .collect()
 }
 
 /// 首次启动时，把捆绑的 assets 放到 tuack-ng 能读到的地方
@@ -1194,6 +1254,8 @@ pub fn run() {
             get_ren_defaults,
             set_ren_global,
             set_ren_project,
+            snapshot_score,
+            get_score_history,
             read_file_base64,
             read_text_file
         ])

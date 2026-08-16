@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Channel, invoke } from "@tauri-apps/api/core";
-import type { BinaryInfo, Command, DirListing, FontPrefs, LastProject, ProcessEvent, Project, RenDefaults } from "./types";
+import type { BinaryInfo, Command, DirListing, FontPrefs, LastProject, ProcessEvent, Project, RenDefaults, ScoreSnapshot } from "./types";
 
 export function detectTuack(): Promise<BinaryInfo> {
   return invoke<BinaryInfo>("detect_tuack");
@@ -112,6 +112,14 @@ export function setRenGlobal(template: string): Promise<void> {
 
 export function setRenProject(projectRoot: string, template: string): Promise<void> {
   return invoke("set_ren_project", { projectRoot, template });
+}
+
+export function snapshotScore(projectRoot: string, problemDir: string): Promise<void> {
+  return invoke("snapshot_score", { projectRoot, problemDir });
+}
+
+export function getScoreHistory(projectRoot: string, problemDir: string): Promise<ScoreSnapshot[]> {
+  return invoke<ScoreSnapshot[]>("get_score_history", { projectRoot, problemDir });
 }
 
 export function readFileBase64(path: string): Promise<string> {

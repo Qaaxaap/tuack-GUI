@@ -100,3 +100,9 @@ export interface RenDefaults {
   global: string | null;
   project: string | null;
 }
+
+export interface ScoreSnapshot {
+  time: string;
+  csv: string;
+  sample_csv: string;
+}
