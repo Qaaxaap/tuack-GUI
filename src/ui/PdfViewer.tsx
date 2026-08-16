@@ -20,6 +20,7 @@ interface Props {
 export default function PdfCanvas({ path }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
+  const [dpr, setDpr] = useState(() => window.devicePixelRatio || 1);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -30,6 +31,14 @@ export default function PdfCanvas({ path }: Props) {
     });
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // 窗口跨屏移动 / 系统缩放变化时 dpr 会变，跟随重渲染
+  useEffect(() => {
+    const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+    const onChange = () => setDpr(window.devicePixelRatio || 1);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
 
   useEffect(() => {
@@ -50,13 +59,15 @@ export default function PdfCanvas({ path }: Props) {
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const base = page.getViewport({ scale: 1 });
-          // 页宽贴合容器，最小 0.5 倍防止极端窄容器下退化
-          const scale = Math.max(0.5, width / base.width);
+          // 页宽贴合容器，最小 0.5 倍防止极端窄容器下退化；
+          // 乘 dpr 按物理像素渲染，高分屏（125%/150% 缩放）下文字不糊
+          const scale = Math.max(0.5, width / base.width) * dpr;
           const viewport = page.getViewport({ scale });
           const canvas = document.createElement("canvas");
           canvas.width = Math.floor(viewport.width);
           canvas.height = Math.floor(viewport.height);
-          canvas.style.width = "100%";
+          // 显示尺寸仍为 CSS 像素，显式给定避免分数拉伸
+          canvas.style.width = `${Math.floor(viewport.width / dpr)}px`;
           canvas.style.height = "auto";
           canvas.style.marginBottom = "8px";
           await page.render({ canvas, viewport }).promise;
@@ -71,7 +82,7 @@ export default function PdfCanvas({ path }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [path, width]);
+  }, [path, width, dpr]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
