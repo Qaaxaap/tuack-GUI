@@ -55,7 +55,7 @@ export default function Toolbar({
       style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
     >
       <div className="flex items-center gap-2">
-        <TuackLogo size={26} />
+        <TuackLogo size={40} />
         <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
           Tuack-GUI
         </span>
