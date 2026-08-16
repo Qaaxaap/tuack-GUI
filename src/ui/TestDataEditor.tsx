@@ -10,10 +10,33 @@ import Select from "./Select";
 import Checkbox from "./Checkbox";
 
 type DataRow =
-  | { kind: "single"; id: number; score: number; subtask: number; input: string; output: string; dmk: string }
-  | { kind: "bundle"; ids: number[]; score: number; subtask: number; dmk: string };
+  | { kind: "single"; id: number; score: number; subtask: number; input: string; output: string; dmk: string; args: string }
+  | { kind: "bundle"; ids: number[]; score: number; subtask: number; dmk: string; args: string };
 
-type Patch = { score?: number; subtask?: number; dmk?: string; input?: string; output?: string };
+type Patch = { score?: number; subtask?: number; dmk?: string; input?: string; output?: string; args?: string };
+
+function argsText(v: unknown): string {
+  if (v === null || v === undefined) return "{}";
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+
+function parseArgs(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text; // 非法 JSON 原样保留，交由高级 JSON 修正
+  }
+}
+
+function isValidJson(text: string): boolean {
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const DMK_OPTS = [
   { value: "skip", label: "忽略" },
@@ -33,6 +56,7 @@ function parse(value: unknown): DataRow[] {
         score: Number(item.score ?? 0),
         subtask: Number(item.subtask ?? 0),
         dmk: String(item.dmk ?? "skip"),
+        args: argsText(item.args),
       });
     } else {
       const id = Number(item.id ?? 0);
@@ -44,6 +68,7 @@ function parse(value: unknown): DataRow[] {
         input: typeof item.input === "string" ? item.input : `${id}.in`,
         output: typeof item.output === "string" ? item.output : `${id}.ans`,
         dmk: String(item.dmk ?? "skip"),
+        args: argsText(item.args),
       });
     }
   }
@@ -53,9 +78,9 @@ function parse(value: unknown): DataRow[] {
 function serialize(rows: DataRow[]): unknown[] {
   return rows.map((r) => {
     if (r.kind === "bundle") {
-      return { id: r.ids, score: r.score, subtask: r.subtask, dmk: r.dmk };
+      return { id: r.ids, score: r.score, subtask: r.subtask, dmk: r.dmk, args: parseArgs(r.args) };
     }
-    return { id: r.id, score: r.score, subtask: r.subtask, input: r.input, output: r.output, dmk: r.dmk };
+    return { id: r.id, score: r.score, subtask: r.subtask, input: r.input, output: r.output, dmk: r.dmk, args: parseArgs(r.args) };
   });
 }
 
@@ -115,7 +140,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
     const id = maxId(rows) + 1;
     commit([
       ...rows,
-      { kind: "single", id, score: 0, subtask: 0, input: `${id}.in`, output: `${id}.ans`, dmk: "skip" },
+      { kind: "single", id, score: 0, subtask: 0, input: `${id}.in`, output: `${id}.ans`, dmk: "skip", args: "{}" },
     ]);
   }
 
@@ -136,7 +161,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
       else ids.push(...r.ids);
     }
     const first = rows[idxs[0]];
-    const merged: DataRow = { kind: "bundle", ids, score: first.score, subtask: first.subtask, dmk: first.dmk };
+    const merged: DataRow = { kind: "bundle", ids, score: first.score, subtask: first.subtask, dmk: first.dmk, args: first.args };
     const next = [...rows.slice(0, idxs[0]), merged, ...rows.slice(idxs[idxs.length - 1] + 1)];
     commit(next);
     setSelected(new Set());
@@ -153,6 +178,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
       input: `${id}.in`,
       output: `${id}.ans`,
       dmk: r.dmk,
+      args: r.args,
     }));
     commit([...rows.slice(0, i), ...singles, ...rows.slice(i + 1)]);
   }
@@ -231,6 +257,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
               <th className="p-1" style={{ color: "var(--text-muted)" }}>输入</th>
               <th className="p-1" style={{ color: "var(--text-muted)" }}>输出</th>
               <th className="w-24 p-1" style={{ color: "var(--text-muted)" }}>生成</th>
+              <th className="p-1" style={{ color: "var(--text-muted)" }}>args</th>
               <th className="w-10 p-1"></th>
             </tr>
           </thead>
@@ -272,6 +299,16 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
                     value={r.dmk}
                     options={DMK_OPTS}
                     onChange={(v) => updateRow(i, { dmk: v })}
+                  />
+                </td>
+                <td className="p-1">
+                  <Input
+                    type="text"
+                    className="h-6 px-1.5 text-xs"
+                    style={isValidJson(r.args) ? undefined : { borderColor: "var(--danger)" }}
+                    value={r.args}
+                    title={isValidJson(r.args) ? undefined : "JSON 格式无效"}
+                    onChange={(e) => updateRow(i, { args: e.target.value })}
                   />
                 </td>
                 <td className="p-1 text-center">
