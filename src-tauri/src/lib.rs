@@ -980,6 +980,18 @@ fn set_fonts(app: tauri::AppHandle, ui_font: String, mono_font: String) -> Resul
 }
 
 /// 让原生标题栏、窗口底色与窗口图标跟随主题（前端负责内容区配色）
+/// Windows：清掉标题栏窗口图标（WM_SETICON 传空），任务栏仍显示 exe 图标
+#[cfg(target_os = "windows")]
+fn clear_titlebar_icon(window: &tauri::WebviewWindow) {
+    use windows::Win32::Foundation::{LPARAM, WPARAM};
+    use windows::Win32::UI::WindowsAndMessaging::{SendMessageW, ICON_SMALL, WM_SETICON};
+    if let Ok(hwnd) = window.hwnd() {
+        unsafe {
+            let _ = SendMessageW(hwnd, WM_SETICON, WPARAM(ICON_SMALL as usize), LPARAM(0));
+        }
+    }
+}
+
 fn apply_window_theme(app: &tauri::AppHandle, theme: &str) {
     if let Some(win) = app.get_webview_window("main") {
         let light = theme == "light";
@@ -991,9 +1003,16 @@ fn apply_window_theme(app: &tauri::AppHandle, theme: &str) {
         let _ = win.set_theme(t);
         let bg = if light { "#ffffff" } else { "#161616" };
         let _ = win.set_background_color(bg.parse::<tauri::utils::config::Color>().ok());
-        let icon = if light { ICON_LIGHT } else { ICON_DARK };
-        if let Ok(img) = tauri::image::Image::from_bytes(icon) {
-            let _ = win.set_icon(img);
+        // Windows：标题栏不显示窗口图标（任务栏/桌面用 exe 自带的白底黑条图标）
+        #[cfg(target_os = "windows")]
+        clear_titlebar_icon(&win);
+        // Linux / macOS：窗口图标跟随主题切换深浅变体
+        #[cfg(not(target_os = "windows"))]
+        {
+            let icon = if light { ICON_LIGHT } else { ICON_DARK };
+            if let Ok(img) = tauri::image::Image::from_bytes(icon) {
+                let _ = win.set_icon(img);
+            }
         }
     }
 }
@@ -1232,6 +1251,11 @@ pub fn run() {
         .manage(AppState::default())
         .setup(|app| {
             ensure_assets(app.handle());
+            // Windows：始终不显示标题栏窗口图标（首次启动无保存主题时也生效）
+            #[cfg(target_os = "windows")]
+            if let Some(win) = app.get_webview_window("main") {
+                clear_titlebar_icon(&win);
+            }
             let theme = load_settings(app.handle()).theme.unwrap_or_default();
             if !theme.is_empty() {
                 apply_window_theme(app.handle(), &theme);
