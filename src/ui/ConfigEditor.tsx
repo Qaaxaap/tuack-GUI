@@ -7,9 +7,10 @@ import { Label } from "../components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
 import { useEffect, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
+import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { readConfig, writeConfig, getRenDefaults, setRenProject } from "../ipc";
+import { reportError } from "../errors";
 import type { NodeKind } from "../ipc/types";
 import type { AppTheme } from "../theme";
 import { TEMPLATES } from "../templates";
@@ -17,6 +18,7 @@ import Select from "./Select";
 import Checkbox from "./Checkbox";
 import TestDataEditor from "./TestDataEditor";
 import Scoreboard from "./Scoreboard";
+import CheckerEditor from "./CheckerEditor";
 
 type FieldType = "text" | "number" | "bool" | "enum" | "json";
 
@@ -69,9 +71,11 @@ interface Props {
   dir: string;
   kind: NodeKind;
   theme: AppTheme;
+  running: boolean;
+  projectRoot: string;
 }
 
-export default function ConfigEditor({ path, dir, kind, theme }: Props) {
+export default function ConfigEditor({ path, dir, kind, theme, running, projectRoot }: Props) {
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [tab, setTab] = useState<"form" | "json" | "data" | "score" | "gui">("form");
   const [jsonText, setJsonText] = useState("");
@@ -90,7 +94,7 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
       // 项目级 GUI 配置（存于项目根 .tuack-gui.json）
       getRenDefaults(dir)
         .then((d) => setRenProjectState(d.project ?? ""))
-        .catch(() => {});
+        .catch((e) => reportError(`读取项目 ren 模板失败：${e}`));
     }
   }, [path, kind, dir]);
 
@@ -154,7 +158,7 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto p-4">
-        <TabsContent value="form">
+        <TabsContent value="form" className="h-full min-h-0">
           {config ? (
             <div className="flex max-w-md flex-col gap-3">
               {FIELDS[kind].map((f) => {
@@ -213,6 +217,20 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
                   </div>
                 );
               })}
+              {kind === "problem" && (
+                <>
+                  <CheckerEditor
+                    title="checker（校验器）"
+                    value={config?.["checker"]}
+                    onChange={(v) => setField("checker", v)}
+                  />
+                  <CheckerEditor
+                    title="validator（数据校验器）"
+                    value={config?.["validator"]}
+                    onChange={(v) => setField("validator", v)}
+                  />
+                </>
+              )}
               <Button variant="default" className="self-start" onClick={saveForm}>
                 保存
               </Button>
@@ -223,29 +241,38 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
             </div>
           )}
         </TabsContent>
-        <TabsContent value="data">
+        <TabsContent value="data" className="h-full min-h-0">
           <div className="flex min-h-0 flex-col gap-2">
             <div className="min-h-0 flex-1 overflow-auto">
-              <TestDataEditor value={config?.["data"]} onChange={(v) => setField("data", v)} />
+              <TestDataEditor
+                value={config?.["data"]}
+                onChange={(v) => setField("data", v)}
+                subtasks={
+                  config?.["subtasks"] && typeof config["subtasks"] === "object"
+                    ? (config["subtasks"] as Record<string, string>)
+                    : undefined
+                }
+                onSubtasksChange={(v) => setField("subtasks", v)}
+              />
             </div>
             <Button variant="default" className="self-start" onClick={saveForm}>
               保存
             </Button>
           </div>
         </TabsContent>
-        <TabsContent value="score">
-          <Scoreboard dir={dir} />
+        <TabsContent value="score" className="h-full min-h-0">
+          <Scoreboard dir={dir} running={running} projectRoot={projectRoot} />
         </TabsContent>
-        <TabsContent value="json">
+        <TabsContent value="json" className="h-full min-h-0">
           <div className="flex h-full min-h-0 flex-col gap-2">
             <div className="min-h-0 flex-1 overflow-hidden rounded" style={{ border: "1px solid var(--border)" }}>
               <CodeMirror
                 value={jsonText}
                 onChange={setJsonText}
-                extensions={[json()]}
+                extensions={[json(), EditorView.lineWrapping]}
                 theme={theme}
                 height="100%"
-                style={{ fontSize: 12, height: "100%" }}
+                style={{ fontSize: 12, height: "100%", width: "100%" }}
               />
             </div>
             <Button variant="default" className="self-start" onClick={saveJson}>
@@ -254,7 +281,7 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
           </div>
         </TabsContent>
         {kind === "contest" && (
-          <TabsContent value="gui">
+          <TabsContent value="gui" className="h-full min-h-0">
             <div className="flex max-w-md flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <Label>ren 默认模板（项目）</Label>
@@ -267,7 +294,7 @@ export default function ConfigEditor({ path, dir, kind, theme }: Props) {
                   onChange={(v) => {
                     const t = v === "__unset__" ? "" : v;
                     setRenProjectState(t);
-                    setRenProject(dir, t).catch(() => {});
+                    setRenProject(dir, t).catch((e) => reportError(`保存项目 ren 模板失败：${e}`));
                   }}
                 />
                 <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>

@@ -11,6 +11,7 @@ import FontSettingsModal from "./FontSettingsModal";
 import Select from "./Select";
 import { getFileManager, getRenDefaults, saveFileManager, setRenGlobal } from "../ipc";
 import { TEMPLATES } from "../templates";
+import { reportError } from "../errors";
 import type { AppTheme } from "../theme";
 
 interface Props {
@@ -57,10 +58,10 @@ export default function SettingsDialog({
   useEffect(() => {
     getFileManager()
       .then((fm) => setFileManager(fm))
-      .catch(() => {});
+      .catch((e) => reportError(`读取文件管理器设置失败：${e}`));
     getRenDefaults("")
       .then((d) => setRenGlobalState(d.global ?? ""))
-      .catch(() => {});
+      .catch((e) => reportError(`读取 ren 默认模板失败：${e}`));
   }, []);
 
   return (
@@ -85,7 +86,7 @@ export default function SettingsDialog({
               onClick={() =>
                 saveFileManager("")
                   .then(() => setFileManager(null))
-                  .catch(() => {})
+                  .catch((e) => reportError(`恢复默认文件管理器失败：${e}`))
               }
             >
               恢复自动
@@ -108,7 +109,7 @@ export default function SettingsDialog({
               onChange={(v) => {
                 const t = v === "__unset__" ? "" : v;
                 setRenGlobalState(t);
-                setRenGlobal(t).catch(() => {});
+                setRenGlobal(t).catch((e) => reportError(`保存 ren 默认模板失败：${e}`));
               }}
             />
           </div>
@@ -140,7 +141,7 @@ export default function SettingsDialog({
               setFmPicker(false);
               saveFileManager(p)
                 .then(() => setFileManager(p))
-                .catch(() => {});
+                .catch((e) => reportError(`保存文件管理器设置失败：${e}`));
             }}
             onClose={() => setFmPicker(false)}
           />

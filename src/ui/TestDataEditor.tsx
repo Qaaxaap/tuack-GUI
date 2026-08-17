@@ -8,12 +8,15 @@ import { useState } from "react";
 import { Plus, Trash2, Combine, Split } from "lucide-react";
 import Select from "./Select";
 import Checkbox from "./Checkbox";
+import ArgsEditorDialog from "./ArgsEditorDialog";
 
 type DataRow =
-  | { kind: "single"; id: number; score: number; subtask: number; input: string; output: string; dmk: string }
-  | { kind: "bundle"; ids: number[]; score: number; subtask: number; dmk: string };
+  | { kind: "single"; id: number; score: number; subtask: number; input: string; output: string; dmk: string; args: Record<string, unknown> }
+  | { kind: "bundle"; ids: number[]; score: number; subtask: number; dmk: string; args: Record<string, unknown> };
 
-type Patch = { score?: number; subtask?: number; dmk?: string; input?: string; output?: string };
+type Patch = { score?: number; subtask?: number; dmk?: string; input?: string; output?: string; args?: Record<string, unknown> };
+
+
 
 const DMK_OPTS = [
   { value: "skip", label: "忽略" },
@@ -33,6 +36,10 @@ function parse(value: unknown): DataRow[] {
         score: Number(item.score ?? 0),
         subtask: Number(item.subtask ?? 0),
         dmk: String(item.dmk ?? "skip"),
+        args:
+          item.args && typeof item.args === "object"
+            ? ({ ...(item.args as Record<string, unknown>) })
+            : {},
       });
     } else {
       const id = Number(item.id ?? 0);
@@ -44,6 +51,10 @@ function parse(value: unknown): DataRow[] {
         input: typeof item.input === "string" ? item.input : `${id}.in`,
         output: typeof item.output === "string" ? item.output : `${id}.ans`,
         dmk: String(item.dmk ?? "skip"),
+        args:
+          item.args && typeof item.args === "object"
+            ? ({ ...(item.args as Record<string, unknown>) })
+            : {},
       });
     }
   }
@@ -53,9 +64,9 @@ function parse(value: unknown): DataRow[] {
 function serialize(rows: DataRow[]): unknown[] {
   return rows.map((r) => {
     if (r.kind === "bundle") {
-      return { id: r.ids, score: r.score, subtask: r.subtask, dmk: r.dmk };
+      return { id: r.ids, score: r.score, subtask: r.subtask, dmk: r.dmk, args: r.args };
     }
-    return { id: r.id, score: r.score, subtask: r.subtask, input: r.input, output: r.output, dmk: r.dmk };
+    return { id: r.id, score: r.score, subtask: r.subtask, input: r.input, output: r.output, dmk: r.dmk, args: r.args };
   });
 }
 
@@ -71,11 +82,30 @@ function maxId(rows: DataRow[]): number {
 interface Props {
   value: unknown;
   onChange: (v: unknown[]) => void;
+  /** conf.json 的 subtasks 映射（子任务号 → 策略） */
+  subtasks?: Record<string, string>;
+  onSubtasksChange?: (v: Record<string, string>) => void;
 }
 
-export default function TestDataEditor({ value, onChange }: Props) {
+const POLICY_OPTS = [
+  { value: "sum", label: "求和" },
+  { value: "max", label: "最大值" },
+  { value: "min", label: "最小值" },
+];
+
+export default function TestDataEditor({ value, onChange, subtasks, onSubtasksChange }: Props) {
   const rows = parse(value);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [argsRow, setArgsRow] = useState<number | null>(null);
+
+  // 展示策略的编号：subtasks 已有键 + 数据行里引用但未配置的
+  const subtaskIds = (() => {
+    const ids = new Set<string>(Object.keys(subtasks ?? {}));
+    for (const r of rows) {
+      ids.add(String(r.subtask));
+    }
+    return [...ids].sort((a, b) => Number(a) - Number(b));
+  })();
 
   function commit(next: DataRow[]) {
     onChange(serialize(next));
@@ -97,7 +127,7 @@ export default function TestDataEditor({ value, onChange }: Props) {
     const id = maxId(rows) + 1;
     commit([
       ...rows,
-      { kind: "single", id, score: 0, subtask: 0, input: `${id}.in`, output: `${id}.ans`, dmk: "skip" },
+      { kind: "single", id, score: 0, subtask: 0, input: `${id}.in`, output: `${id}.ans`, dmk: "skip", args: {} },
     ]);
   }
 
@@ -118,7 +148,7 @@ export default function TestDataEditor({ value, onChange }: Props) {
       else ids.push(...r.ids);
     }
     const first = rows[idxs[0]];
-    const merged: DataRow = { kind: "bundle", ids, score: first.score, subtask: first.subtask, dmk: first.dmk };
+    const merged: DataRow = { kind: "bundle", ids, score: first.score, subtask: first.subtask, dmk: first.dmk, args: first.args };
     const next = [...rows.slice(0, idxs[0]), merged, ...rows.slice(idxs[idxs.length - 1] + 1)];
     commit(next);
     setSelected(new Set());
@@ -135,6 +165,7 @@ export default function TestDataEditor({ value, onChange }: Props) {
       input: `${id}.in`,
       output: `${id}.ans`,
       dmk: r.dmk,
+      args: r.args,
     }));
     commit([...rows.slice(0, i), ...singles, ...rows.slice(i + 1)]);
   }
@@ -173,6 +204,35 @@ export default function TestDataEditor({ value, onChange }: Props) {
         </Button>
       </div>
 
+      {onSubtasksChange && (
+        <div>
+          <div className="mb-1 text-xs font-medium" style={{ color: "var(--text)" }}>
+            子任务策略
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-1 rounded border p-2" style={{ borderColor: "var(--border)" }}>
+            {subtaskIds.map((id) => (
+              <div key={id} className="flex items-center gap-2">
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {id === "0" ? "默认" : `子任务 ${id}`}
+                </span>
+                <div className="w-28">
+                  <Select
+                    value={subtasks?.[id] ?? "sum"}
+                    options={POLICY_OPTS}
+                    onChange={(v) => onSubtasksChange({ ...(subtasks ?? {}), [id]: v })}
+                  />
+                </div>
+              </div>
+            ))}
+            {subtaskIds.length === 0 && (
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                无子任务（按默认策略求和）
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="overflow-auto rounded border" style={{ borderColor: "var(--border)" }}>
         <table className="w-full text-xs" style={{ borderCollapse: "collapse" }}>
           <thead>
@@ -184,6 +244,7 @@ export default function TestDataEditor({ value, onChange }: Props) {
               <th className="p-1" style={{ color: "var(--text-muted)" }}>输入</th>
               <th className="p-1" style={{ color: "var(--text-muted)" }}>输出</th>
               <th className="w-24 p-1" style={{ color: "var(--text-muted)" }}>生成</th>
+              <th className="p-1" style={{ color: "var(--text-muted)" }}>args</th>
               <th className="w-10 p-1"></th>
             </tr>
           </thead>
@@ -227,6 +288,16 @@ export default function TestDataEditor({ value, onChange }: Props) {
                     onChange={(v) => updateRow(i, { dmk: v })}
                   />
                 </td>
+                <td className="p-1">
+                  <Button
+                    variant="ghost"
+                    className="h-6 min-w-0 px-1.5 text-xs font-normal text-muted-foreground"
+                    onClick={() => setArgsRow(i)}
+                    title="编辑参数"
+                  >
+                    {Object.keys(r.args).length > 0 ? `${Object.keys(r.args).length} 项` : "—"}
+                  </Button>
+                </td>
                 <td className="p-1 text-center">
                   {r.kind === "bundle" && (
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => splitRow(i)} title="拆分为单个测试点">
@@ -246,6 +317,17 @@ export default function TestDataEditor({ value, onChange }: Props) {
           </tbody>
         </table>
       </div>
+
+      {argsRow != null && rows[argsRow] && (
+        <ArgsEditorDialog
+          value={rows[argsRow].args}
+          onSave={(v) => {
+            updateRow(argsRow, { args: v });
+            setArgsRow(null);
+          }}
+          onClose={() => setArgsRow(null)}
+        />
+      )}
     </div>
   );
 }

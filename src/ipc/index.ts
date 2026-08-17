@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Channel, invoke } from "@tauri-apps/api/core";
-import type { BinaryInfo, Command, DirListing, FontPrefs, LastProject, ProcessEvent, Project, RenDefaults } from "./types";
+import type { BinaryInfo, Command, DirListing, FontPrefs, LastProject, ProcessEvent, Project, RenDefaults, ScoreSnapshot } from "./types";
 
 export function detectTuack(): Promise<BinaryInfo> {
   return invoke<BinaryInfo>("detect_tuack");
@@ -114,10 +114,30 @@ export function setRenProject(projectRoot: string, template: string): Promise<vo
   return invoke("set_ren_project", { projectRoot, template });
 }
 
+export function snapshotScore(projectRoot: string, problemDir: string): Promise<void> {
+  return invoke("snapshot_score", { projectRoot, problemDir });
+}
+
+export function getScoreHistory(projectRoot: string, problemDir: string): Promise<ScoreSnapshot[]> {
+  return invoke<ScoreSnapshot[]>("get_score_history", { projectRoot, problemDir });
+}
+
 export function readFileBase64(path: string): Promise<string> {
   return invoke<string>("read_file_base64", { path });
 }
 
 export function readTextFile(path: string): Promise<string> {
   return invoke<string>("read_text_file", { path });
+}
+
+export function writeTextFile(path: string, content: string): Promise<void> {
+  return invoke<void>("write_text_file", { path, content });
+}
+
+export function getAutoRen(): Promise<boolean> {
+  return invoke<boolean>("get_auto_ren");
+}
+
+export function setAutoRen(enabled: boolean): Promise<void> {
+  return invoke<void>("set_auto_ren", { enabled });
 }

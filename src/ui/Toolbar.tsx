@@ -15,6 +15,7 @@ import TuackLogo from "./TuackLogo";
 import CommandPanel from "./CommandPanel";
 import NewProjectModal from "./NewProjectModal";
 import PathPicker from "./PathPicker";
+import { reportError } from "../errors";
 import type { Command } from "../ipc/types";
 
 interface Props {
@@ -44,7 +45,7 @@ export default function Toolbar({
 
   async function openLast() {
     if (!lastProject) return;
-    await onOpenProject(lastProject.path).catch(() => {});
+    await onOpenProject(lastProject.path).catch((e) => reportError(`打开工程失败：${e}`));
   }
 
   return (
@@ -54,7 +55,7 @@ export default function Toolbar({
       style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
     >
       <div className="flex items-center gap-2">
-        <TuackLogo size={26} />
+        <TuackLogo size={40} />
         <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
           Tuack-GUI
         </span>
@@ -137,7 +138,7 @@ export default function Toolbar({
           directory
           onSelect={(p) => {
             setOpenPicker(false);
-            onOpenProject(p).catch(() => {});
+            onOpenProject(p).catch((e) => reportError(`打开工程失败：${e}`));
           }}
           onClose={() => setOpenPicker(false)}
         />
