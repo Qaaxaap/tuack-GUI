@@ -987,7 +987,12 @@ fn clear_titlebar_icon(window: &tauri::WebviewWindow) {
     use windows::Win32::UI::WindowsAndMessaging::{SendMessageW, ICON_SMALL, WM_SETICON};
     if let Ok(hwnd) = window.hwnd() {
         unsafe {
-            let _ = SendMessageW(hwnd, WM_SETICON, WPARAM(ICON_SMALL as usize), LPARAM(0));
+            let _ = SendMessageW(
+                hwnd,
+                WM_SETICON,
+                Some(WPARAM(ICON_SMALL as usize)),
+                Some(LPARAM(0)),
+            );
         }
     }
 }
