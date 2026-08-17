@@ -72,7 +72,7 @@ flowchart LR
 
 ### 分支策略
 
-日常开发在 `dev` 分支进行，稳定版本切出维护分支并行修 bug，与 Tuack-NG 的分支模型一致：
+日常开发在 `dev` 分支进行，稳定版本切出维护分支并行修 bug：
 
 ```mermaid
 %%{init: {'gitGraph': {'showBranches': true, 'showCommitLabel':true, 'mainBranchName': 'main'}} }%%
@@ -80,7 +80,6 @@ gitGraph
     commit tag: "v1.0.0-rc3"
 
     branch dev
-    commit
     commit
 
     checkout main
@@ -92,6 +91,8 @@ gitGraph
 
     checkout dev
     commit tag: "v1.1.0-alpha.1"
+    switch main
+    merge dev
 ```
 
 ### 里程碑说明
