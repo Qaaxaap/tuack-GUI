@@ -9,13 +9,13 @@ use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use tauri::ipc::Channel;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{ChildStdin, Command};
 use tokio::sync::oneshot;
 
-use crate::{AppState, sidecar_dir, tuack_data_dir};
+use crate::{sidecar_dir, tuack_data_dir, AppState};
 
 /// 服务端发来的事件（Notification），经 Channel 转发到前端
 #[derive(serde::Serialize, Clone)]
@@ -61,7 +61,10 @@ pub fn resolve_tuack_rpc(state: &AppState) -> Option<std::path::PathBuf> {
     if let Ok(target) = tauri::utils::platform::target_triple() {
         let dev = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("binaries")
-            .join(format!("tuack-ng-rpc-{target}{}", std::env::consts::EXE_SUFFIX));
+            .join(format!(
+                "tuack-ng-rpc-{target}{}",
+                std::env::consts::EXE_SUFFIX
+            ));
         if dev.is_file() {
             return Some(dev);
         }
@@ -106,8 +109,7 @@ fn spawn_rpc(exe: &Path, on_event: Channel<RpcEvent>) -> Result<RpcConnection, S
         .take()
         .ok_or_else(|| "无法获取 tuack-ng-rpc 标准输出".to_string())?;
 
-    let pending: PendingMap =
-        Arc::new(Mutex::new(HashMap::new()));
+    let pending: PendingMap = Arc::new(Mutex::new(HashMap::new()));
 
     // 读线程：逐行解析 stdout。Notification -> 事件转发；Response -> 匹配 pending。
     let reader_pending = pending.clone();
@@ -265,16 +267,16 @@ mod tests {
     }
 
     /// 发送一条请求并等待响应（与 rpc_request 相同的读写路径）
-    async fn send(
-        conn: &RpcConnection,
-        req: Value,
-    ) -> Result<Value, String> {
+    async fn send(conn: &RpcConnection, req: Value) -> Result<Value, String> {
         let id = req.get("id").and_then(|v| v.as_u64()).unwrap();
         let (tx, rx) = oneshot::channel();
         conn.pending.lock().unwrap().insert(id, tx);
         let mut stdin = conn.stdin.lock().await;
         let line = serde_json::to_string(&req).map_err(|e| e.to_string())?;
-        stdin.write_all(line.as_bytes()).await.map_err(|e| e.to_string())?;
+        stdin
+            .write_all(line.as_bytes())
+            .await
+            .map_err(|e| e.to_string())?;
         stdin.write_all(b"\n").await.map_err(|e| e.to_string())?;
         stdin.flush().await.map_err(|e| e.to_string())?;
         drop(stdin);
@@ -291,25 +293,37 @@ mod tests {
         let conn = spawn_rpc(&exe, channel).expect("spawn_rpc 失败");
 
         // initialize
-        let res = send(&conn, json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize" }))
-            .await
-            .expect("initialize 失败");
+        let res = send(
+            &conn,
+            json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize" }),
+        )
+        .await
+        .expect("initialize 失败");
         assert!(res.get("serverInfo").is_some(), "缺 serverInfo: {res}");
         assert!(res.get("serverInfo").is_some(), "缺 serverInfo: {res}");
 
         // 未知方法 -> -32601
-        let err = send(&conn, json!({ "jsonrpc": "2.0", "id": 2, "method": "nope" }))
-            .await
-            .expect_err("未知方法应报错");
+        let err = send(
+            &conn,
+            json!({ "jsonrpc": "2.0", "id": 2, "method": "nope" }),
+        )
+        .await
+        .expect_err("未知方法应报错");
         assert!(err.contains("-32601"), "错误码不符: {err}");
 
         // 未 initialize 状态下调用业务方法 -> -32600（shutdown 后）
-        let _ = send(&conn, json!({ "jsonrpc": "2.0", "id": 3, "method": "shutdown" }))
-            .await
-            .expect("shutdown 失败");
-        let err = send(&conn, json!({ "jsonrpc": "2.0", "id": 4, "method": "workspace/list" }))
-            .await
-            .expect_err("shutdown 后应报错");
+        let _ = send(
+            &conn,
+            json!({ "jsonrpc": "2.0", "id": 3, "method": "shutdown" }),
+        )
+        .await
+        .expect("shutdown 失败");
+        let err = send(
+            &conn,
+            json!({ "jsonrpc": "2.0", "id": 4, "method": "workspace/list" }),
+        )
+        .await
+        .expect_err("shutdown 后应报错");
         assert!(err.contains("-32600"), "错误码不符: {err}");
 
         // 关闭连接：kill 子进程 -> 读线程收尾并唤醒 pending 请求
