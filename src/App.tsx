@@ -17,19 +17,18 @@ import {
   cancelCommand,
   clearTuackPath,
   detectTuack,
-  getAutoRen,
   getFonts,
   getLastProject,
   getRenDefaults,
   getTheme,
-  openProject,
   runCommand,
   saveLastProject,
-  setAutoRen,
   setTheme,
   setTuackPath,
-  snapshotScore,
 } from "./ipc";
+import { session } from "./rpc/session";
+import { runPreview, runRender } from "./rpc/runner";
+import type { JudgeTrigger } from "./ui/JudgeView";
 import { applyFonts } from "./fonts";
 import { applyTheme, normalizeTheme, type AppTheme } from "./theme";
 import { reportError } from "./errors";
@@ -56,8 +55,8 @@ export default function App() {
   } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showMissing, setShowMissing] = useState(false);
-  /** 保存题面后自动 ren（默认开，持久化于 settings.json） */
-  const [autoRen, setAutoRenState] = useState(true);
+  /** 评测触发：命令面板 test 命令，驱动 MainPanel 切到评测视图 */
+  const [judgeTrigger, setJudgeTrigger] = useState<JudgeTrigger | null>(null);
 
   async function refreshTuack() {
     try {
@@ -89,9 +88,6 @@ export default function App() {
         setThemeState(th);
       })
       .catch((e) => reportError(`加载主题设置失败：${e}`));
-    getAutoRen()
-      .then(setAutoRenState)
-      .catch((e) => reportError(`读取自动渲染设置失败：${e}`));
   }, []);
 
   // 打开 / 刷新工程后读取 ren 默认模板（预览探测 statements/<template>/ 用）
@@ -105,7 +101,7 @@ export default function App() {
   const resolvedTemplate = renDefaults.project || renDefaults.global || "noi";
 
   async function handleOpenProject(path: string) {
-    const p = await openProject(path);
+    const p = await session.open(path);
     setProject(p);
     setSelected({ dir: p.root, kind: "contest" });
     const name =
@@ -139,8 +135,33 @@ export default function App() {
   }
 
   function handleRun(cmd: Command, cwd: string) {
+    // 评测：切换到评测视图，由 JudgeView 通过 RPC 流式逐点更新
+    // （不触碰终端 running 状态）
+    if (cmd.command === "test") {
+      setJudgeTrigger((t) => ({
+        dir: cwd,
+        target: cmd.target,
+        seq: (t?.seq ?? 0) + 1,
+      }));
+      return;
+    }
+
+    // 渲染：单题走 ren/preview（Markdown），场次走 ren/run（PDF）
+    if (cmd.command === "ren") {
+      const scope = session.scope(cwd);
+      const run = scope.split("/").length === 2
+        ? runPreview(scope, cmd.template)
+        : runRender(scope, cmd.template);
+      run
+        .then(() => setPreviewRefresh((r) => r + 1))
+        .catch((e) => reportError(`预览失败：${e}`));
+      return;
+    }
+
     setLogs([]);
     setRunning(true);
+
+    // 其余命令走 CLI 子进程
     runCommand(cmd, cwd, (e) => {
       setLogs((prev) => [...prev, e]);
       if (e.kind === "exited") {
@@ -152,20 +173,10 @@ export default function App() {
             handleOpenProject(root).catch((e) => reportError(`打开新工程失败：${e}`));
           } else if (project) {
             // 场次/题目/数据生成后刷新当前工程树
-            openProject(project.root)
+            session
+              .refreshProject()
               .then((p) => setProject(p))
               .catch((e) => reportError(`刷新工程失败：${e}`));
-          }
-        }
-        if (e.code === 0 && cmd.command === "test" && project) {
-          // 记分板历史：test 成功后保存快照
-          snapshotScore(project.root, cwd).catch(() => {});
-        }
-        if (e.code === 0 && cmd.command === "ren") {
-          // 渲染成功后刷新内嵌预览；模板可能刚在命令面板里改过，一并重读默认值
-          setPreviewRefresh((r) => r + 1);
-          if (project) {
-            getRenDefaults(project.root).then(setRenDefaults).catch(() => {});
           }
         }
       }
@@ -181,13 +192,10 @@ export default function App() {
     if (runId != null) cancelCommand(runId);
   }
 
-  /** 预览占位区的「渲染」按钮：对当前选中节点按默认模板跑 ren */
+  /** 预览占位区的「刷新预览」按钮：触发 PreviewPane 重新调用 ren/preview */
   function handleRenderSelected() {
     if (!selected || selected.kind === "contest" || running || !requireTuack()) return;
-    handleRun(
-      { command: "ren", template: resolvedTemplate, keep_tmp: false, no_auto_open: true },
-      selected.dir,
-    );
+    setPreviewRefresh((r) => r + 1);
   }
 
   function handleToggleTheme() {
@@ -195,12 +203,6 @@ export default function App() {
     applyTheme(next);
     setThemeState(next);
     setTheme(next).catch((e) => reportError(`保存主题设置失败：${e}`));
-  }
-
-  /** 切换「保存题面后自动渲染」并持久化 */
-  function handleToggleAutoRen(v: boolean) {
-    setAutoRenState(v);
-    setAutoRen(v).catch((e) => reportError(`保存自动渲染设置失败：${e}`));
   }
 
   /** 执行命令类操作前的守卫：未检测到 tuack-ng 时弹提示并拦截 */
@@ -245,8 +247,7 @@ export default function App() {
           template={resolvedTemplate}
           refreshKey={previewRefresh}
           onRender={handleRenderSelected}
-          autoRen={autoRen}
-          onAutoRenChange={handleToggleAutoRen}
+          judgeTrigger={judgeTrigger}
         />
       </div>
       <OutputDrawer logs={logs} running={running} runId={runId} onCancel={handleCancel} />
@@ -268,7 +269,8 @@ export default function App() {
           parentDir={removeTarget.parentDir}
           onRemoved={() => {
             if (project) {
-              openProject(project.root)
+              session
+                .refreshProject()
                 .then((p) => setProject(p))
                 .catch((e) => reportError(`刷新工程失败：${e}`));
             }

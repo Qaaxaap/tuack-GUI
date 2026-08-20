@@ -71,6 +71,13 @@ export type ProcessEvent =
   | { kind: "output"; data: string }
   | { kind: "exited"; code: number | null };
 
+/// tuack-ng-rpc 服务端事件（Notification），经 rpc_connect 的 Channel 送达
+export type RpcEvent = {
+  kind: "event";
+  method: string;
+  params: Record<string, unknown>;
+};
+
 
 export interface LastProject {
   path: string;
@@ -99,10 +106,4 @@ export interface FontPrefs {
 export interface RenDefaults {
   global: string | null;
   project: string | null;
-}
-
-export interface ScoreSnapshot {
-  time: string;
-  csv: string;
-  sample_csv: string;
 }

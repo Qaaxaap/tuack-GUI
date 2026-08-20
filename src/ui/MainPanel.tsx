@@ -3,10 +3,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import ConfigEditor from "./ConfigEditor";
-import PreviewPane from "./PreviewPane";
-import StatementEditor from "./StatementEditor";
+import PreviewPane, { type PreviewPaneHandle } from "./PreviewPane";
+import StatementEditor, { type StatementEditorHandle } from "./StatementEditor";
+import JudgeView, { type JudgeTrigger } from "./JudgeView";
 import type { NodeKind, Project } from "../ipc/types";
 import type { AppTheme } from "../theme";
+import { session } from "../rpc/session";
 
 interface Props {
   project: Project | null;
@@ -18,15 +20,14 @@ interface Props {
   /** ren 成功后自增，触发预览重新探测 */
   refreshKey: number;
   onRender: () => void;
-  /** 保存题面后自动 ren（默认开） */
-  autoRen: boolean;
-  onAutoRenChange: (v: boolean) => void;
+  /** 评测触发（命令面板 test 命令）：dir 匹配时切换到评测视图 */
+  judgeTrigger: JudgeTrigger | null;
 }
 
 /** 低于该宽度时配置 / 编辑 / 预览退化为切换 tab（类比 Qt resizeEvent 动态换布局） */
 const SPLIT_WIDTH = 880;
 
-type MainView = "config" | "edit" | "preview";
+type MainView = "config" | "edit" | "preview" | "judge";
 
 export default function MainPanel({
   project,
@@ -36,8 +37,7 @@ export default function MainPanel({
   template,
   refreshKey,
   onRender,
-  autoRen,
-  onAutoRenChange,
+  judgeTrigger,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [narrow, setNarrow] = useState(false);
@@ -58,38 +58,54 @@ export default function MainPanel({
     if (!narrow && view === "preview") setView("config");
   }, [narrow, view]);
 
+  // 命令面板 test 命令：切到评测视图
+  useEffect(() => {
+    if (judgeTrigger && selected && judgeTrigger.dir === selected.dir) {
+      setView("judge");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [judgeTrigger]);
+
   const showPreview = selected != null && selected.kind !== "contest";
 
   const config = selected ? (
     <ConfigEditor
-      path={`${selected.dir}/conf.json`}
       dir={selected.dir}
       kind={selected.kind}
       theme={theme}
-      running={running}
-      projectRoot={project?.root ?? ""}
     />
   ) : null;
 
+  // 编辑器 ↔ 预览同步滚动：ref 直接调用，绕过 React 状态链（响应更快）
+  const editorRef = useRef<StatementEditorHandle>(null);
+  const previewRef = useRef<PreviewPaneHandle>(null);
+
   const editor = selected && selected.kind === "problem" ? (
     <StatementEditor
+      ref={editorRef}
       dir={selected.dir}
-      autoRen={autoRen}
-      onAutoRenChange={onAutoRenChange}
       onRender={onRender}
-      running={running}
       theme={theme}
+      onCursorLine={(line, ratio, animated) =>
+        previewRef.current?.scrollToLine(line, ratio, animated)
+      }
     />
+  ) : null;
+
+  const judgeView = selected && selected.kind === "problem" ? (
+    <JudgeView dir={selected.dir} trigger={judgeTrigger} />
   ) : null;
 
   const preview = selected && showPreview ? (
     <PreviewPane
-      dir={selected.dir}
+      ref={previewRef}
+      scope={session.scope(selected.dir)}
       template={template}
       refreshKey={refreshKey}
       running={running}
       onRender={onRender}
       bordered={!narrow}
+      onPreviewScroll={(source) => editorRef.current?.scrollToSource(source)}
     />
   ) : null;
 
@@ -137,10 +153,12 @@ export default function MainPanel({
   const views: { id: MainView; label: string }[] = [
     { id: "config", label: "配置" },
     ...(isProblem ? ([{ id: "edit", label: "编辑" }] as const) : []),
+    ...(isProblem ? ([{ id: "judge", label: "评测" }] as const) : []),
     ...(narrow ? ([{ id: "preview", label: "预览" }] as const) : []),
   ];
 
-  const leftContent = view === "edit" ? editor : config;
+  const leftContent =
+    view === "edit" ? editor : view === "judge" ? judgeView : config;
 
   return (
     <main ref={containerRef} className="flex min-h-0 flex-1 flex-col">
@@ -167,7 +185,7 @@ export default function MainPanel({
       )}
       {narrow ? (
         <div className="min-h-0 flex-1">
-          {view === "config" ? config : view === "edit" ? editor : preview}
+          {view === "config" ? config : view === "edit" ? editor : view === "judge" ? judgeView : preview}
         </div>
       ) : (
         <div className="flex min-h-0 flex-1">

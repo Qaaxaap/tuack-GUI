@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Channel, invoke } from "@tauri-apps/api/core";
-import type { BinaryInfo, Command, DirListing, FontPrefs, LastProject, ProcessEvent, Project, RenDefaults, ScoreSnapshot } from "./types";
+import type { BinaryInfo, Command, DirListing, FontPrefs, LastProject, ProcessEvent, Project, RenDefaults, RpcEvent } from "./types";
 
 export function detectTuack(): Promise<BinaryInfo> {
   return invoke<BinaryInfo>("detect_tuack");
@@ -114,12 +114,14 @@ export function setRenProject(projectRoot: string, template: string): Promise<vo
   return invoke("set_ren_project", { projectRoot, template });
 }
 
-export function snapshotScore(projectRoot: string, problemDir: string): Promise<void> {
-  return invoke("snapshot_score", { projectRoot, problemDir });
+/** 保存单个测试者最新评测结果（覆盖旧记录） */
+export function saveJudgeResult(projectRoot: string, key: string, result: unknown): Promise<void> {
+  return invoke<void>("save_judge_result", { projectRoot, key, result });
 }
 
-export function getScoreHistory(projectRoot: string, problemDir: string): Promise<ScoreSnapshot[]> {
-  return invoke<ScoreSnapshot[]>("get_score_history", { projectRoot, problemDir });
+/** 读取全部评测结果缓存 */
+export function loadJudgeResults(projectRoot: string): Promise<Record<string, unknown>> {
+  return invoke<Record<string, unknown>>("load_judge_results", { projectRoot });
 }
 
 export function readFileBase64(path: string): Promise<string> {
@@ -140,4 +142,24 @@ export function getAutoRen(): Promise<boolean> {
 
 export function setAutoRen(enabled: boolean): Promise<void> {
   return invoke<void>("set_auto_ren", { enabled });
+}
+
+// ---------- tuack-ng-rpc 通道 ----------
+
+export function rpcConnect(onEvent: (e: RpcEvent) => void): Promise<number> {
+  const channel = new Channel<RpcEvent>();
+  channel.onmessage = onEvent;
+  return invoke<number>("rpc_connect", { onEvent: channel });
+}
+
+export function rpcRequest(
+  conn: number,
+  method: string,
+  params?: Record<string, unknown>,
+): Promise<unknown> {
+  return invoke<unknown>("rpc_request", { conn, method, params });
+}
+
+export function rpcStop(conn: number): Promise<void> {
+  return invoke<void>("rpc_stop", { conn });
 }

@@ -35,10 +35,19 @@ Tuack-NG 以 AGPL-3.0-or-later 许可发布，与本项目采用相同许可证�
 | @codemirror/lang-json / @codemirror/lang-markdown / @uiw/react-codemirror | 代码/Markdown 编辑器 | MIT |
 | @xterm/xterm / @xterm/addon-fit | 命令输出终端渲染 | MIT |
 | pdfjs-dist | PDF 预览渲染 | Apache-2.0 |
+| react-markdown / remark-gfm / remark-math / rehype-mathjax / remark-directive / mdast-util-to-hast / mdast-util-directive / mathjax-full | 题面 Markdown / LaTeX 预览渲染 | MIT |
 | class-variance-authority | 样式变体工具 | Apache-2.0 |
 | clsx | 类名拼接工具 | MIT |
 | tailwind-merge | 样式类合并工具 | MIT |
 | lucide-react | 图标库 | ISC |
+
+### CNOI statement-generator
+
+- 项目：<https://github.com/Mr-Python-in-China/cnoi-statement-generator/>
+- 用途：题面 Markdown 渲染扩展——表格 `<`/`^` 合并单元格、`{attr=val}` 图片属性（`src/lib/remarkExtendedTable.ts`、`src/lib/remarkImageAttr.ts`）
+- 许可证：MIT
+
+本组件的表格扩展与图片属性解析逻辑取自 CNOI statement-generator，感谢 [Mr-Python-in-China](https://github.com/Mr-Python-in-China) 及其贡献者。
 
 ## Rust 组件（静态链接进可执行文件）
 

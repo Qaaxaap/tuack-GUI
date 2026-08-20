@@ -191,3 +191,223 @@ body .cm-editor {
 body .cm-scroller {
   font-family: var(--font-mono) !important;
 }
+
+/* 题面预览（ren/preview 展开的 Markdown） */
+.md-body {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+  word-break: break-word;
+}
+.md-body > :first-child {
+  margin-top: 0;
+}
+.md-body > :last-child {
+  margin-bottom: 0;
+}
+.md-body h1,
+.md-body h2,
+.md-body h3,
+.md-body h4 {
+  margin: 1em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.md-body h1 {
+  font-size: 1.5em;
+}
+.md-body h2 {
+  font-size: 1.25em;
+}
+.md-body h3 {
+  font-size: 1.1em;
+}
+.md-body p {
+  margin: 0.5em 0;
+}
+.md-body ul,
+.md-body ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+.md-body ul {
+  list-style: disc;
+}
+.md-body ol {
+  list-style: decimal;
+}
+.md-body li {
+  margin: 0.2em 0;
+}
+.md-body blockquote {
+  margin: 0.5em 0;
+  padding-left: 0.8em;
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
+}
+.md-body code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 0.25em;
+}
+.md-body pre {
+  margin: 0.5em 0;
+  padding: 0.6em 0.8em;
+  overflow: auto;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+/* 代码块高亮：背景/文字跟随主题，token 颜色沿用 highlight.js */
+.md-body pre code.hljs {
+  display: block;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+.md-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+.md-body table {
+  border-collapse: collapse;
+  margin: 0.5em auto; /* 居中 */
+  /* 上下外框加粗：border-collapse 下与所有触底单元格（含 rowspan 延伸）合并 */
+  border-top: 2px solid var(--text);
+  border-bottom: 2px solid var(--text);
+}
+.md-body th,
+.md-body td {
+  border: 1px solid var(--text);
+  padding: 0.3em 0.6em;
+}
+.md-body th {
+  font-weight: 600;
+  /* 表头下划线加粗 */
+  border-bottom: 2px solid var(--text);
+}
+/* 左右无外框：首列无左边线、末列无右边线 */
+.md-body th:first-child,
+.md-body td:first-child {
+  border-left: none;
+}
+.md-body th:last-child,
+.md-body td:last-child {
+  border-right: none;
+}
+.md-body a {
+  color: var(--brand);
+}
+.md-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1em 0;
+}
+/* MathJax SVG 公式：Tailwind preflight 把 svg 设为 block 导致行内公式也换行，需覆盖 */
+mjx-container[jax="SVG"] {
+  display: inline-block;
+  line-height: 0;
+  text-align: left;
+  font-size: 100%;
+  white-space: nowrap;
+  direction: ltr;
+  margin-left: 0.15em;
+  margin-right: 0.15em;
+}
+mjx-container[jax="SVG"][display="true"] {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+mjx-container[jax="SVG"] svg {
+  display: inline;
+  vertical-align: baseline;
+}
+/* figure 容器（:::figure）：内容居中，caption 小号灰色 */
+.md-body .md-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+  margin: 0.8em 0;
+  text-align: center;
+}
+.md-body .md-figure figcaption {
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+/* 亮色模式：覆盖 github-dark 的 token 色为 github-light 语义色，
+   避免深色主题高亮色在浅背景上过强 */
+:root[data-theme="light"] .md-body .hljs-doctag,
+:root[data-theme="light"] .md-body .hljs-keyword,
+:root[data-theme="light"] .md-body .hljs-meta .hljs-keyword,
+:root[data-theme="light"] .md-body .hljs-template-tag,
+:root[data-theme="light"] .md-body .hljs-template-variable,
+:root[data-theme="light"] .md-body .hljs-type,
+:root[data-theme="light"] .md-body .hljs-variable.language_ {
+  color: #d73a49;
+}
+:root[data-theme="light"] .md-body .hljs-title,
+:root[data-theme="light"] .md-body .hljs-title.class_,
+:root[data-theme="light"] .md-body .hljs-title.class_.inherited__,
+:root[data-theme="light"] .md-body .hljs-title.function_ {
+  color: #6f42c1;
+}
+:root[data-theme="light"] .md-body .hljs-attr,
+:root[data-theme="light"] .md-body .hljs-attribute,
+:root[data-theme="light"] .md-body .hljs-literal,
+:root[data-theme="light"] .md-body .hljs-meta,
+:root[data-theme="light"] .md-body .hljs-number,
+:root[data-theme="light"] .md-body .hljs-operator,
+:root[data-theme="light"] .md-body .hljs-selector-attr,
+:root[data-theme="light"] .md-body .hljs-selector-class,
+:root[data-theme="light"] .md-body .hljs-selector-id,
+:root[data-theme="light"] .md-body .hljs-variable {
+  color: #005cc5;
+}
+:root[data-theme="light"] .md-body .hljs-meta .hljs-string,
+:root[data-theme="light"] .md-body .hljs-regexp,
+:root[data-theme="light"] .md-body .hljs-string {
+  color: #032f62;
+}
+:root[data-theme="light"] .md-body .hljs-built_in,
+:root[data-theme="light"] .md-body .hljs-symbol {
+  color: #e36209;
+}
+:root[data-theme="light"] .md-body .hljs-comment,
+:root[data-theme="light"] .md-body .hljs-code,
+:root[data-theme="light"] .md-body .hljs-formula {
+  color: #6a737d;
+}
+:root[data-theme="light"] .md-body .hljs-name,
+:root[data-theme="light"] .md-body .hljs-quote,
+:root[data-theme="light"] .md-body .hljs-selector-pseudo,
+:root[data-theme="light"] .md-body .hljs-selector-tag {
+  color: #22863a;
+}
+:root[data-theme="light"] .md-body .hljs-subst,
+:root[data-theme="light"] .md-body .hljs-emphasis,
+:root[data-theme="light"] .md-body .hljs-strong {
+  color: #24292e;
+}
+:root[data-theme="light"] .md-body .hljs-section {
+  color: #005cc5;
+}
+:root[data-theme="light"] .md-body .hljs-bullet {
+  color: #735c0f;
+}
+:root[data-theme="light"] .md-body .hljs-addition {
+  color: #22863a;
+  background-color: #f0fff4;
+}
+:root[data-theme="light"] .md-body .hljs-deletion {
+  color: #b31d28;
+  background-color: #ffeef0;
+}

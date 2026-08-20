@@ -9,15 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { useEffect, useState } from "react";
 import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
-import { readConfig, writeConfig, getRenDefaults, setRenProject } from "../ipc";
+import { getRenDefaults, setRenProject } from "../ipc";
 import { reportError } from "../errors";
+import { session, RpcSessionManager } from "../rpc/session";
 import type { NodeKind } from "../ipc/types";
 import type { AppTheme } from "../theme";
 import { TEMPLATES } from "../templates";
 import Select from "./Select";
 import Checkbox from "./Checkbox";
 import TestDataEditor from "./TestDataEditor";
-import Scoreboard from "./Scoreboard";
 import CheckerEditor from "./CheckerEditor";
 
 type FieldType = "text" | "number" | "bool" | "enum" | "json";
@@ -67,64 +67,89 @@ function toDisplay(v: unknown): string {
 }
 
 interface Props {
-  path: string;
   dir: string;
   kind: NodeKind;
   theme: AppTheme;
-  running: boolean;
-  projectRoot: string;
 }
 
-export default function ConfigEditor({ path, dir, kind, theme, running, projectRoot }: Props) {
+export default function ConfigEditor({ dir, kind, theme }: Props) {
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
-  const [tab, setTab] = useState<"form" | "json" | "data" | "score" | "gui">("form");
+  const [tab, setTab] = useState<"form" | "json" | "data" | "gui">("form");
   const [jsonText, setJsonText] = useState("");
   const [status, setStatus] = useState("");
   const [renProject, setRenProjectState] = useState("");
 
   useEffect(() => {
+    let alive = true;
     setStatus("");
-    readConfig(path)
-      .then((c) => {
-        setConfig(c);
-        setJsonText(JSON.stringify(c, null, 2));
+    session
+      .getConfig(dir)
+      .then(({ config }) => {
+        if (!alive) return;
+        setConfig(config);
+        setJsonText(JSON.stringify(config, null, 2));
       })
-      .catch((e) => setStatus(String(e)));
+      .catch((e) => {
+        if (alive) setStatus(String(e));
+      });
     if (kind === "contest") {
       // 项目级 GUI 配置（存于项目根 .tuack-gui.json）
       getRenDefaults(dir)
         .then((d) => setRenProjectState(d.project ?? ""))
         .catch((e) => reportError(`读取项目 ren 模板失败：${e}`));
     }
-  }, [path, kind, dir]);
+    return () => {
+      alive = false;
+    };
+  }, [dir, kind]);
 
   function setField(key: string, value: unknown) {
     setConfig((prev) => (prev ? { ...prev, [key]: value } : prev));
   }
 
+  /** 保存后的统一处理：revision 冲突时重载配置并提示 */
+  function handleSaveError(e: unknown) {
+    if (RpcSessionManager.isRevisionConflict(e)) {
+      setStatus("保存冲突：配置已被其他程序修改，已重新加载");
+      session
+        .getConfig(dir)
+        .then(({ config }) => {
+          setConfig(config);
+          setJsonText(JSON.stringify(config, null, 2));
+        })
+        .catch(() => {});
+    } else {
+      setStatus(String(e));
+    }
+  }
+
   async function saveForm() {
     if (!config) return;
     try {
-      await writeConfig(path, config);
+      await session.setConfig(dir, config);
       setStatus("已保存");
     } catch (e) {
-      setStatus(String(e));
+      handleSaveError(e);
     }
   }
 
   async function saveJson() {
     try {
       const parsed = JSON.parse(jsonText);
-      await writeConfig(path, parsed);
+      await session.setConfig(dir, parsed);
       setStatus("已保存");
     } catch (e) {
-      setStatus("JSON 无效：" + String(e));
+      if (e instanceof SyntaxError) {
+        setStatus("JSON 无效：" + String(e));
+      } else {
+        handleSaveError(e);
+      }
     }
   }
 
   function handleTab(v: string) {
     if (v === "json" && config) setJsonText(JSON.stringify(config, null, 2));
-    setTab(v as "form" | "json" | "data" | "score");
+    setTab(v as "form" | "json" | "data" | "gui");
   }
 
   return (
@@ -139,7 +164,6 @@ export default function ConfigEditor({ path, dir, kind, theme, running, projectR
         <TabsList>
           <TabsTrigger value="form">表单</TabsTrigger>
           {kind === "problem" && <TabsTrigger value="data">测试点</TabsTrigger>}
-          {kind === "problem" && <TabsTrigger value="score">评测结果</TabsTrigger>}
           <TabsTrigger value="json">高级 JSON</TabsTrigger>
           {kind === "contest" && <TabsTrigger value="gui">偏好</TabsTrigger>}
         </TabsList>
@@ -259,9 +283,6 @@ export default function ConfigEditor({ path, dir, kind, theme, running, projectR
               保存
             </Button>
           </div>
-        </TabsContent>
-        <TabsContent value="score" className="h-full min-h-0">
-          <Scoreboard dir={dir} running={running} projectRoot={projectRoot} />
         </TabsContent>
         <TabsContent value="json" className="h-full min-h-0">
           <div className="flex h-full min-h-0 flex-col gap-2">

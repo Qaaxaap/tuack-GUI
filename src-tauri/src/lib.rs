@@ -15,6 +15,8 @@ use serde_json::Value;
 use tauri::ipc::Channel;
 use tauri::Manager;
 
+mod rpc;
+
 /// 窗口图标：深色主题用白描边版、浅色主题用黑描边版
 const ICON_LIGHT: &[u8] = include_bytes!("../icons/icon-light.png");
 const ICON_DARK: &[u8] = include_bytes!("../icons/icon-dark.png");
@@ -409,6 +411,8 @@ struct AppState {
     tuack_path: Mutex<Option<PathBuf>>,
     children: Arc<Mutex<HashMap<u64, RunningProcess>>>,
     next_id: Arc<AtomicU64>,
+    rpc_conns: Arc<Mutex<HashMap<u64, Arc<rpc::RpcConnection>>>>,
+    rpc_next_id: Arc<AtomicU64>,
 }
 
 impl Default for AppState {
@@ -417,6 +421,8 @@ impl Default for AppState {
             tuack_path: Mutex::new(None),
             children: Arc::new(Mutex::new(HashMap::new())),
             next_id: Arc::new(AtomicU64::new(1)),
+            rpc_conns: Arc::new(Mutex::new(HashMap::new())),
+            rpc_next_id: Arc::new(AtomicU64::new(1)),
         }
     }
 }
@@ -1103,20 +1109,12 @@ struct RenDefaults {
     project: Option<String>,
 }
 
-/// 一次评测的记分板快照（CSV 原文，展示时再解析）
-#[derive(serde::Serialize, serde::Deserialize, Clone)]
-struct ScoreSnapshot {
-    time: String,
-    csv: String,
-    sample_csv: String,
-}
-
 /// 项目级 GUI 配置：存于项目根目录 .tuack-gui.json
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 struct ProjectConfig {
     ren_template: Option<String>,
-    /// 记分板历史：题目目录 → 最近若干次快照
-    score_history: Option<HashMap<String, Vec<ScoreSnapshot>>>,
+    /// 评测结果缓存：key = "<题目绝对目录>\u0000<tester>"，仅保留最新记录
+    judge_results: Option<HashMap<String, Value>>,
 }
 
 fn project_config_path(project_root: &str) -> PathBuf {
@@ -1134,6 +1132,57 @@ fn save_project_config(project_root: &str, cfg: &ProjectConfig) -> Result<(), St
     let path = project_config_path(project_root);
     let text = serde_json::to_string_pretty(cfg).map_err(|e| format!("序列化失败：{e}"))?;
     fs::write(&path, text).map_err(|e| format!("写入 .tuack-gui.json 失败：{e}"))
+}
+
+/// 保存单个测试者的最新评测结果（覆盖旧记录）
+#[tauri::command]
+fn save_judge_result(project_root: String, key: String, result: Value) -> Result<(), String> {
+    let root = project_root.trim().to_string();
+    if root.is_empty() {
+        return Ok(());
+    }
+    let mut cfg = load_project_config(&root);
+    let mut map = cfg.judge_results.unwrap_or_default();
+    map.insert(key, result);
+    cfg.judge_results = Some(map);
+    save_project_config(&root, &cfg)
+}
+
+/// 读取全部评测结果缓存（key -> RunResult JSON）
+#[tauri::command]
+fn load_judge_results(project_root: String) -> HashMap<String, Value> {
+    let root = project_root.trim().to_string();
+    if root.is_empty() {
+        return HashMap::new();
+    }
+    load_project_config(&root).judge_results.unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn judge_result_roundtrip() {
+        let dir = std::env::temp_dir().join("tuack-gui-test-judge");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let root = dir.to_string_lossy().to_string();
+
+        let r1 = serde_json::json!({ "tester": "std", "judged": [] });
+        save_judge_result(root.clone(), "p\u{0}std".into(), r1.clone()).unwrap();
+        let loaded = load_judge_results(root.clone());
+        assert_eq!(loaded.get("p\u{0}std"), Some(&r1));
+
+        // 同一 key 覆盖为最新
+        let r2 = serde_json::json!({ "tester": "std", "judged": [1] });
+        save_judge_result(root.clone(), "p\u{0}std".into(), r2.clone()).unwrap();
+        let loaded2 = load_judge_results(root.clone());
+        assert_eq!(loaded2.get("p\u{0}std"), Some(&r2));
+        assert_eq!(loaded2.len(), 1);
+
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
 }
 
 #[tauri::command]
@@ -1167,56 +1216,6 @@ fn set_ren_project(project_root: String, template: String) -> Result<(), String>
     let t = template.trim().to_string();
     cfg.ren_template = if t.is_empty() { None } else { Some(t) };
     save_project_config(&root, &cfg)
-}
-
-/// 记分板历史单题最多保留的快照数
-const SCORE_HISTORY_LIMIT: usize = 5;
-
-/// test 成功后调用：读取 result.csv / result-sample.csv 并存入项目历史
-#[tauri::command]
-fn snapshot_score(project_root: String, problem_dir: String) -> Result<(), String> {
-    let root = project_root.trim().to_string();
-    let dir = problem_dir.trim().to_string();
-    if root.is_empty() || dir.is_empty() {
-        return Ok(());
-    }
-    let read = |name: &str| fs::read_to_string(Path::new(&dir).join(name)).unwrap_or_default();
-    let csv = read("result.csv");
-    let sample_csv = read("result-sample.csv");
-    if csv.is_empty() && sample_csv.is_empty() {
-        return Ok(());
-    }
-
-    let mut cfg = load_project_config(&root);
-    let mut map = cfg.score_history.unwrap_or_default();
-    let list = map.entry(dir).or_default();
-    list.push(ScoreSnapshot {
-        time: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-        csv,
-        sample_csv,
-    });
-    while list.len() > SCORE_HISTORY_LIMIT {
-        list.remove(0);
-    }
-    cfg.score_history = Some(map);
-    save_project_config(&root, &cfg)
-}
-
-/// 读取某题目的记分板历史（新→旧）
-#[tauri::command]
-fn get_score_history(project_root: String, problem_dir: String) -> Vec<ScoreSnapshot> {
-    let root = project_root.trim().to_string();
-    let dir = problem_dir.trim().to_string();
-    if root.is_empty() || dir.is_empty() {
-        return Vec::new();
-    }
-    let cfg = load_project_config(&root);
-    cfg.score_history
-        .and_then(|mut m| m.remove(&dir))
-        .unwrap_or_default()
-        .into_iter()
-        .rev()
-        .collect()
 }
 
 /// 首次启动时，把捆绑的 assets 放到 tuack-ng 能读到的地方
@@ -1302,13 +1301,16 @@ pub fn run() {
             get_ren_defaults,
             set_ren_global,
             set_ren_project,
-            snapshot_score,
-            get_score_history,
+            save_judge_result,
+            load_judge_results,
             read_file_base64,
             read_text_file,
             write_text_file,
             get_auto_ren,
-            set_auto_ren
+            set_auto_ren,
+            rpc::rpc_connect,
+            rpc::rpc_request,
+            rpc::rpc_stop
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
