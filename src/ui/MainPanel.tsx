@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { useEffect, useRef, useState } from "react";
+import { Eye, EyeOff, FileText, Gauge, Settings, type LucideIcon } from "lucide-react";
 import ConfigEditor from "./ConfigEditor";
 import PreviewPane, { type PreviewPaneHandle } from "./PreviewPane";
 import StatementEditor, { type StatementEditorHandle } from "./StatementEditor";
@@ -42,6 +43,8 @@ export default function MainPanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const [narrow, setNarrow] = useState(false);
   const [view, setView] = useState<MainView>("config");
+  /** 宽屏下右栏预览是否展开（可手动折叠；非编辑界面自动折叠） */
+  const [previewOpen, setPreviewOpen] = useState(true);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -58,6 +61,21 @@ export default function MainPanel({
     if (!narrow && view === "preview") setView("config");
   }, [narrow, view]);
 
+  // 切到无「编辑/评测」界面的节点（天/比赛）时回到配置页，避免 view 停留在不存在的页
+  useEffect(() => {
+    if (selected?.kind !== "problem") setView("config");
+  }, [selected?.kind]);
+
+  // 非编辑界面自动折叠预览；进入编辑界面自动展开（题目有编辑界面时才生效；场次等无编辑界面的节点预览常驻）
+  useEffect(() => {
+    const isProblem = selected?.kind === "problem";
+    if (isProblem) {
+      setPreviewOpen(view === "edit");
+    } else {
+      setPreviewOpen(true);
+    }
+  }, [selected, view]);
+
   // 命令面板 test 命令：切到评测视图
   useEffect(() => {
     if (judgeTrigger && selected && judgeTrigger.dir === selected.dir) {
@@ -73,6 +91,7 @@ export default function MainPanel({
       dir={selected.dir}
       kind={selected.kind}
       theme={theme}
+      narrow={narrow}
     />
   ) : null;
 
@@ -150,11 +169,11 @@ export default function MainPanel({
   // 宽屏隐藏「预览」项（预览常驻右栏）；窄屏全显；
   // 场次节点无单一题面源，不出「编辑」项
   const isProblem = selected.kind === "problem";
-  const views: { id: MainView; label: string }[] = [
-    { id: "config", label: "配置" },
-    ...(isProblem ? ([{ id: "edit", label: "编辑" }] as const) : []),
-    ...(isProblem ? ([{ id: "judge", label: "评测" }] as const) : []),
-    ...(narrow ? ([{ id: "preview", label: "预览" }] as const) : []),
+  const views: { id: MainView; label: string; icon: LucideIcon }[] = [
+    { id: "config", label: "配置", icon: Settings },
+    ...(isProblem ? ([{ id: "edit", label: "编辑", icon: FileText }] as const) : []),
+    ...(isProblem ? ([{ id: "judge", label: "评测", icon: Gauge }] as const) : []),
+    ...(narrow ? ([{ id: "preview", label: "预览", icon: Eye }] as const) : []),
   ];
 
   const leftContent =
@@ -171,16 +190,35 @@ export default function MainPanel({
             <button
               key={v.id}
               onClick={() => setView(v.id)}
-              className="rounded px-3 py-1 text-xs"
+              className="flex items-center gap-1 rounded px-3 py-1 text-xs"
               style={
                 view === v.id
                   ? { backgroundColor: "var(--brand)", color: "#fff" }
                   : { color: "var(--text-muted)" }
               }
             >
+              <v.icon size={14} />
               {v.label}
             </button>
           ))}
+          {/* 预览展开/折叠按钮：常驻 tab 栏右侧（窄屏用「预览」tab 切换，不重复） */}
+          {!narrow && isProblem && (
+            <div className="ml-auto">
+              <button
+                onClick={() => setPreviewOpen((o) => !o)}
+                className="flex items-center gap-1 rounded px-3 py-1 text-xs"
+                style={
+                  previewOpen
+                    ? { backgroundColor: "var(--brand)", color: "#fff" }
+                    : { color: "var(--text-muted)" }
+                }
+                title={previewOpen ? "收起预览" : "展开预览"}
+              >
+                {previewOpen ? <Eye size={14} /> : <EyeOff size={14} />}
+                预览
+              </button>
+            </div>
+          )}
         </div>
       )}
       {narrow ? (
@@ -194,9 +232,11 @@ export default function MainPanel({
           <div className="flex min-w-0 flex-col overflow-hidden" style={{ flex: "50 1 0%" }}>
             {leftContent}
           </div>
-          <div className="flex min-w-0 flex-col overflow-hidden" style={{ flex: "50 1 0%" }}>
-            {preview}
-          </div>
+          {previewOpen && (
+            <div className="flex min-w-0 flex-col overflow-hidden" style={{ flex: "50 1 0%" }}>
+              {preview}
+            </div>
+          )}
         </div>
       )}
     </main>

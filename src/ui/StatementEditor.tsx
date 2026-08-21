@@ -131,7 +131,13 @@ export default function StatementEditor({ dir, theme, onRender, onCursorLine, re
       });
     return () => {
       alive = false;
-      if (saveTimer.current != null) window.clearTimeout(saveTimer.current);
+      if (saveTimer.current != null) {
+        // 切换视图 / 切题导致卸载：flush 尚未触发的自动保存，避免最后一步丢失
+        window.clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+        const text = viewRef.current?.state.doc.toString();
+        if (text != null) void writeTextFile(path, text);
+      }
     };
   }, [path]);
 
@@ -139,8 +145,10 @@ export default function StatementEditor({ dir, theme, onRender, onCursorLine, re
   async function persist(text: string) {
     try {
       await writeTextFile(path, text);
-      setContent(text);
-      setDirty(false);
+      // 仅在保存期间无新输入时标记已保存；有新输入则保持脏状态，等待下一次防抖持久化
+      if (viewRef.current?.state.doc.toString() === text) {
+        setDirty(false);
+      }
       onRender();
     } catch (e) {
       reportError(`保存题面失败：${e}`);

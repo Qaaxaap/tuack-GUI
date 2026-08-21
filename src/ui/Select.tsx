@@ -18,12 +18,14 @@ interface Props {
   value: string;
   options: Option[];
   onChange: (value: string) => void;
+  /** 附加到触发器（如居中：justify-center） */
+  className?: string;
 }
 
-export default function Select({ value, options, onChange }: Props) {
+export default function Select({ value, options, onChange, className }: Props) {
   return (
     <ShadcnSelect value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full">
+      <SelectTrigger className={`w-full ${className ?? ""}`}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

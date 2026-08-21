@@ -19,8 +19,9 @@ import Select from "./Select";
 import Checkbox from "./Checkbox";
 import TestDataEditor from "./TestDataEditor";
 import CheckerEditor from "./CheckerEditor";
+import DateTimePicker from "./DateTimePicker";
 
-type FieldType = "text" | "number" | "bool" | "enum" | "json";
+type FieldType = "text" | "number" | "bool" | "enum" | "json" | "datetime";
 
 interface FieldDef {
   key: string;
@@ -43,8 +44,8 @@ const FIELDS: Record<NodeKind, FieldDef[]> = {
   day: [
     { key: "name", label: "名称", type: "text" },
     { key: "title", label: "标题", type: "text" },
-    { key: "start time", label: "开始时间 [年,月,日,时,分,秒]", type: "json" },
-    { key: "end time", label: "结束时间 [年,月,日,时,分,秒]", type: "json" },
+    { key: "start time", label: "开始时间", type: "datetime" },
+    { key: "end time", label: "结束时间", type: "datetime" },
     { key: "use_pretest", label: "使用预测试", type: "bool" },
     { key: "noi_style", label: "NOI 风格", type: "bool" },
     { key: "file_io", label: "文件 IO", type: "bool" },
@@ -70,14 +71,21 @@ interface Props {
   dir: string;
   kind: NodeKind;
   theme: AppTheme;
+  /** 窄屏模式：透传给测试点编辑器以隐藏行操作栏 */
+  narrow?: boolean;
 }
 
-export default function ConfigEditor({ dir, kind, theme }: Props) {
+export default function ConfigEditor({ dir, kind, theme, narrow = false }: Props) {
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [tab, setTab] = useState<"form" | "json" | "data" | "gui">("form");
   const [jsonText, setJsonText] = useState("");
   const [status, setStatus] = useState("");
   const [renProject, setRenProjectState] = useState("");
+
+  // 节点类型变化时重置到表单页（题目↔天/比赛）；同级别切换保留当前页
+  useEffect(() => {
+    setTab("form");
+  }, [kind]);
 
   useEffect(() => {
     let alive = true;
@@ -218,6 +226,11 @@ export default function ConfigEditor({ dir, kind, theme }: Props) {
                           setField(f.key, e.target.value === "" ? null : Number(e.target.value))
                         }
                       />
+                    ) : f.type === "datetime" ? (
+                      <DateTimePicker
+                        value={Array.isArray(raw) ? raw : undefined}
+                        onChange={(v) => setField(f.key, v)}
+                      />
                     ) : f.type === "json" ? (
                       <Input
                         type="text"
@@ -277,6 +290,7 @@ export default function ConfigEditor({ dir, kind, theme }: Props) {
                     : undefined
                 }
                 onSubtasksChange={(v) => setField("subtasks", v)}
+                narrow={narrow}
               />
             </div>
             <Button variant="default" className="self-start" onClick={saveForm}>

@@ -277,6 +277,8 @@ export default function JudgeView({ dir, trigger }: Props) {
               <button
                 key={t}
                 onClick={() => {
+                  // 已选中时无操作：避免 setRuns({}) 清空记录而 target 不变、恢复 effect 不触发
+                  if (t === target) return;
                   // 先清空，避免旧目标的结果参与新目标的预期检查（闪烁警告）
                   setRuns({});
                   setTarget(t);
