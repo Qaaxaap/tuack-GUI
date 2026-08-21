@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import { cn } from "../lib/utils";
 
 interface Option {
   value: string;
@@ -25,7 +26,7 @@ interface Props {
 export default function Select({ value, options, onChange, className }: Props) {
   return (
     <ShadcnSelect value={value} onValueChange={onChange}>
-      <SelectTrigger className={`w-full ${className ?? ""}`}>
+      <SelectTrigger className={cn("w-full", className)}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

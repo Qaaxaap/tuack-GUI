@@ -103,7 +103,7 @@ export default function ArgsEditorDialog({ value, onSave, onClose }: Props) {
 
   return (
     <div className="rounded border p-3" style={{ borderColor: "var(--border)" }}>
-      <div className="mb-2 text-xs font-medium" style={{ color: "var(--text)" }}>
+      <div className="mb-2 text-xs font-medium" style={{ color: "var(--foreground)" }}>
         测试点参数（args）
       </div>
 
@@ -145,7 +145,7 @@ export default function ArgsEditorDialog({ value, onSave, onClose }: Props) {
           </div>
         ))}
         {entries.length === 0 && (
-          <div className="py-2 text-center text-xs" style={{ color: "var(--text-muted)" }}>
+          <div className="py-2 text-center text-xs" style={{ color: "var(--muted-foreground)" }}>
             无参数
           </div>
         )}
@@ -157,7 +157,7 @@ export default function ArgsEditorDialog({ value, onSave, onClose }: Props) {
           添加
         </Button>
         {error ? (
-          <span className="text-xs" style={{ color: "var(--danger)" }}>
+          <span className="text-xs" style={{ color: "var(--destructive)" }}>
             {error}
           </span>
         ) : null}

@@ -33,7 +33,7 @@ export default function NewProjectModal({ onRun, onClose }: Props) {
       if (!o) onClose();
     }}>
       <DialogContent className="w-[min(640px,80vw)] rounded-lg p-4">
-        <div className="mb-3 text-sm" style={{ color: "var(--text)" }}>
+        <div className="mb-3 text-sm" style={{ color: "var(--foreground)" }}>
           新建工程
         </div>
 

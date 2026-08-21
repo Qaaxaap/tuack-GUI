@@ -13,7 +13,7 @@ export default function TuackLogo({ size = 40 }: { size?: number }) {
       height={(size * 149) / 245}
       viewBox="0 0 245 149"
       fill="none"
-      style={{ color: "var(--text)" }}
+      style={{ color: "var(--foreground)" }}
       aria-hidden="true"
     >
       {/* 中间斜杠 */}

@@ -28,9 +28,9 @@ function Row({ label, value, children }: { label: string; value?: string; childr
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="min-w-0">
-        <div className="text-xs" style={{ color: "var(--text)" }}>{label}</div>
+        <div className="text-xs" style={{ color: "var(--foreground)" }}>{label}</div>
         {value !== undefined && (
-          <div className="truncate text-[11px]" style={{ color: "var(--text-muted)" }} title={value}>
+          <div className="truncate text-[11px]" style={{ color: "var(--muted-foreground)" }} title={value}>
             {value}
           </div>
         )}
@@ -69,7 +69,7 @@ export default function SettingsDialog({
       if (!o) onClose();
     }}>
       <DialogContent className="w-[min(640px,80vw)] rounded-lg p-4">
-        <div className="mb-1 text-sm" style={{ color: "var(--text)" }}>设置</div>
+        <div className="mb-1 text-sm" style={{ color: "var(--foreground)" }}>设置</div>
 
         <Row label="tuack-ng" value={binaryStatus}>
           <Button variant="ghost" onClick={() => setTuackPicker(true)}>选择可执行文件…</Button>

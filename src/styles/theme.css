@@ -7,18 +7,10 @@
 :root {
   color-scheme: dark;
 
-  /* —— 应用令牌 —— */
-  --bg: #161616;
-  --bg-raised: #1e1e1e;
-  --bg-card: #242424;
+  /* —— 应用令牌（其余颜色统一走下方 shadcn 令牌） —— */
   --border: #2c2c2c;
-  --text: #e6e6e6;
-  --text-muted: #8a8a8a;
-  --brand: #6366f1;
-  --brand-hover: #818cf8;
   --success: #34d399;
-  --danger: #f87171;
-  --row-hover: rgba(255, 255, 255, 0.05);
+  --warning: #e5e510;
   --radius: 8px;
 
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
@@ -68,17 +60,9 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg: #ffffff;
-  --bg-raised: #f3f3f3;
-  --bg-card: #f6f6f6;
   --border: #e4e4e4;
-  --text: #1f1f1f;
-  --text-muted: #717171;
-  --brand: #6366f1;
-  --brand-hover: #4f46e5;
   --success: #15803d;
-  --danger: #dc2626;
-  --row-hover: rgba(0, 0, 0, 0.05);
+  --warning: #e5e510;
 
   --ansi-0: #000000;
   --ansi-1: #cd3131;
@@ -137,6 +121,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -153,8 +139,8 @@ body,
 body {
   font-family: var(--font-ui);
   font-size: 13px;
-  color: var(--text);
-  background-color: var(--bg);
+  color: var(--foreground);
+  background-color: var(--background);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
@@ -196,7 +182,7 @@ body .cm-scroller {
 .md-body {
   font-size: 13px;
   line-height: 1.7;
-  color: var(--text);
+  color: var(--foreground);
   word-break: break-word;
 }
 .md-body > :first-child {
@@ -243,12 +229,12 @@ body .cm-scroller {
   margin: 0.5em 0;
   padding-left: 0.8em;
   border-left: 3px solid var(--border);
-  color: var(--text-muted);
+  color: var(--muted-foreground);
 }
 .md-body code {
   font-family: var(--font-mono);
   font-size: 0.9em;
-  background: var(--bg-raised);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 0 0.25em;
@@ -257,7 +243,7 @@ body .cm-scroller {
   margin: 0.5em 0;
   padding: 0.6em 0.8em;
   overflow: auto;
-  background: var(--bg-raised);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 4px;
 }
@@ -266,7 +252,7 @@ body .cm-scroller {
   display: block;
   padding: 0;
   background: transparent;
-  color: var(--text);
+  color: var(--foreground);
   border: none;
   font-family: var(--font-mono);
   font-size: 0.9em;
@@ -280,18 +266,18 @@ body .cm-scroller {
   border-collapse: collapse;
   margin: 0.5em auto; /* 居中 */
   /* 上下外框加粗：border-collapse 下与所有触底单元格（含 rowspan 延伸）合并 */
-  border-top: 2px solid var(--text);
-  border-bottom: 2px solid var(--text);
+  border-top: 2px solid var(--foreground);
+  border-bottom: 2px solid var(--foreground);
 }
 .md-body th,
 .md-body td {
-  border: 1px solid var(--text);
+  border: 1px solid var(--foreground);
   padding: 0.3em 0.6em;
 }
 .md-body th {
   font-weight: 600;
   /* 表头下划线加粗 */
-  border-bottom: 2px solid var(--text);
+  border-bottom: 2px solid var(--foreground);
 }
 /* 左右无外框：首列无左边线、末列无右边线 */
 .md-body th:first-child,
@@ -303,7 +289,7 @@ body .cm-scroller {
   border-right: none;
 }
 .md-body a {
-  color: var(--brand);
+  color: var(--primary);
 }
 .md-body hr {
   border: none;
@@ -341,7 +327,7 @@ mjx-container[jax="SVG"] svg {
 }
 .md-body .md-figure figcaption {
   font-size: 0.85em;
-  color: var(--text-muted);
+  color: var(--muted-foreground);
 }
 /* 亮色模式：覆盖 github-dark 的 token 色为 github-light 语义色，
    避免深色主题高亮色在浅背景上过强 */

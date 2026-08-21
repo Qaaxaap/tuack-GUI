@@ -46,7 +46,7 @@ function statusColor(s: string): string {
   if (s === "RE") return "#d670d6";
   if (s === "UKE" || s === "FE") return "#e5e510";
   if (s.startsWith("PC")) return "#e5e510";
-  return "var(--text)";
+  return "var(--foreground)";
 }
 
 const STATE_LABEL: Record<JudgeState, string> = {
@@ -92,7 +92,7 @@ function TesterTable({ run }: { run: TesterRun }) {
       <thead>
         <tr style={{ borderBottom: "1px solid var(--border)" }}>
           {["测试点", "状态", "得分", "时间", "空间", "信息"].map((h) => (
-            <th key={h} className="p-1 text-left" style={{ color: "var(--text-muted)" }}>
+            <th key={h} className="p-1 text-left" style={{ color: "var(--muted-foreground)" }}>
               {h}
             </th>
           ))}
@@ -101,7 +101,7 @@ function TesterTable({ run }: { run: TesterRun }) {
       <tbody>
         {rows.map((r) => (
           <tr key={r.id} style={{ borderBottom: "1px solid var(--border)" }}>
-            <td className="p-1" style={{ color: "var(--text-muted)" }}>
+            <td className="p-1" style={{ color: "var(--muted-foreground)" }}>
               {r.label}
             </td>
             <td className="p-1" style={{ color: statusColor(r.status) }}>
@@ -110,14 +110,14 @@ function TesterTable({ run }: { run: TesterRun }) {
             <td className="p-1">{r.score}</td>
             <td className="p-1">{r.time}</td>
             <td className="p-1">{r.memory}</td>
-            <td className="p-1" style={{ color: r.status === "UKE" ? "var(--danger)" : "var(--text-muted)" }}>
+            <td className="p-1" style={{ color: r.status === "UKE" ? "var(--destructive)" : "var(--muted-foreground)" }}>
               {r.msg}
             </td>
           </tr>
         ))}
         {rows.length === 0 && (
           <tr>
-            <td colSpan={6} className="p-3 text-center" style={{ color: "var(--text-muted)" }}>
+            <td colSpan={6} className="p-3 text-center" style={{ color: "var(--muted-foreground)" }}>
               暂无数据点
             </td>
           </tr>
@@ -252,11 +252,11 @@ export default function JudgeView({ dir, trigger }: Props) {
         className="flex h-11 shrink-0 flex-wrap items-center gap-2 px-3"
         style={{ borderBottom: "1px solid var(--border)" }}
       >
-        <span className="text-xs font-medium" style={{ color: "var(--text)" }}>
+        <span className="text-xs font-medium" style={{ color: "var(--foreground)" }}>
           评测
         </span>
         {running ? (
-          <span className="text-xs" style={{ color: "var(--brand)" }}>
+          <span className="text-xs" style={{ color: "var(--primary)" }}>
             {Object.values(runs).some((r) => r.state === "preparing")
               ? "编译中…"
               : Object.values(runs).some((r) => r.state === "judging")
@@ -264,7 +264,7 @@ export default function JudgeView({ dir, trigger }: Props) {
                 : "等待中…"}
           </span>
         ) : (
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+          <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
             {doneCount + failedCount > 0
               ? `完成 ${doneCount}${failedCount > 0 ? ` · 失败 ${failedCount}` : ""}`
               : "待评测"}
@@ -287,8 +287,8 @@ export default function JudgeView({ dir, trigger }: Props) {
                 className="px-2 py-1 text-[11px]"
                 style={
                   target === t
-                    ? { backgroundColor: "var(--brand)", color: "#fff" }
-                    : { color: "var(--text-muted)" }
+                    ? { backgroundColor: "var(--primary)", color: "#fff" }
+                    : { color: "var(--muted-foreground)" }
                 }
               >
                 {targetLabel(t)}
@@ -310,7 +310,7 @@ export default function JudgeView({ dir, trigger }: Props) {
 
       <div className="min-h-0 flex-1 overflow-auto p-4">
         {testers.length === 0 && (
-          <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+          <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>
             题目未配置测试代码（tests），无法评测
           </div>
         )}
@@ -329,12 +329,12 @@ export default function JudgeView({ dir, trigger }: Props) {
           return (
             <div
               className="mb-3 rounded border px-3 py-2 text-xs"
-              style={{ borderColor: "#e5e510" }}
+              style={{ borderColor: "var(--warning)" }}
             >
-              <div className="font-bold" style={{ color: "#e5e510" }}>
+              <div className="font-bold" style={{ color: "var(--warning)" }}>
                 以下测试用例不符合预期
               </div>
-              <div className="mt-1 font-medium leading-5" style={{ color: "var(--text)" }}>
+              <div className="mt-1 font-medium leading-5" style={{ color: "var(--foreground)" }}>
                 {mismatched.map((t) => (
                   <div key={t}>· {t}</div>
                 ))}
@@ -359,7 +359,7 @@ export default function JudgeView({ dir, trigger }: Props) {
                 <button
                   onClick={() => setCollapsed((p) => ({ ...p, [t]: !p[t] }))}
                   className="flex items-center gap-1 text-xs font-medium"
-                  style={{ color: "var(--text)" }}
+                  style={{ color: "var(--foreground)" }}
                 >
                   {isCollapsed ? (
                     <ChevronRight size={14} />
@@ -368,24 +368,24 @@ export default function JudgeView({ dir, trigger }: Props) {
                   )}
                   {run.tester}
                 </button>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                   {targetLabel(target)} · {STATE_LABEL[run.state]}
                   {run.state === "judging" && run.points.length > 0
                     ? `（${run.judged.length}/${run.points.length}）`
                     : ""}
                 </span>
                 {report && (
-                  <span className="text-xs font-medium" style={{ color: bad ? "#e5e510" : "var(--text)" }}>
+                  <span className="text-xs font-medium" style={{ color: bad ? "var(--warning)" : "var(--foreground)" }}>
                     {report.total}/{report.fullScore}
                   </span>
                 )}
                 {bad && (
-                  <span className="text-xs" style={{ color: "#e5e510" }}>
+                  <span className="text-xs" style={{ color: "var(--warning)" }}>
                     不符合预期
                   </span>
                 )}
                 {run.state === "error" && (
-                  <span className="text-xs font-bold" style={{ color: "#e5e510" }}>
+                  <span className="text-xs font-bold" style={{ color: "var(--warning)" }}>
                     CE
                   </span>
                 )}
@@ -411,17 +411,17 @@ export default function JudgeView({ dir, trigger }: Props) {
                   {run.state === "error" && (run.logs.length > 0 || run.error) && (
                     <div
                       className="mt-1.5 rounded border px-2.5 py-1.5 text-[11px] leading-5"
-                      style={{ borderColor: "#e5e510" }}
+                      style={{ borderColor: "var(--warning)" }}
                     >
-                      <span className="mr-1 font-bold" style={{ color: "#e5e510" }}>
+                      <span className="mr-1 font-bold" style={{ color: "var(--warning)" }}>
                         CE
                       </span>
-                      <span className="font-bold" style={{ color: "#e5e510" }}>
+                      <span className="font-bold" style={{ color: "var(--warning)" }}>
                         编译错误
                       </span>
                       <div
                         className="mt-1 font-mono whitespace-pre-wrap"
-                        style={{ color: "var(--text-muted)" }}
+                        style={{ color: "var(--muted-foreground)" }}
                       >
                         {run.logs.length > 0 ? run.logs.join("\n") : run.error}
                       </div>

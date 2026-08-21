@@ -52,11 +52,11 @@ export default function Toolbar({
     <header
       data-tauri-drag-region="deep"
       className="flex h-14 shrink-0 items-center gap-4 px-4"
-      style={{ backgroundColor: "var(--bg-raised)", borderBottom: "1px solid var(--border)" }}
+      style={{ backgroundColor: "var(--card)", borderBottom: "1px solid var(--border)" }}
     >
       <div className="flex items-center gap-2">
         <TuackLogo size={40} />
-        <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+        <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
           Tuack-GUI
         </span>
       </div>

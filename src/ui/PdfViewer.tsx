@@ -137,7 +137,7 @@ export default function PdfCanvas({ path, zoom = 1, refreshKey = 0 }: Props) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       {error && (
-        <div className="shrink-0 p-3 text-xs" style={{ color: "var(--danger)" }}>
+        <div className="shrink-0 p-3 text-xs" style={{ color: "var(--destructive)" }}>
           {error}
         </div>
       )}
@@ -146,7 +146,7 @@ export default function PdfCanvas({ path, zoom = 1, refreshKey = 0 }: Props) {
       <div
         ref={containerRef}
         className="min-h-0 flex-1 overflow-y-scroll"
-        style={{ backgroundColor: "var(--bg)", scrollbarGutter: "stable" }}
+        style={{ backgroundColor: "var(--background)", scrollbarGutter: "stable" }}
       />
     </div>
   );

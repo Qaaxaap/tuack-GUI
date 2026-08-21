@@ -217,12 +217,12 @@ export default function StatementEditor({ dir, theme, onRender, onCursorLine, re
         className="flex h-9 shrink-0 items-center gap-3 px-3"
         style={{ borderBottom: "1px solid var(--border)" }}
       >
-        <span className="text-xs" style={{ color: "var(--text)" }}>
+        <span className="text-xs" style={{ color: "var(--foreground)" }}>
           statement.md
         </span>
         <span
           className="text-xs"
-          style={{ color: dirty ? "var(--accent)" : "var(--text-muted)" }}
+          style={{ color: dirty ? "var(--primary)" : "var(--muted-foreground)" }}
         >
           {dirty ? "● " : ""}
           {status}
@@ -242,7 +242,7 @@ export default function StatementEditor({ dir, theme, onRender, onCursorLine, re
       {missing && (
         <div
           className="shrink-0 px-3 py-1.5 text-xs"
-          style={{ color: "var(--text-muted)", borderBottom: "1px solid var(--border)" }}
+          style={{ color: "var(--muted-foreground)", borderBottom: "1px solid var(--border)" }}
         >
           statement.md 不存在，保存时将创建
         </div>

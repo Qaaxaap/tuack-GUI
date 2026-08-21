@@ -166,7 +166,7 @@ export default function ConfigEditor({ dir, kind, theme, narrow = false }: Props
         className="flex shrink-0 items-center gap-3 border-b px-4 py-2"
         style={{ borderColor: "var(--border)" }}
       >
-        <span className="text-xs uppercase" style={{ color: "var(--text-muted)" }}>
+        <span className="text-xs uppercase" style={{ color: "var(--muted-foreground)" }}>
           {kind}
         </span>
         <TabsList>
@@ -181,8 +181,8 @@ export default function ConfigEditor({ dir, kind, theme, narrow = false }: Props
             color: status.startsWith("已保存")
               ? "var(--success)"
               : status
-                ? "var(--danger)"
-                : "var(--text-muted)",
+                ? "var(--destructive)"
+                : "var(--muted-foreground)",
           }}
         >
           {status}
@@ -273,7 +273,7 @@ export default function ConfigEditor({ dir, kind, theme, narrow = false }: Props
               </Button>
             </div>
           ) : (
-            <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+            <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>
               加载中…
             </div>
           )}
@@ -332,7 +332,7 @@ export default function ConfigEditor({ dir, kind, theme, narrow = false }: Props
                     setRenProject(dir, t).catch((e) => reportError(`保存项目 ren 模板失败：${e}`));
                   }}
                 />
-                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
                   存于项目根目录 .tuack-gui.json；运行命令面板中显式选择模板运行后也会自动写入。
                 </span>
               </div>

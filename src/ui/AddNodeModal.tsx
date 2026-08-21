@@ -33,7 +33,7 @@ export default function AddNodeModal({ title, label, placeholder, target, cwd, o
       if (!o) onClose();
     }}>
       <DialogContent className="w-[min(640px,80vw)] rounded-lg p-4">
-        <div className="text-sm" style={{ color: "var(--text)" }}>{title}</div>
+        <div className="text-sm" style={{ color: "var(--foreground)" }}>{title}</div>
 
         <Label className="mb-1 block">{label}</Label>
         <Input

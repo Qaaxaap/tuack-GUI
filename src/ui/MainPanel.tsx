@@ -134,22 +134,22 @@ export default function MainPanel({
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 text-center">
           {project ? (
             <>
-              <h1 className="text-xl font-semibold" style={{ color: "var(--text)" }}>
+              <h1 className="text-xl font-semibold" style={{ color: "var(--foreground)" }}>
                 {project.contest.title || project.contest.name}
               </h1>
-              <p className="text-xs break-all" style={{ color: "var(--text-muted)" }}>
+              <p className="text-xs break-all" style={{ color: "var(--muted-foreground)" }}>
                 {project.root}
               </p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                 在左侧选择一个比赛 / 场次 / 题目以编辑其配置
               </p>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-semibold" style={{ color: "var(--text)" }}>
+              <h1 className="text-2xl font-semibold" style={{ color: "var(--foreground)" }}>
                 Tuack-GUI
               </h1>
-              <p style={{ color: "var(--text-muted)" }}>美观、跨平台的 Tuack-NG 图形化前端</p>
+              <p style={{ color: "var(--muted-foreground)" }}>美观、跨平台的 Tuack-NG 图形化前端</p>
             </>
           )}
         </div>
@@ -193,8 +193,8 @@ export default function MainPanel({
               className="flex items-center gap-1 rounded px-3 py-1 text-xs"
               style={
                 view === v.id
-                  ? { backgroundColor: "var(--brand)", color: "#fff" }
-                  : { color: "var(--text-muted)" }
+                  ? { backgroundColor: "var(--primary)", color: "#fff" }
+                  : { color: "var(--muted-foreground)" }
               }
             >
               <v.icon size={14} />
@@ -209,8 +209,8 @@ export default function MainPanel({
                 className="flex items-center gap-1 rounded px-3 py-1 text-xs"
                 style={
                   previewOpen
-                    ? { backgroundColor: "var(--brand)", color: "#fff" }
-                    : { color: "var(--text-muted)" }
+                    ? { backgroundColor: "var(--primary)", color: "#fff" }
+                    : { color: "var(--muted-foreground)" }
                 }
                 title={previewOpen ? "收起预览" : "展开预览"}
               >

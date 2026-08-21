@@ -19,11 +19,11 @@ export default function SideBar({ project, selectedDir, onSelect, onAdd, onRemov
   return (
     <aside
       className="flex w-64 shrink-0 flex-col"
-      style={{ backgroundColor: "var(--bg-raised)", borderRight: "1px solid var(--border)" }}
+      style={{ backgroundColor: "var(--card)", borderRight: "1px solid var(--border)" }}
     >
       <div
         className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider"
-        style={{ color: "var(--text-muted)" }}
+        style={{ color: "var(--muted-foreground)" }}
       >
         工程
       </div>
@@ -40,7 +40,7 @@ export default function SideBar({ project, selectedDir, onSelect, onAdd, onRemov
       ) : (
         <div
           className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center"
-          style={{ color: "var(--text-muted)" }}
+          style={{ color: "var(--muted-foreground)" }}
         >
           <p className="text-sm">尚未打开工程</p>
           <p className="text-xs">点工具栏「打开工程」</p>
@@ -53,7 +53,7 @@ export default function SideBar({ project, selectedDir, onSelect, onAdd, onRemov
 function rowStyle(active: boolean) {
   return {
     backgroundColor: active ? "var(--accent)" : "transparent",
-    color: active ? "var(--accent-foreground)" : "var(--text)",
+    color: active ? "var(--accent-foreground)" : "var(--foreground)",
   };
 }
 
@@ -102,7 +102,7 @@ function ContestItem({ node, selectedDir, onSelect, onAdd, onRemove }: { node: C
   const [open, setOpen] = useState(true);
   return (
     <div>
-      <div className="group flex items-center hover:bg-[var(--row-hover)]" style={rowStyle(selectedDir === node.dir)}>
+      <div className="group flex items-center hover:bg-accent/60" style={rowStyle(selectedDir === node.dir)}>
         <Button
           variant="ghost"
           onClick={() => {
@@ -149,7 +149,7 @@ function DayItem({
   const [open, setOpen] = useState(false);
   return (
     <div>
-      <div className="group flex items-center hover:bg-[var(--row-hover)]" style={rowStyle(selectedDir === node.dir)}>
+      <div className="group flex items-center hover:bg-accent/60" style={rowStyle(selectedDir === node.dir)}>
         <Button
           variant="ghost"
           onClick={() => {
@@ -195,7 +195,7 @@ function ProblemItem({
   onRemove,
 }: { node: ProblemNode; parentDir: string } & Omit<ItemHandlers, "onAdd">) {
   return (
-    <div className="group flex items-center hover:bg-[var(--row-hover)]" style={rowStyle(selectedDir === node.dir)}>
+    <div className="group flex items-center hover:bg-accent/60" style={rowStyle(selectedDir === node.dir)}>
       <Button
         variant="ghost"
         onClick={() => onSelect(node.dir, "problem")}

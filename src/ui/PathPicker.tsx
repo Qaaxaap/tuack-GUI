@@ -33,16 +33,16 @@ const EntryList = memo(function EntryList({
         <div
           key={e.path}
           onClick={() => onPick(e)}
-          className="flex cursor-pointer items-center gap-2 px-2 py-1 hover:bg-[var(--row-hover)]"
+          className="flex cursor-pointer items-center gap-2 px-2 py-1 hover:bg-accent/60"
           style={{
-            color: selected === e.path ? "var(--accent-foreground)" : "var(--text)",
+            color: selected === e.path ? "var(--accent-foreground)" : "var(--foreground)",
             backgroundColor: selected === e.path ? "var(--accent)" : "transparent",
           }}
         >
           {e.is_dir ? (
-            <Folder size={14} style={{ color: "var(--text-muted)" }} />
+            <Folder size={14} style={{ color: "var(--muted-foreground)" }} />
           ) : (
-            <FileText size={14} style={{ color: "var(--text-muted)" }} />
+            <FileText size={14} style={{ color: "var(--muted-foreground)" }} />
           )}
           <span className="min-w-0 truncate text-xs">{e.name}</span>
         </div>
@@ -113,7 +113,7 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
     }}>
       <DialogContent className="flex h-[min(640px,84vh)] w-[min(800px,88vw)] flex-col rounded-lg p-4">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm" style={{ color: "var(--text)" }}>
+          <span className="text-sm" style={{ color: "var(--foreground)" }}>
             {title}
           </span>
         </div>
@@ -141,11 +141,11 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
 
         <div className="mb-2 flex-1 overflow-auto rounded" style={{ border: "1px solid var(--border)" }}>
           {error ? (
-            <div className="p-3 text-xs" style={{ color: "var(--danger)" }}>
+            <div className="p-3 text-xs" style={{ color: "var(--destructive)" }}>
               {error}
             </div>
           ) : visible.length === 0 ? (
-            <div className="p-3 text-xs" style={{ color: "var(--text-muted)" }}>
+            <div className="p-3 text-xs" style={{ color: "var(--muted-foreground)" }}>
               （空目录）
             </div>
           ) : (
@@ -154,7 +154,7 @@ export default function PathPicker({ title, directory, onSelect, onClose }: Prop
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="min-w-0 truncate text-xs" style={{ color: "var(--text-muted)" }}>
+          <span className="min-w-0 truncate text-xs" style={{ color: "var(--muted-foreground)" }}>
             {directory ? `将选择：${cwd}` : selected ? selected : "请选择一个文件"}
           </span>
           <div className="flex gap-2">

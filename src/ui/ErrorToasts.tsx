@@ -36,19 +36,19 @@ export default function ErrorToasts() {
           className="pointer-events-auto flex items-start gap-2 rounded-md border px-3 py-2 shadow-lg"
           style={{
             backgroundColor: "var(--popover)",
-            borderColor: "var(--danger)",
+            borderColor: "var(--destructive)",
           }}
         >
           <span
             className="min-w-0 flex-1 break-all text-xs leading-relaxed"
-            style={{ color: "var(--text)" }}
+            style={{ color: "var(--foreground)" }}
           >
             {t.message}
           </span>
           <button
             onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
             className="shrink-0"
-            style={{ color: "var(--text-muted)" }}
+            style={{ color: "var(--muted-foreground)" }}
             title="关闭"
           >
             <X size={12} />

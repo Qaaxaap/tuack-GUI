@@ -15,8 +15,8 @@ export default function BinaryMissingDialog({ onOpenSettings, onClose }: Props) 
       if (!o) onClose();
     }}>
       <DialogContent className="w-[min(640px,80vw)] rounded-lg p-4">
-        <div className="text-sm" style={{ color: "var(--text)" }}>未检测到 tuack-ng</div>
-        <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        <div className="text-sm" style={{ color: "var(--foreground)" }}>未检测到 tuack-ng</div>
+        <p className="text-xs leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
           执行命令需要 tuack-ng 二进制。请在设置中选择其可执行文件，或先安装 tuack-ng。
         </p>
         <div className="flex justify-end gap-2">

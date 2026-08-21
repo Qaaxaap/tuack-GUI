@@ -321,7 +321,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
       {onSubtasksChange && (
         <div>
           <div className="mb-1 flex items-center gap-2">
-            <span className="text-xs font-medium" style={{ color: "var(--text)" }}>
+            <span className="text-xs font-medium" style={{ color: "var(--foreground)" }}>
               子任务策略
             </span>
             <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={addSubtask}>
@@ -332,7 +332,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
           <div className="flex flex-wrap gap-x-6 gap-y-1 rounded border p-2" style={{ borderColor: "var(--border)" }}>
             {declared.map((id) => (
               <div key={id} className="flex items-center gap-2">
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                   子任务 {id}
                 </span>
                 <div className="w-28">
@@ -348,7 +348,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
               </div>
             ))}
             {declared.length === 0 && (
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+              <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                 无子任务（测试点默认按求和计分），点「添加子任务」
               </span>
             )}
@@ -361,13 +361,13 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
           <thead>
             <tr style={{ borderBottom: "1px solid var(--border)" }}>
               <th className="w-8 p-1"></th>
-              <th className="w-12 p-1 text-center" style={{ color: "var(--text-muted)" }}>编号</th>
-              <th className="w-16 p-1 text-center" style={{ color: "var(--text-muted)" }}>分值</th>
-              <th className="w-20 p-1 text-center" style={{ color: "var(--text-muted)" }}>子任务</th>
-              <th className="w-24 p-1 text-center" style={{ color: "var(--text-muted)" }}>输入</th>
-              <th className="w-24 p-1 text-center" style={{ color: "var(--text-muted)" }}>输出</th>
-              <th className="w-24 p-1 text-center" style={{ color: "var(--text-muted)" }}>生成</th>
-              <th className="w-20 p-1 text-center" style={{ color: "var(--text-muted)" }}>args</th>
+              <th className="w-12 p-1 text-center" style={{ color: "var(--muted-foreground)" }}>编号</th>
+              <th className="w-16 p-1 text-center" style={{ color: "var(--muted-foreground)" }}>分值</th>
+              <th className="w-20 p-1 text-center" style={{ color: "var(--muted-foreground)" }}>子任务</th>
+              <th className="w-24 p-1 text-center" style={{ color: "var(--muted-foreground)" }}>输入</th>
+              <th className="w-24 p-1 text-center" style={{ color: "var(--muted-foreground)" }}>输出</th>
+              <th className="w-24 p-1 text-center" style={{ color: "var(--muted-foreground)" }}>生成</th>
+              <th className="w-20 p-1 text-center" style={{ color: "var(--muted-foreground)" }}>args</th>
               {!narrow && <th className="w-28 p-1"></th>}
             </tr>
           </thead>
@@ -377,7 +377,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
               const panel =
                 argsRow === i ? (
                   <tr key={`${i}-args`} style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td colSpan={narrow ? 8 : 9} className="p-2" style={{ backgroundColor: "var(--bg-raised)" }}>
+                    <td colSpan={narrow ? 8 : 9} className="p-2" style={{ backgroundColor: "var(--card)" }}>
                       <ArgsEditorDialog
                         value={rows[i].args}
                         onSave={(v) => {
@@ -400,7 +400,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
                         <Checkbox checked={selected.has(i)} onChange={() => toggle(i)} />
                       </td>
                     )}
-                    <td className="p-1 text-center" style={{ color: "var(--text-muted)" }}>
+                    <td className="p-1 text-center" style={{ color: "var(--muted-foreground)" }}>
                       {id}
                     </td>
                     {j === 0 && (
@@ -420,12 +420,12 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
                     )}
                     {j === 0 && (
                       <td rowSpan={n} className="p-1">
-                        <span className="block text-center" style={{ color: "var(--text-muted)" }}>—</span>
+                        <span className="block text-center" style={{ color: "var(--muted-foreground)" }}>—</span>
                       </td>
                     )}
                     {j === 0 && (
                       <td rowSpan={n} className="p-1">
-                        <span className="block text-center" style={{ color: "var(--text-muted)" }}>—</span>
+                        <span className="block text-center" style={{ color: "var(--muted-foreground)" }}>—</span>
                       </td>
                     )}
                     {j === 0 && (
@@ -478,7 +478,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
                   <td className="p-1 text-center">
                     <Checkbox checked={selected.has(i)} onChange={() => toggle(i)} />
                   </td>
-                  <td className="p-1 text-center" style={{ color: "var(--text)" }}>
+                  <td className="p-1 text-center" style={{ color: "var(--foreground)" }}>
                     {r.id}
                   </td>
                   <td className="p-1">
@@ -539,7 +539,7 @@ export default function TestDataEditor({ value, onChange, subtasks, onSubtasksCh
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={narrow ? 8 : 9} className="p-3 text-center" style={{ color: "var(--text-muted)" }}>
+                <td colSpan={narrow ? 8 : 9} className="p-3 text-center" style={{ color: "var(--muted-foreground)" }}>
                   暂无测试点，点「添加测试点」
                 </td>
               </tr>

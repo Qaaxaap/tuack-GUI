@@ -150,7 +150,7 @@ export default function OutputDrawer({ logs, running, runId, onCancel }: Props) 
         className="h-8 w-full justify-start gap-2 rounded-none bg-card px-4 text-xs font-normal text-muted-foreground"
       >
         <span>输出</span>
-        {running && <span style={{ color: "var(--brand)" }}>运行中…</span>}
+        {running && <span style={{ color: "var(--primary)" }}>运行中…</span>}
         {isOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
       </Button>
       {/*
@@ -158,12 +158,12 @@ export default function OutputDrawer({ logs, running, runId, onCancel }: Props) 
         否则初始化 effect 会因 hostRef 为空被跳过，之后永远建不出终端。
       */}
       <div className="flex h-48 flex-col" style={{ display: isOpen ? "flex" : "none" }}>
-        <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "var(--bg)" }}>
+        <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: "var(--background)" }}>
           <div ref={hostRef} className="absolute inset-0" />
           {logs.length === 0 && (
             <div
               className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs"
-              style={{ color: "var(--text-muted)" }}
+              style={{ color: "var(--muted-foreground)" }}
             >
               暂无输出
             </div>

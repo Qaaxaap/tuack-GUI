@@ -219,11 +219,11 @@ function MarkdownBody({
       {markdown == null ? (
         // 无已保留内容：仅显示加载中 / 错误
         error ? (
-          <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-xs" style={{ color: "var(--danger)" }}>
+          <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-xs" style={{ color: "var(--destructive)" }}>
             {error}
           </div>
         ) : (
-          <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-xs" style={{ color: "var(--text-muted)" }}>
+          <div className="flex min-h-0 flex-1 items-center justify-center p-4 text-xs" style={{ color: "var(--muted-foreground)" }}>
             {loading ? "加载预览…" : "暂无预览内容"}
           </div>
         )
@@ -231,7 +231,7 @@ function MarkdownBody({
         <>
           {/* 预览失败：保留已有内容，错误块固定显示在顶部（不随内容滚动） */}
           {error && (
-            <div className="shrink-0 rounded border px-3 py-2 text-xs" style={{ borderColor: "var(--danger)", color: "var(--danger)", backgroundColor: "var(--bg)" }}>
+            <div className="shrink-0 rounded border px-3 py-2 text-xs" style={{ borderColor: "var(--destructive)", color: "var(--destructive)", backgroundColor: "var(--background)" }}>
               {error}
             </div>
           )}
@@ -244,7 +244,7 @@ function MarkdownBody({
           >
             <div className="p-4">
             {warnings.length > 0 && (
-              <div className="mb-3 rounded border px-3 py-2 text-xs" style={{ borderColor: "#e5e510", color: "#e5e510" }}>
+              <div className="mb-3 rounded border px-3 py-2 text-xs" style={{ borderColor: "var(--warning)", color: "var(--warning)" }}>
                 {warnings.join("；")}
               </div>
             )}
@@ -310,8 +310,8 @@ function PdfBody({
         <PdfCanvas path={pdf} zoom={1} refreshKey={refreshKey} />
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
-          <FileText size={28} style={{ color: "var(--text-muted)" }} />
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          <FileText size={28} style={{ color: "var(--muted-foreground)" }} />
+          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
             还没有渲染结果，运行 ren 后在这里预览
           </p>
           <Button variant="default" onClick={onPdfRender} disabled={running}>
@@ -373,7 +373,7 @@ export default function PreviewPane({
         className="flex h-9 shrink-0 items-center gap-1 px-3"
         style={{ borderBottom: "1px solid var(--border)" }}
       >
-        <span className="min-w-0 flex-1 truncate text-xs" style={{ color: "var(--text-muted)" }}>
+        <span className="min-w-0 flex-1 truncate text-xs" style={{ color: "var(--muted-foreground)" }}>
           {isProblem ? "题面预览" : "PDF 预览"}
         </span>
         {isProblem && (
@@ -390,8 +390,8 @@ export default function PreviewPane({
                 className="px-2 py-1 text-[11px]"
                 style={
                   view === id
-                    ? { backgroundColor: "var(--brand)", color: "#fff" }
-                    : { color: "var(--text-muted)" }
+                    ? { backgroundColor: "var(--primary)", color: "#fff" }
+                    : { color: "var(--muted-foreground)" }
                 }
               >
                 {label}

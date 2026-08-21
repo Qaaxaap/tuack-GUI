@@ -40,18 +40,18 @@ export default function RemoveConfirmModal({ kind, name, parentDir, onRemoved, o
       if (!o) onClose();
     }}>
       <DialogContent className="w-[min(640px,80vw)] rounded-lg p-4">
-        <div className="text-sm" style={{ color: "var(--text)" }}>
+        <div className="text-sm" style={{ color: "var(--foreground)" }}>
           删除{what}「{name}」
         </div>
 
-        <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        <p className="text-xs leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
           只会从父级 conf.json 的 subdir 中移除该条目，
-          <span style={{ color: "var(--text)" }}>不会删除磁盘上的文件夹</span>。
+          <span style={{ color: "var(--foreground)" }}>不会删除磁盘上的文件夹</span>。
           之后仍可通过「新建」重新加入。
         </p>
 
         {error && (
-          <div className="text-xs" style={{ color: "var(--danger)" }}>
+          <div className="text-xs" style={{ color: "var(--destructive)" }}>
             {error}
           </div>
         )}
