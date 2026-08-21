@@ -124,6 +124,16 @@ export function loadJudgeResults(projectRoot: string): Promise<Record<string, un
   return invoke<Record<string, unknown>>("load_judge_results", { projectRoot });
 }
 
+/** 保存某 scope 最近一次 PDF 渲染结果（覆盖旧记录） */
+export function saveRenderResult(projectRoot: string, key: string, result: unknown): Promise<void> {
+  return invoke<void>("save_render_result", { projectRoot, key, result });
+}
+
+/** 读取全部 PDF 渲染结果缓存 */
+export function loadRenderResults(projectRoot: string): Promise<Record<string, unknown>> {
+  return invoke<Record<string, unknown>>("load_render_results", { projectRoot });
+}
+
 export function readFileBase64(path: string): Promise<string> {
   return invoke<string>("read_file_base64", { path });
 }

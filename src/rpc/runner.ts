@@ -5,7 +5,7 @@
 // run/create（异步编译）-> 等 run/ready -> 逐个 run/judge -> run/score。
 // 结果缓存供 JudgeView 展示，并持久化到项目级 .tuack-gui.json。
 
-import { loadJudgeResults, saveJudgeResult } from "../ipc";
+import { loadJudgeResults, loadRenderResults, saveJudgeResult, saveRenderResult } from "../ipc";
 import { rpc } from "./client";
 import { session, waitUntil } from "./session";
 import type { JudgeResult, RenFinishedEvent, RunFinishedEvent, ScoreResult } from "./types";
@@ -103,6 +103,27 @@ export function getLatestRender(scope: string): RenFinishedEvent | undefined {
   return renders.get(scope);
 }
 
+/** 把渲染结果写入项目持久化（fire-and-forget） */
+function persistRender(scope: string, result: RenFinishedEvent): void {
+  try {
+    void saveRenderResult(session.projectRoot, scope, result).catch(() => {});
+  } catch {
+    // 忽略
+  }
+}
+
+/** 从项目级 .tuack-gui.json 恢复某 scope 的最近渲染结果（若存在），供启动/重开后直接加载 */
+export async function loadPersistedRender(scope: string): Promise<RenFinishedEvent | undefined> {
+  try {
+    const all = await loadRenderResults(session.projectRoot);
+    const v = all[scope] as RenFinishedEvent | undefined;
+    if (v) renders.set(scope, v);
+    return v;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * 对题目/场次跑一次 PDF 渲染（ren/run + 等待 ren/finished）。
  * 产物位于服务端临时目录，结果缓存供 PDF 预览读取。
@@ -140,6 +161,7 @@ export async function runRender(
       throw new Error(`渲染失败：${finished!.error ?? finished!.status}`);
     }
     renders.set(scope, finished!);
+    persistRender(scope, finished!);
     return finished!;
   } finally {
     off();

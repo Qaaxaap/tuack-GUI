@@ -1115,6 +1115,8 @@ struct ProjectConfig {
     ren_template: Option<String>,
     /// 评测结果缓存：key = "<题目绝对目录>\u0000<tester>"，仅保留最新记录
     judge_results: Option<HashMap<String, Value>>,
+    /// PDF 渲染结果缓存：key = scope，仅保留最新记录
+    renders: Option<HashMap<String, Value>>,
 }
 
 fn project_config_path(project_root: &str) -> PathBuf {
@@ -1156,6 +1158,30 @@ fn load_judge_results(project_root: String) -> HashMap<String, Value> {
         return HashMap::new();
     }
     load_project_config(&root).judge_results.unwrap_or_default()
+}
+
+/// 保存某 scope 最近一次 PDF 渲染结果（覆盖旧记录）
+#[tauri::command]
+fn save_render_result(project_root: String, key: String, result: Value) -> Result<(), String> {
+    let root = project_root.trim().to_string();
+    if root.is_empty() {
+        return Ok(());
+    }
+    let mut cfg = load_project_config(&root);
+    let mut map = cfg.renders.unwrap_or_default();
+    map.insert(key, result);
+    cfg.renders = Some(map);
+    save_project_config(&root, &cfg)
+}
+
+/// 读取全部 PDF 渲染结果缓存（key -> RenFinishedEvent JSON）
+#[tauri::command]
+fn load_render_results(project_root: String) -> HashMap<String, Value> {
+    let root = project_root.trim().to_string();
+    if root.is_empty() {
+        return HashMap::new();
+    }
+    load_project_config(&root).renders.unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -1303,6 +1329,8 @@ pub fn run() {
             set_ren_project,
             save_judge_result,
             load_judge_results,
+            save_render_result,
+            load_render_results,
             read_file_base64,
             read_text_file,
             write_text_file,

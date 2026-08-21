@@ -17,7 +17,7 @@ import { defaultHandlers } from "mdast-util-to-hast";
 import { FileText, RefreshCw } from "lucide-react";
 import { Button } from "../components/ui/button";
 import PdfCanvas from "./PdfViewer";
-import { getLatestRender, getPreview, runPreview, runRender } from "../rpc/runner";
+import { getLatestRender, getPreview, loadPersistedRender, runPreview, runRender } from "../rpc/runner";
 import { reportError } from "../errors";
 import remarkImageAttr from "../lib/remarkImageAttr";
 import { rehypeLineMap } from "../lib/rehypeLineMap";
@@ -295,13 +295,22 @@ function PdfBody({
 }) {
   const [pdf, setPdf] = useState<string | null>(null);
   useEffect(() => {
-    const fin = getLatestRender(scope);
-    let hit: string | null = null;
-    if (fin?.tmpDir && fin.files) {
-      const p = fin.files.find((f) => f.path.toLowerCase().endsWith(".pdf"));
-      if (p) hit = `${fin.tmpDir.replace(/[\\/]+$/, "")}/${p.path.replace(/\\/g, "/")}`;
-    }
-    setPdf(hit);
+    let alive = true;
+    (async () => {
+      // 优先内存缓存；启动/重开后无缓存时从项目持久化恢复（若存在）
+      let fin = getLatestRender(scope);
+      if (!fin) fin = await loadPersistedRender(scope);
+      if (!alive) return;
+      let hit: string | null = null;
+      if (fin?.tmpDir && fin.files) {
+        const p = fin.files.find((f) => f.path.toLowerCase().endsWith(".pdf"));
+        if (p) hit = `${fin.tmpDir.replace(/[\\/]+$/, "")}/${p.path.replace(/\\/g, "/")}`;
+      }
+      setPdf(hit);
+    })();
+    return () => {
+      alive = false;
+    };
   }, [scope, refreshKey]);
 
   return (
@@ -363,6 +372,17 @@ export default function PreviewPane({
   };
 
   const effectiveView: "md" | "pdf" = isProblem ? view : "pdf";
+
+  // 外部刷新（编辑保存 / 命令刷新）：题面视图由 refreshKey 驱动 preview 更新；
+  // PDF 视图下自动重新渲染 PDF 以保持同步（跳过首次挂载，避免打开即重渲染）
+  const pdfRenderRef = useRef(handlePdfRender);
+  pdfRenderRef.current = handlePdfRender;
+  const lastRefresh = useRef(refreshKey);
+  useEffect(() => {
+    if (refreshKey === lastRefresh.current) return;
+    lastRefresh.current = refreshKey;
+    if (effectiveView === "pdf") pdfRenderRef.current();
+  }, [refreshKey, effectiveView]);
 
   return (
     <div
